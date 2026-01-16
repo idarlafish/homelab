@@ -1,15 +1,18 @@
-// src/commands/add.ts
-import { InlineKeyboard } from "gramio";
-import type { BotType } from "../bot";
+import { InlineKeyboard } from "grammy";
+import { bot } from "../bot";
+import { config } from "../config";
 
-export default (bot: BotType) =>
-    bot.command("add", async (context) => {
-        const miniAppUrl = `${process.env.API_URL}/add-reminder.html`;
+bot.command("add", async (ctx) => {
+    const miniAppUrl = `${config.API_URL}/add-reminder.html`;
 
-        await context.send("⏰ Click the button below to create a reminder:", {
-            reply_markup: new InlineKeyboard().webApp(
-                "📝 Create Reminder",
-                miniAppUrl
-            )
-        });
+    console.log(`Mini App URL: ${miniAppUrl}`);
+
+    const keyboard = new InlineKeyboard().webApp(
+        "📝 Create Reminder",
+        miniAppUrl
+    );
+
+    await ctx.reply("⏰ Click the button below to create a reminder:", {
+        reply_markup: keyboard,
     });
+});

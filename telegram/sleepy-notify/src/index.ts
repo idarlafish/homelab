@@ -1,6 +1,14 @@
-import { bot } from "./bot.ts";
-import { config } from "./config.ts";
-import { notificationWorker } from "./queue.ts";
+import { bot } from "./bot";
+import { config } from "./config";
+import { notificationWorker } from "./queue";
+
+// Import all commands and handlers
+import "./commands/add";
+import "./commands/list";
+import "./commands/delete";
+import "./commands/toggle";
+import "./commands/start";
+import "./handlers/web-app-data";
 
 const signals = ["SIGINT", "SIGTERM"];
 
@@ -23,13 +31,33 @@ process.on("unhandledRejection", (error) => {
 
 if (config.NODE_ENV === "production") {
 	// Production: webhook
-	const { server } = await import("./server/index.ts");
-	await bot.start({
-		webhook: {
-			url: `${config.API_URL}/${config.BOT_TOKEN}`,
+	const { serve } = await import("bun");
+
+	serve({
+		port: config.PORT,
+		async fetch(req) {
+			const url = new URL(req.url);
+
+			if (url.pathname === `/${config.BOT_TOKEN}`) {
+				const update = await req.json() as any;
+				await bot.handleUpdate(update);
+				return new Response("OK");
+			}
+
+			if (url.pathname === "/add-reminder.html") {
+				const file = Bun.file("public/add-reminder.html");
+				return new Response(file, {
+					headers: { "Content-Type": "text/html" }
+				});
+			}
+
+			return new Response("Not found", { status: 404 });
 		},
 	});
+
+	await bot.api.setWebhook(`${config.API_URL}/${config.BOT_TOKEN}`);
 	console.log(`✨ Bot ready for webhook`);
+
 } else {
 	// Development: long polling + file server for Mini Apps
 	const { serve } = await import("bun");
@@ -59,7 +87,7 @@ if (config.NODE_ENV === "production") {
 		},
 	});
 
-	await bot.start();
+	bot.start();
 	console.log(`✨ Bot started with long polling!`);
 	console.log(`📁 File server on http://localhost:${config.PORT}`);
 	console.log(`🌐 Mini App URL: ${config.API_URL}/add-reminder.html`);

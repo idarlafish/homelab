@@ -25,11 +25,11 @@ export const notificationWorker = new Worker<NotificationJob>(
         }
 
         try {
-            await bot.api.sendMessage({
-                chat_id: chatId,
-                text: notification.message,
-                disable_notification: false,
-            });
+            await bot.api.sendMessage(
+                chatId,
+                notification.message,
+                { disable_notification: false }
+            );
 
             console.log(`✅ Sent notification to ${chatId}: ${notification.message}`);
 
@@ -62,6 +62,7 @@ export const notificationWorker = new Worker<NotificationJob>(
         removeOnFail: { count: 5 },
     }
 );
+
 
 notificationWorker.on("completed", (job) => {
     console.log(`Job ${job.id} completed`);

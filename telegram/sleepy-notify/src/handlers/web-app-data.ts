@@ -1,58 +1,46 @@
-console.log("🔧 [web-app-data.ts] FILE IS LOADING");
-
-import type { BotType } from "../bot";
+import { bot } from "../bot";
 import { addNotification } from "../services/notifications";
 
-export default (bot: BotType) =>
-    bot.on("web_app_data", async (context) => {
-        console.log("=== WEB APP DATA RECEIVED ===");
-        console.log("Context:", context);
+bot.on("message:web_app_data", async (ctx) => {
+    console.log("=== WEB APP DATA RECEIVED ===");
 
-        // Type guard
-        if (!context.webAppData) {
-            console.error("webAppData is undefined!");
-            return;
-        }
+    const webAppData = ctx.message.web_app_data;
 
-        console.log("Raw data:", context.webAppData.data);
+    if (!webAppData) {
+        console.error("webAppData is undefined!");
+        return;
+    }
 
-        try {
-            const parsed = JSON.parse(context.webAppData.data);
-            console.log("Parsed data:", parsed);
+    console.log("Raw data:", webAppData.data);
 
-            const { time, message, date } = parsed;
+    try {
+        const { time, message, date } = JSON.parse(webAppData.data);
 
-            if (!context.from) {
-                console.error("context.from is undefined!");
-                return;
-            }
+        const userId = ctx.from.id;
+        const chatId = ctx.chat.id;
 
-            const userId = context.from.id;
-            const chatId = context.chat.id;
+        console.log(`Adding notification for user ${userId}`);
 
-            console.log(`Adding notification for user ${userId}`);
+        const notification = await addNotification(
+            userId,
+            chatId,
+            time,
+            message,
+            date
+        );
 
-            // Call centralized logic
-            const notification = await addNotification(
-                userId,
-                chatId,
-                time,
-                message,
-                date
-            );
+        console.log("Notification added:", notification);
 
-            console.log("Notification added:", notification);
+        await ctx.reply(
+            `✅ Reminder created!\n\n⏰ ${time}\n💬 ${message}${date ? `\n📅 ${date}` : ""
+            }`
+        );
 
-            await context.send(
-                `✅ Reminder created!\n\n⏰ ${time}\n💬 ${message}${date ? `\n📅 ${date}` : ""
-                }`
-            );
+        console.log("=== SUCCESS ===");
 
-            console.log("=== SUCCESS ===");
-
-        } catch (error) {
-            console.error("=== ERROR ===");
-            console.error("Error:", error);
-            await context.send("❌ Failed to create reminder. Please try again.");
-        }
-    });
+    } catch (error) {
+        console.error("=== ERROR ===");
+        console.error("Error:", error);
+        await ctx.reply("❌ Failed to create reminder. Please try again.");
+    }
+});

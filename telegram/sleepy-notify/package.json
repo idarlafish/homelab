@@ -8,16 +8,10 @@
 		"lint:fix": "bun run lint --fix"
 	},
 	"dependencies": {
-		"@gramio/auto-retry": "^0.0.3",
-		"@gramio/autoload": "^1.1.0",
-		"@gramio/broadcast": "^0.0.2",
-		"@gramio/prompt": "^1.2.1",
-		"@gramio/session": "^0.1.6",
-		"@gramio/storage-redis": "^1.0.4",
 		"@verrou/core": "^0.5.1",
 		"bullmq": "^5.66.5",
 		"env-var": "^7.5.0",
-		"gramio": "^0.4.10",
+		"grammy": "^1.39.3",
 		"ioredis": "^5.9.2",
 		"jobify": "^0.1.6"
 	},
