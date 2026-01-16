@@ -1,0 +1,29 @@
+services:
+    bot:
+        container_name: sleepy-notify-bot
+        restart: unless-stopped
+        build:
+            context: .
+            dockerfile: Dockerfile
+        environment:
+            - NODE_ENV=production
+        env_file:
+            - path: ./.env
+              required: false
+            - path: ./.env.production
+              required: false
+    postgres:
+        container_name: sleepy-notify-postgres
+        image: postgres:latest
+        restart: unless-stopped
+        environment:
+            - POSTGRES_USER=sleepy-notify
+            - POSTGRES_PASSWORD=b328421e20803f9e08fc2f03
+            - POSTGRES_DB=sleepy-notify
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+volumes:
+    postgres_data:
+    
+networks:
+    default: {}

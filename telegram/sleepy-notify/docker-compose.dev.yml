@@ -1,0 +1,18 @@
+services:
+    postgres:
+            container_name: sleepy-notify-postgres
+            image: postgres:latest
+            restart: unless-stopped
+            environment:
+                - POSTGRES_USER=sleepy-notify
+                - POSTGRES_PASSWORD=b328421e20803f9e08fc2f03
+                - POSTGRES_DB=sleepy-notify
+            ports:
+                - 5432:5432
+            volumes:
+                - postgres_data:/var/lib/postgresql/data
+volumes:
+    postgres_data:
+    
+networks:
+    default: {}

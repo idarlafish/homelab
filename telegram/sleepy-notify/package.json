@@ -1,0 +1,30 @@
+{
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "bun --watch src/index.ts",
+		"start": "NODE_ENV=production bun src/index.ts",
+		"lint": "bun x @biomejs/biome check",
+		"lint:fix": "bun run lint --fix"
+	},
+	"dependencies": {
+		"@gramio/auto-retry": "^0.0.3",
+		"@gramio/autoload": "^1.1.0",
+		"@gramio/broadcast": "^0.0.2",
+		"@gramio/prompt": "^1.2.1",
+		"@gramio/session": "^0.1.6",
+		"@gramio/storage-redis": "^1.0.4",
+		"@verrou/core": "^0.5.1",
+		"env-var": "^7.5.0",
+		"gramio": "^0.4.10",
+		"ioredis": "^5.9.2",
+		"jobify": "^0.1.6"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.2.3",
+		"@types/bun": "^1.2.21",
+		"@types/uuid": "^11.0.0",
+		"typescript": "^5.9.2",
+		"uuid": "^13.0.0"
+	}
+}
