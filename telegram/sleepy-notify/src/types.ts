@@ -1,9 +1,9 @@
 export interface UserNotification {
     id: string;
-    time: string;           // "09:00"
+    time: string;
     message: string;
     timezone: string;
-    lastSentDate?: string;  // "2026-01-16"
+    lastSentDate: string | null;
 }
 
 export interface UserScheduleConfig {

@@ -1,13 +1,13 @@
 import { randomUUID } from "node:crypto";
-import { getUserConfig, setUserConfig } from "../redis";
-import { scheduleUserNotifications } from "../scheduler";
+import { getUserConfig, setUserConfig } from "../database/redis";
+import { scheduleUserNotifications } from "../database/scheduler";
 
 export async function addNotification(
     userId: number,
     chatId: number,
     time: string,
     message: string,
-    date?: string // Optional: specific date
+    timezone: string,
 ) {
     // Validate time
     if (!/^\d{2}:\d{2}$/.test(time)) {
@@ -27,9 +27,8 @@ export async function addNotification(
         id: randomUUID(),
         time,
         message,
-        date, // Add date field if you want one-time reminders
-        timezone: "Europe/Nicosia",
-        lastSentDate: undefined,
+        timezone,
+        lastSentDate: null,
     };
 
     config.notifications.push(notification);

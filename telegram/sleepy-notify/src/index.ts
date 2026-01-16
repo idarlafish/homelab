@@ -1,22 +1,20 @@
 // src/index.ts
+import { Elysia } from "elysia";
+import { staticPlugin } from "@elysiajs/static";
 import { bot } from "./bot";
 import { config } from "./config";
-import { notificationWorker } from "./queue";
+import { notificationWorker } from "./database/queue";
+import { remindersRoutes } from "./routes/reminders";
 
-// Import all commands and handlers
+// Import commands
 import "./commands/start";
-import "./commands/add";
 import "./commands/list";
-import "./commands/delete";
-import "./commands/toggle";
-import "./handlers/web-app-data";
-import "./handlers/callback-handlers";
 
+// Graceful shutdown
 const signals = ["SIGINT", "SIGTERM"];
-
 for (const signal of signals) {
 	process.on(signal, async () => {
-		console.log(`Received ${signal}. Initiating graceful shutdown...`);
+		console.log(`Received ${signal}. Shutting down...`);
 		await notificationWorker.close();
 		await bot.stop();
 		process.exit(0);
@@ -31,64 +29,72 @@ process.on("unhandledRejection", (error) => {
 	console.error("Unhandled rejection:", error);
 });
 
+// Create Elysia app
+const app = new Elysia()
+	// Global error handler
+	.onError(({ code, error, set }) => {
+		console.error(`[${code}]`, error);
+
+		if (code === "VALIDATION") {
+			set.status = 400;
+			return {
+				error: "Validation failed",
+				details: error instanceof Error ? error.message : String(error)
+			};
+		}
+
+		if (code === "NOT_FOUND") {
+			set.status = 404;
+			return { error: "Not found" };
+		}
+
+		set.status = 500;
+		return {
+			error: error instanceof Error ? error.message : "Internal server error"
+		};
+	})
+
+	// Request logging (dev only)
+	.onRequest(({ request }) => {
+		if (config.NODE_ENV === "development") {
+			console.log(`📥 ${request.method} ${new URL(request.url).pathname}`);
+		}
+	})
+
+	// Webhook endpoint (production only)
+	.post(
+		`/${config.BOT_TOKEN}`,
+		async ({ body }) => {
+			if (config.NODE_ENV === "production") {
+				await bot.handleUpdate(body as any);
+				return "OK";
+			}
+			return { error: "Webhook only available in production" };
+		}
+	)
+
+	// API routes
+	.use(remindersRoutes)
+
+	// Static files (Mini App)
+	.use(
+		staticPlugin({
+			assets: "public",
+			prefix: "/",
+		})
+	)
+
+	// Start server
+	.listen(config.PORT);
+
+console.log(`🚀 Server running on http://localhost:${app.server?.port}`);
+
+// Bot startup
 if (config.NODE_ENV === "production") {
-	const { serve } = await import("bun");
-
-	serve({
-		port: config.PORT,
-		async fetch(req) {
-			const url = new URL(req.url);
-
-			if (url.pathname === `/${config.BOT_TOKEN}`) {
-				const update = await req.json() as any;
-				await bot.handleUpdate(update);
-				return new Response("OK");
-			}
-
-			if (url.pathname === "/add-reminder.html") {
-				const file = Bun.file("public/add-reminder.html");
-				return new Response(file, {
-					headers: { "Content-Type": "text/html" }
-				});
-			}
-
-			return new Response("Not found", { status: 404 });
-		},
-	});
-
 	await bot.api.setWebhook(`${config.API_URL}/${config.BOT_TOKEN}`);
 	console.log(`✨ Bot ready for webhook`);
-
 } else {
-	const { serve } = await import("bun");
-
-	serve({
-		port: config.PORT,
-		async fetch(req) {
-			const url = new URL(req.url);
-			console.log(`📥 Request: ${url.pathname}`);
-
-			if (url.pathname === "/add-reminder.html") {
-				const file = Bun.file("public/add-reminder.html");
-				const exists = await file.exists();
-
-				if (!exists) {
-					console.error("❌ File not found: public/add-reminder.html");
-					return new Response("File not found", { status: 404 });
-				}
-
-				console.log("✅ Serving add-reminder.html");
-				return new Response(file, {
-					headers: { "Content-Type": "text/html" }
-				});
-			}
-
-			return new Response("Not found", { status: 404 });
-		},
-	});
-
 	bot.start();
 	console.log(`✨ Bot started with long polling!`);
-	console.log(`📁 File server on http://localhost:${config.PORT}`);
-	console.log(`🌐 Mini App URL: ${config.API_URL}/add-reminder.html`);
+	console.log(`🌐 Mini App: ${config.API_URL}/index.html`);
 }

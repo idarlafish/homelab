@@ -1,48 +1,43 @@
 // src/commands/list.ts
 import { bot } from "../bot";
-import { getUserConfig } from "../redis";
-import { InlineKeyboard } from "grammy";
-import { config } from "../config";
+import { getUserConfig } from "../database/redis";
 
 async function handleList(ctx: any) {
     const userId = ctx.from!.id;
     const userConfig = await getUserConfig(userId);
 
     if (!userConfig || userConfig.notifications.length === 0) {
-        await ctx.reply("You have no reminders yet. Use 📝 Add Reminder!");
+        await ctx.reply("You have no reminders yet. Open the menu (☰) to create one!");
         return;
     }
 
-    // Header message
-    await ctx.reply(
-        `📋 Your reminders (${userConfig.notifications.length}):\n` +
-        `Status: ${userConfig.enabled ? "✅ Enabled" : "❌ Disabled"}\n\n` +
-        `Use /toggle to enable/disable`
-    );
+    let message = `📋 Your reminders (${userConfig.notifications.length}):\n`;
+    message += `Status: ${userConfig.enabled ? "✅ Enabled" : "❌ Disabled"}\n\n`;
 
-    // Send each reminder as a separate message with buttons immediately below
+    const now = new Date();
+
     for (const notif of userConfig.notifications) {
-        // Create Mini App URL with pre-filled data
-        const params = new URLSearchParams({
-            id: notif.id,
-            time: notif.time,
-            message: notif.message,
-            date: notif.lastSentDate || "",
-            mode: "edit"
-        });
+        const [hours, minutes] = notif.time.split(':').map(Number);
+        const nextNotif = new Date();
+        nextNotif.setHours(hours ?? 0, minutes, 0, 0);
 
-        const editUrl = `${config.API_URL}/add-reminder.html?${params.toString()}`;
+        if (nextNotif <= now) {
+            nextNotif.setDate(nextNotif.getDate() + 1);
+        }
 
-        const keyboard = new InlineKeyboard()
-            .webApp("✏️ Edit", editUrl)  // ← Opens Mini App directly
-            .text("🗑️ Delete", `delete_${notif.id}`);
+        const diffMs = nextNotif.getTime() - now.getTime();
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
-        await ctx.reply(
-            `⏰ ${notif.time} - ${notif.message}${notif.lastSentDate ? `\n📅 ${notif.lastSentDate}` : ""}`,
-            { reply_markup: keyboard }
-        );
+        const timeUntil = diffHours > 0
+            ? `in ${diffHours}h ${diffMinutes}m`
+            : `in ${diffMinutes}m`;
+
+        message += `⏰ ${notif.time} - ${notif.message}\n`;
+        message += `   ⏳ Next: ${timeUntil}\n\n`;
     }
+
+    await ctx.reply(message);
 }
 
 bot.command("list", handleList);
-bot.hears("📋 List Reminders", handleList);

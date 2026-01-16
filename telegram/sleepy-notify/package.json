@@ -8,8 +8,10 @@
 		"lint:fix": "bun run lint --fix"
 	},
 	"dependencies": {
+		"@elysiajs/static": "^1.4.7",
 		"@verrou/core": "^0.5.1",
 		"bullmq": "^5.66.5",
+		"elysia": "^1.4.22",
 		"env-var": "^7.5.0",
 		"grammy": "^1.39.3",
 		"ioredis": "^5.9.2",

@@ -1,7 +1,7 @@
 import { Queue, Worker } from "bullmq";
 import { redisConnection } from "./redis"; // ← IMPORT THIS, not redis
-import { bot } from "./bot";
-import type { UserNotification } from "./types";
+import { bot } from "../bot";
+import type { UserNotification } from "../types";
 
 interface NotificationJob {
     userId: number;
@@ -10,18 +10,20 @@ interface NotificationJob {
 }
 
 export const notificationQueue = new Queue<NotificationJob>("notifications", {
-    connection: redisConnection, // ← Use redisConnection (plain object)
+    connection: redisConnection,
 });
 
-export const notificationWorker = new Worker<NotificationJob>(
+// src/queue/worker.ts (or wherever your worker is)
+export const notificationWorker = new Worker(
     "notifications",
     async (job) => {
         const { userId, chatId, notification } = job.data;
-        const today = new Date().toISOString().split("T")[0];
+        const today = new Date().toISOString().split("T")[0]!;
 
+        // 🔥 Idempotency check
         if (notification.lastSentDate === today) {
-            console.log(`Already sent notification ${notification.id} today`);
-            return;
+            console.log(`⏭️  Already sent notification ${notification.id} today (${today})`);
+            return { skipped: true, reason: 'already_sent_today' };
         }
 
         try {
@@ -33,20 +35,24 @@ export const notificationWorker = new Worker<NotificationJob>(
 
             console.log(`✅ Sent notification to ${chatId}: ${notification.message}`);
 
-            // Update lastSentDate in Redis
+            // Update lastSentDate atomically
             const { getUserConfig, setUserConfig } = await import("./redis");
             const config = await getUserConfig(userId);
+
             if (config) {
                 const notif = config.notifications.find(n => n.id === notification.id);
                 if (notif) {
                     notif.lastSentDate = today;
                     await setUserConfig(userId, config);
+                    console.log(`📝 Updated lastSentDate for ${notification.id} to ${today}`);
                 }
             }
 
+            return { sent: true, timestamp: new Date().toISOString() };
+
         } catch (error: any) {
             if (error?.description?.includes("blocked")) {
-                console.log(`User ${chatId} blocked the bot`);
+                console.log(`🚫 User ${chatId} blocked the bot`);
                 throw new Error("USER_BLOCKED");
             }
             throw error;
@@ -54,15 +60,11 @@ export const notificationWorker = new Worker<NotificationJob>(
     },
     {
         connection: redisConnection,
-        limiter: {
-            max: 20,
-            duration: 1000,
-        },
+        limiter: { max: 20, duration: 1000 },
         removeOnComplete: { count: 10 },
         removeOnFail: { count: 5 },
     }
 );
-
 
 notificationWorker.on("completed", (job) => {
     console.log(`Job ${job.id} completed`);
