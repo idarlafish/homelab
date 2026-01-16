@@ -1,7 +1,6 @@
-// src/controllers/reminders.ts
-import { getUserConfig, setUserConfig } from "../database/redis";
-import { addNotification } from "../services/notifications";
-import { scheduleUserNotifications } from "../database/scheduler";
+import { getUserConfig, setUserConfig } from "../../storage/redis";
+import { addNotification } from "../../storage/notifications";
+import { scheduleUserNotifications } from "../../storage/scheduler";
 
 export class RemindersController {
     async getReminders(userId: number) {

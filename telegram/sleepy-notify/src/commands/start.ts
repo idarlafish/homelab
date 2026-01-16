@@ -1,4 +1,3 @@
-// src/commands/start.ts
 import { bot } from "../bot";
 import { config } from "../config";
 
@@ -17,8 +16,6 @@ bot.command("start", async (ctx) => {
 	await ctx.reply(
 		"👋 Welcome to Sleepy Notify Bot!\n\n" +
 		"Click the menu button (☰) at the bottom to manage your reminders.\n\n" +
-		"Commands:\n" +
-		"/list - View reminders as text\n" +
 		{
 			reply_markup: { remove_keyboard: true }
 		}

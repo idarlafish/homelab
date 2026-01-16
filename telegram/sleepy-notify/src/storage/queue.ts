@@ -1,7 +1,7 @@
 import { Queue, Worker } from "bullmq";
 import { redisConnection } from "./redis"; // ← IMPORT THIS, not redis
 import { bot } from "../bot";
-import type { UserNotification } from "../types";
+import type { UserNotification } from "./types";
 
 interface NotificationJob {
     userId: number;
@@ -13,7 +13,6 @@ export const notificationQueue = new Queue<NotificationJob>("notifications", {
     connection: redisConnection,
 });
 
-// src/queue/worker.ts (or wherever your worker is)
 export const notificationWorker = new Worker(
     "notifications",
     async (job) => {

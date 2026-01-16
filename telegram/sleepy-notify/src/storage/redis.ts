@@ -1,6 +1,6 @@
 import Redis from "ioredis";
 import { config } from "../config";
-import type { UserScheduleConfig } from "../types";
+import type { UserScheduleConfig } from "./types";
 
 // Regular Redis instance for direct operations
 export const redis = new Redis({

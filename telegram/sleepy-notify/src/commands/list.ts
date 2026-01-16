@@ -1,6 +1,5 @@
-// src/commands/list.ts
 import { bot } from "../bot";
-import { getUserConfig } from "../database/redis";
+import { getUserConfig } from "../storage/redis";
 
 async function handleList(ctx: any) {
     const userId = ctx.from!.id;

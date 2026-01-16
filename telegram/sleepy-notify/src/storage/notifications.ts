@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { getUserConfig, setUserConfig } from "../database/redis";
-import { scheduleUserNotifications } from "../database/scheduler";
+import { getUserConfig, setUserConfig } from "./redis";
+import { scheduleUserNotifications } from "./scheduler";
 
 export async function addNotification(
     userId: number,

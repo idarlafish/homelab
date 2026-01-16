@@ -3,12 +3,13 @@ import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
 import { bot } from "./bot";
 import { config } from "./config";
-import { notificationWorker } from "./database/queue";
-import { remindersRoutes } from "./routes/reminders";
+import { notificationWorker } from "./storage/queue";
+import { routes } from "./api/reminders/routes";
 
 // Import commands
 import "./commands/start";
 import "./commands/list";
+import { logger } from "elysia-logger";
 
 // Graceful shutdown
 const signals = ["SIGINT", "SIGTERM"];
@@ -74,7 +75,7 @@ const app = new Elysia()
 	)
 
 	// API routes
-	.use(remindersRoutes)
+	.use(routes)
 
 	// Static files (Mini App)
 	.use(
@@ -83,6 +84,8 @@ const app = new Elysia()
 			prefix: "/",
 		})
 	)
+	// Elysia logger
+	.use(logger())
 
 	// Start server
 	.listen(config.PORT);

@@ -1,4 +1,3 @@
-<!-- public/index.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -145,12 +144,21 @@
     tg.ready();
     tg.expand();
     
-    const userId = tg.initDataUnsafe?.user?.id;
+    const initData = tg.initData;
     
     async function loadReminders() {
       try {
-        const response = await fetch(`/api/reminders?userId=${userId}`);
+        const response = await fetch('/api/reminders', {
+          headers: {
+            'Authorization': `tma ${initData}`
+          }
+        });
+        
         const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load');
+        }
         
         const statusEl = document.getElementById('status');
         statusEl.textContent = data.enabled ? '✅ Enabled' : '❌ Disabled';
@@ -223,8 +231,11 @@
           if (!confirmed) return;
           
           try {
-            const response = await fetch(`/api/reminders/${id}?userId=${userId}`, {
-              method: 'DELETE'
+            const response = await fetch(`/api/reminders/${id}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `tma ${initData}`
+              }
             });
             
             const result = await response.json();
