@@ -1,13 +1,14 @@
+// src/index.ts
 import { bot } from "./bot";
 import { config } from "./config";
 import { notificationWorker } from "./queue";
 
 // Import all commands and handlers
+import "./commands/start";
 import "./commands/add";
 import "./commands/list";
 import "./commands/delete";
 import "./commands/toggle";
-import "./commands/start";
 import "./handlers/web-app-data";
 
 const signals = ["SIGINT", "SIGTERM"];
@@ -30,7 +31,6 @@ process.on("unhandledRejection", (error) => {
 });
 
 if (config.NODE_ENV === "production") {
-	// Production: webhook
 	const { serve } = await import("bun");
 
 	serve({
@@ -59,7 +59,6 @@ if (config.NODE_ENV === "production") {
 	console.log(`✨ Bot ready for webhook`);
 
 } else {
-	// Development: long polling + file server for Mini Apps
 	const { serve } = await import("bun");
 
 	serve({
