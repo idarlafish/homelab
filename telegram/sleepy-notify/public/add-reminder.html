@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+      background: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+      margin: 0;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    input[type="time"],
+    input[type="date"],
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--tg-theme-hint-color);
+      border-radius: 8px;
+      font-size: 16px;
+      background: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+      box-sizing: border-box;
+    }
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    .hint {
+      font-size: 12px;
+      color: var(--tg-theme-hint-color);
+      margin-top: 4px;
+    }
+    #debug {
+      margin-top: 20px;
+      padding: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-group">
+    <label for="date">📅 Date (optional)</label>
+    <input type="date" id="date">
+    <div class="hint">Leave empty for daily reminder</div>
+  </div>
+  
+  <div class="form-group">
+    <label for="time">⏰ Time</label>
+    <input type="time" id="time" value="09:00" required>
+  </div>
+  
+  <div class="form-group">
+    <label for="message">💬 Message</label>
+    <textarea id="message" placeholder="What should I remind you about?" required></textarea>
+  </div>
+
+  <div id="debug">Loading Telegram Web App...</div>
+
+  <script>
+    const debugEl = document.getElementById('debug');
+    
+    function log(msg) {
+      console.log(msg);
+      debugEl.textContent += '\n' + msg;
+    }
+    
+    log('Script started');
+    log('Telegram.WebApp exists: ' + (typeof Telegram !== 'undefined'));
+    
+    const tg = window.Telegram.WebApp;
+    
+    log('WebApp object: ' + JSON.stringify({
+      platform: tg.platform,
+      version: tg.version,
+      initDataUnsafe: tg.initDataUnsafe
+    }));
+    
+    tg.ready();
+    log('WebApp.ready() called');
+    
+    tg.expand();
+    log('WebApp.expand() called');
+    
+    tg.MainButton.setText('Save Reminder');
+    tg.MainButton.show();
+    log('MainButton configured and shown');
+    
+    tg.MainButton.onClick(() => {
+      log('MainButton clicked!');
+      
+      const time = document.getElementById('time').value;
+      const date = document.getElementById('date').value || undefined;
+      const message = document.getElementById('message').value.trim();
+      
+      log('Time: ' + time);
+      log('Date: ' + date);
+      log('Message: ' + message);
+      
+      if (!time || !message) {
+        log('ERROR: Missing required fields');
+        tg.showAlert('Please fill all required fields');
+        return;
+      }
+      
+      const data = { time, date, message };
+      log('Sending data: ' + JSON.stringify(data));
+      
+      try {
+        tg.sendData(JSON.stringify(data));
+        log('sendData() called successfully');
+      } catch (error) {
+        log('ERROR in sendData: ' + error.message);
+      }
+    });
+    
+    log('Setup complete');
+  </script>
+</body>
+</html>

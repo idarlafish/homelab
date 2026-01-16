@@ -16,7 +16,7 @@ export const notificationQueue = new Queue<NotificationJob>("notifications", {
 export const notificationWorker = new Worker<NotificationJob>(
     "notifications",
     async (job) => {
-        const { chatId, notification } = job.data;
+        const { userId, chatId, notification } = job.data;
         const today = new Date().toISOString().split("T")[0];
 
         if (notification.lastSentDate === today) {
@@ -32,6 +32,18 @@ export const notificationWorker = new Worker<NotificationJob>(
             });
 
             console.log(`✅ Sent notification to ${chatId}: ${notification.message}`);
+
+            // Update lastSentDate in Redis
+            const { getUserConfig, setUserConfig } = await import("./redis");
+            const config = await getUserConfig(userId);
+            if (config) {
+                const notif = config.notifications.find(n => n.id === notification.id);
+                if (notif) {
+                    notif.lastSentDate = today;
+                    await setUserConfig(userId, config);
+                }
+            }
+
         } catch (error: any) {
             if (error?.description?.includes("blocked")) {
                 console.log(`User ${chatId} blocked the bot`);
@@ -41,7 +53,7 @@ export const notificationWorker = new Worker<NotificationJob>(
         }
     },
     {
-        connection: redisConnection, // ← Use redisConnection here too
+        connection: redisConnection,
         limiter: {
             max: 20,
             duration: 1000,

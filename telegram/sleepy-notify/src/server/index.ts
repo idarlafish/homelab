@@ -13,7 +13,17 @@ export const server = serve({
 			POST: handler,
 		},
 	},
-	fetch(req) {
+	async fetch(req) {
+		const url = new URL(req.url);
+
+		// Serve Mini App
+		if (url.pathname === "/add-reminder.html") {
+			const file = Bun.file("public/add-reminder.html");
+			return new Response(file, {
+				headers: { "Content-Type": "text/html" }
+			});
+		}
+
 		return new Response("Not found", { status: 404 });
 	},
 });
