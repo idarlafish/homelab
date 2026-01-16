@@ -10,6 +10,7 @@
         "@gramio/session": "^0.1.6",
         "@gramio/storage-redis": "^1.0.4",
         "@verrou/core": "^0.5.1",
+        "bullmq": "^5.66.5",
         "env-var": "^7.5.0",
         "gramio": "^0.4.10",
         "ioredis": "^5.9.2",
@@ -18,9 +19,7 @@
       "devDependencies": {
         "@biomejs/biome": "^2.2.3",
         "@types/bun": "^1.2.21",
-        "@types/uuid": "^11.0.0",
         "typescript": "^5.9.2",
-        "uuid": "^13.0.0",
       },
     },
   },
@@ -103,8 +102,6 @@
 
     "@types/pluralize": ["@types/pluralize@0.0.33", "", {}, "sha512-JOqsl+ZoCpP4e8TDke9W79FDcSgPAR0l6pixx2JHkhnRjvShyYiAYw2LVsnA7K08Y6DeOnaU6ujmENO4os/cYg=="],
 
-    "@types/uuid": ["@types/uuid@11.0.0", "", { "dependencies": { "uuid": "*" } }, "sha512-HVyk8nj2m+jcFRNazzqyVKiZezyhDKrGUA3jlEcg/nZ6Ms+qHwocba1Y/AaVaznJTAM9xpdFSh+ptbNrhOGvZA=="],
-
     "@verrou/core": ["@verrou/core@0.5.2", "", { "dependencies": { "@julr/utils": "^1.9.0", "@poppinss/utils": "^6.10.1", "async-mutex": "^0.5.0" }, "peerDependencies": { "@aws-sdk/client-dynamodb": "^3.484.0", "ioredis": "^5.3.2" }, "optionalPeers": ["@aws-sdk/client-dynamodb", "ioredis"] }, "sha512-RDitlGrKqU4PJzhPol0N54booiLABOpC1nsS6QDpgB2lCzyoDLdIG97zKEt/2bS6UElv3s+Gdm6kIA24WaeEyw=="],
 
     "async-mutex": ["async-mutex@0.5.0", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-1A94B18jkJ3DYq284ohPxoXbfTA5HsQ7/Mf4DEhcyLx3Bz27Rh59iScbB6EPiP+B+joue6YCxcMXSbFC1tZKwA=="],
@@ -183,10 +180,8 @@
 
     "undici-types": ["undici-types@7.16.0", "", {}, "sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw=="],
 
-    "uuid": ["uuid@13.0.0", "", { "bin": { "uuid": "dist-node/bin/uuid" } }, "sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w=="],
+    "uuid": ["uuid@11.1.0", "", { "bin": { "uuid": "dist/esm/bin/uuid" } }, "sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A=="],
 
     "bullmq/ioredis": ["ioredis@5.9.1", "", { "dependencies": { "@ioredis/commands": "1.5.0", "cluster-key-slot": "^1.1.0", "debug": "^4.3.4", "denque": "^2.1.0", "lodash.defaults": "^4.2.0", "lodash.isarguments": "^3.1.0", "redis-errors": "^1.2.0", "redis-parser": "^3.0.0", "standard-as-callback": "^2.1.0" } }, "sha512-BXNqFQ66oOsR82g9ajFFsR8ZKrjVvYCLyeML9IvSMAsP56XH2VXBdZjmI11p65nXXJxTEt1hie3J2QeFJVgrtQ=="],
-
-    "bullmq/uuid": ["uuid@11.1.0", "", { "bin": { "uuid": "dist/esm/bin/uuid" } }, "sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A=="],
   }
 }
