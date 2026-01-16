@@ -10,6 +10,7 @@ import "./commands/list";
 import "./commands/delete";
 import "./commands/toggle";
 import "./handlers/web-app-data";
+import "./handlers/callback-handlers";
 
 const signals = ["SIGINT", "SIGTERM"];
 

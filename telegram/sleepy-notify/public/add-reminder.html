@@ -1,3 +1,4 @@
+<!-- public/add-reminder.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -42,18 +43,20 @@
       color: var(--tg-theme-hint-color);
       margin-top: 4px;
     }
-    #debug {
-      margin-top: 20px;
-      padding: 10px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 8px;
-      font-size: 12px;
-      font-family: monospace;
-      white-space: pre-wrap;
+    .mode-indicator {
+      padding: 8px 12px;
+      background: var(--tg-theme-button-color);
+      color: var(--tg-theme-button-text-color);
+      border-radius: 6px;
+      margin-bottom: 16px;
+      text-align: center;
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
+  <div id="mode-indicator" class="mode-indicator" style="display: none;"></div>
+
   <div class="form-group">
     <label for="date">📅 Date (optional)</label>
     <input type="date" id="date">
@@ -70,66 +73,58 @@
     <textarea id="message" placeholder="What should I remind you about?" required></textarea>
   </div>
 
-  <div id="debug">Loading Telegram Web App...</div>
-
   <script>
-    const debugEl = document.getElementById('debug');
-    
-    function log(msg) {
-      console.log(msg);
-      debugEl.textContent += '\n' + msg;
-    }
-    
-    log('Script started');
-    log('Telegram.WebApp exists: ' + (typeof Telegram !== 'undefined'));
-    
     const tg = window.Telegram.WebApp;
     
-    log('WebApp object: ' + JSON.stringify({
-      platform: tg.platform,
-      version: tg.version,
-      initDataUnsafe: tg.initDataUnsafe
-    }));
+    // Parse URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode') || 'create';
+    const reminderId = urlParams.get('id');
+    const existingTime = urlParams.get('time');
+    const existingMessage = urlParams.get('message');
+    const existingDate = urlParams.get('date');
+    
+    // Pre-fill form if editing
+    if (mode === 'edit' && reminderId) {
+      const indicator = document.getElementById('mode-indicator');
+      indicator.textContent = '✏️ Editing Reminder';
+      indicator.style.display = 'block';
+      
+      if (existingTime) document.getElementById('time').value = existingTime;
+      if (existingMessage) document.getElementById('message').value = existingMessage;
+      if (existingDate) document.getElementById('date').value = existingDate;
+    }
     
     tg.ready();
-    log('WebApp.ready() called');
-    
     tg.expand();
-    log('WebApp.expand() called');
     
-    tg.MainButton.setText('Save Reminder');
+    tg.MainButton.setText(mode === 'edit' ? 'Update Reminder' : 'Save Reminder');
     tg.MainButton.show();
-    log('MainButton configured and shown');
     
     tg.MainButton.onClick(() => {
-      log('MainButton clicked!');
-      
       const time = document.getElementById('time').value;
       const date = document.getElementById('date').value || undefined;
       const message = document.getElementById('message').value.trim();
       
-      log('Time: ' + time);
-      log('Date: ' + date);
-      log('Message: ' + message);
-      
       if (!time || !message) {
-        log('ERROR: Missing required fields');
         tg.showAlert('Please fill all required fields');
         return;
       }
       
-      const data = { time, date, message };
-      log('Sending data: ' + JSON.stringify(data));
+      const data = { 
+        time, 
+        date, 
+        message,
+        mode,
+        id: reminderId // Include ID for updates
+      };
       
       try {
         tg.sendData(JSON.stringify(data));
-        log('sendData() called successfully');
       } catch (error) {
-        log('ERROR in sendData: ' + error.message);
+        tg.showAlert('Error: ' + error.message);
       }
     });
-    
-    log('Setup complete');
   </script>
 </body>
 </html>
