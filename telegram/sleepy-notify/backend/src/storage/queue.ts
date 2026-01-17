@@ -18,7 +18,7 @@ async function sendTelegramMessage(chatId: number, message: string): Promise<voi
 
     const messageId = await bot.api.sendMessage(
       chatId,
-      `⏰ ${timeString}`, 
+        `⏰ ${timeString}: ${message}`, 
       {
         reply_markup: {
           inline_keyboard: [[

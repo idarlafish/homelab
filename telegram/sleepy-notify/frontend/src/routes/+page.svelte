@@ -1,9 +1,17 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { getReminders, deleteReminder, toggleReminderDismiss } from '$lib/api';
   import { tg } from '$lib/telegram';
   import type { Reminder } from '$lib/types';
+
+  // Import SVG files as raw strings
+  import moonSvg from '$lib/assets/moon.svg?raw';
+  import sunSvg from '$lib/assets/sun.svg?raw';
+  import sunsetSvg from '$lib/assets/sunset.svg?raw';
+  import sunriseSvg from '$lib/assets/sunrise.svg?raw';
+    import plusSvg from '$lib/assets/plus.svg?raw';
+  import ActionButton from '$lib/components/ActionButton.svelte';
 
   let reminders: Reminder[] = [];
   let enabled = true;
@@ -91,8 +99,12 @@
   });
 
   onMount(() => {
-    tg?.MainButton.hide();
     tg?.BackButton.hide();
+    tg?.MainButton.setText('Create Reminder');
+    tg?.MainButton.hideProgress();
+    tg?.MainButton.show();
+    tg?.MainButton.onClick(handleCreate);
+    
     loadReminders();
 
     const current = new Date();
@@ -112,6 +124,14 @@
       clearInterval(interval);
     };
   });
+
+  onDestroy(() => {
+    tg?.MainButton.offClick(handleCreate);
+  });
+
+  function handleCreate() {
+    goto('/create');
+  }
 
   async function loadReminders() {
     try {
@@ -159,6 +179,30 @@
       tg?.showAlert(e instanceof Error ? e.message : 'Failed to update');
     }
   }
+
+  function getTimePeriod(time: string): string {
+    const hour = parseInt(time.split(':')[0]);
+    if (hour >= 5 && hour < 12) return 'morning';
+    if (hour >= 12 && hour < 17) return 'day';
+    if (hour >= 17 && hour < 21) return 'evening';
+    return 'night';
+  }
+
+  function getIconSvg(time: string): string {
+    const period = getTimePeriod(time);
+    switch (period) {
+      case 'morning':
+        return sunriseSvg;
+      case 'day':
+        return sunSvg;
+      case 'evening':
+        return sunsetSvg;
+      case 'night':
+        return moonSvg;
+      default:
+        return moonSvg;
+    }
+  }
 </script>
 
 {#if loading}
@@ -178,35 +222,38 @@
     </div>
   </div>
 {:else}
-  <div class="reminder-list">
-    {#each reminderStates as reminder (reminder.id)}
-      <div class="reminder-card" class:dismissed={reminder.isDismissed}>
-        <div class="action-buttons">
-          <button 
-            class="dismiss-btn" 
-            class:active={reminder.isDismissed}
-            on:click={() => handleDismiss(reminder)}
-            title={reminder.isDismissed ? 'Reset' : 'Dismiss'}
-          >
-            {reminder.isDismissed ? '✓' : '○'}
-          </button>
-          <button class="delete-btn" on:click={() => handleDelete(reminder)}>
-            🗑️
-          </button>
-        </div>
-        <div class="reminder-content">
-          <div class="reminder-time">⏰ {reminder.time}</div>
-          <div class="reminder-message">{reminder.message}</div>
-          <div class="reminder-status">
-            {reminder.statusText}
-          </div>
-        </div>
-      </div>
-    {/each}
-  </div>
-{/if}
+<div class="reminder-list">
+  {#each reminderStates as reminder (reminder.id)}
+    <div class="card" class:dismissed={reminder.isDismissed} data-time-period={getTimePeriod(reminder.time)}>
+      <div class="action-buttons">
+        <!-- No dismiss yet -->
+        <!-- <button 
+          class="dismiss-btn" 
+          class:active={reminder.isDismissed}
+          on:click={() => handleDismiss(reminder)}
+          title={reminder.isDismissed ? 'Reset' : 'Dismiss'}
+        >
+          {reminder.isDismissed ? '✓' : '○'}
+        </button> -->
 
-<button class="fab" on:click={() => goto('/create')}>+</button>
+        <ActionButton 
+            type="delete" 
+            text="Delete"
+            onClick={() => handleDelete(reminder)}
+        />
+      </div>
+      
+      <p class="time-text"><span>{reminder.time}</span></p>
+      <p class="day-text">{reminder.message}</p>
+      <p class="status-text">{reminder.statusText}</p>
+      
+      <div class="icon">
+        {@html getIconSvg(reminder.time)}
+      </div>
+    </div>
+  {/each}
+</div>
+{/if}
 
 <style>
   .empty-state {
@@ -224,117 +271,130 @@
     color: var(--tg-theme-hint-color);
   }
 
-  .reminder-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
+.reminder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
-  .reminder-card {
-    background: var(--tg-theme-secondary-bg-color, rgba(255, 255, 255, 0.05));
-    border-radius: 12px;
-    padding: 16px;
-    position: relative;
-    transition: opacity 0.2s;
-  }
+.card {
+  width: 100%;
+  height: 150px;
+  border-radius: 15px;
+    box-shadow:
+        1px 2px 2px hsl(220deg 60% 50% / 0.333),
+        2px 4px 4px hsl(220deg 60% 50% / 0.333),
+        3px 6px 6px hsl(220deg 60% 50% / 0.333);
+display: flex;
+  color: white;
+  justify-content: center;
+  position: relative;
+  flex-direction: column;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  overflow: hidden;
+}
 
-  .reminder-card.dismissed {
-    opacity: 0.6;
-  }
+/* Time-based backgrounds */
+.card[data-time-period="morning"] {
+  background: linear-gradient(to right, #87ceeb, #fdfbd3);
+}
 
-  .reminder-content {
-    padding-right: 80px;
-  }
+.card[data-time-period="day"] {
+  background: linear-gradient(to right, #ff8c42, #fcd14d);
+}
 
-  .reminder-time {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
+.card[data-time-period="evening"] {
+  background: linear-gradient(to right, #d66ba0, #ffb68a);
+}
 
-  .reminder-message {
-    font-size: 14px;
-    color: var(--tg-theme-hint-color);
-    margin-bottom: 8px;
-  }
+.card[data-time-period="night"] {
+  background: linear-gradient(to right, #1a2332, #c2c5cc);
+}
 
-  .reminder-status {
-    font-size: 12px;
-    color: var(--tg-theme-link-color);
-  }
+.card.dismissed {
+  opacity: 0.9;
+}
 
-  .action-buttons {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    display: flex;
-    gap: 8px;
-  }
+.time-text {
+  font-size: 50px;
+  margin-top: 0px;
+  margin-left: 15px;
+  margin-bottom: 5px;
+  font-weight: 600;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
 
-  .dismiss-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(52, 199, 89, 0.15);
-    color: #34c759;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    transition: all 0.2s;
-  }
+.day-text {
+  font-size: 18px;
+  margin-top: 0px;
+  margin-left: 15px;
+  margin-bottom: 5px;
+  font-weight: 500;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
 
-  .dismiss-btn.active {
-    background: rgba(52, 199, 89, 0.3);
-  }
+.status-text {
+  font-size: 14px;
+  margin-top: 0px;
+  margin-left: 15px;
+  margin-bottom: 0px;
+  opacity: 0.9;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
 
-  .dismiss-btn:active {
-    transform: scale(0.95);
-  }
+.icon {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.3s ease-in-out;
+  will-change: transform;
+}
 
-  .delete-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 59, 48, 0.15);
-    color: #ff3b30;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-  }
+.icon :global(svg) {
+  width: 100%;
+  height: 100%;
+}
 
-  .delete-btn:active {
-    background: rgba(255, 59, 48, 0.25);
-  }
+.card:hover .icon {
+    transform: scale(1.2);
+}
 
-  .fab {
-    position: fixed;
-    bottom: 80px;
-    right: 20px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: var(--tg-theme-button-color);
-    color: var(--tg-theme-button-text-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    cursor: pointer;
-    border: none;
-    z-index: 1000;
-    transition: transform 0.2s;
-  }
+.action-buttons {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+  width: 150px;
+}
 
-  .fab:active {
-    transform: scale(0.95);
-  }
+/* no dismiss for now */
+/* .dismiss-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+}
+
+.dismiss-btn.active {
+  background: rgba(76, 175, 80, 0.4);
+}
+
+.dismiss-btn:active {
+  transform: scale(0.95);
+} */
 </style>
