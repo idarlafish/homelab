@@ -17,7 +17,7 @@ export async function addNotification(
     // Get or create config
     let config = await getUserConfig(userId);
     if (!config) {
-        config = { chatId, enabled: true, notifications: [] };
+        config = { chatId, notifications: [] };
     } else {
         config.chatId = chatId;
     }

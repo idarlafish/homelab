@@ -11,7 +11,6 @@ async function handleList(ctx: any) {
     }
 
     let message = `📋 Your reminders (${userConfig.notifications.length}):\n`;
-    message += `Status: ${userConfig.enabled ? "✅ Enabled" : "❌ Disabled"}\n\n`;
 
     const now = new Date();
 

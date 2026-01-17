@@ -36,7 +36,7 @@ export function validateInitData(initData: string): TelegramUser {
     }
 
     const authDate = parseInt(urlParams.get('auth_date') || '0');
-    if (Math.floor(Date.now() / 1000) - authDate > 300) {
+    if (Math.floor(Date.now() / 1000) - authDate > 1200) {
         throw new Error('Expired');
     }
 

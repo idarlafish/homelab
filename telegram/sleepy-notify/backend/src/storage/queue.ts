@@ -1,5 +1,5 @@
 import { Queue, Worker } from "bullmq";
-import { redisConnection, updateLastSentDate, isAlreadySentToday, redis, getUserConfig } from "./redis";
+import { redisConnection, updateLastSentDate, isAlreadySentToday, redis, getUserConfig, setUserConfig } from "./redis";
 import { bot } from "../bot";
 import type { NotificationJob } from "./types";
 
@@ -23,9 +23,9 @@ async function sendTelegramMessage(chatId: number, message: string): Promise<voi
 export const notificationWorker = new Worker<NotificationJob>(
   "notifications",
   async (job) => {
-    const { userId, chatId, notification } = job.data;
+    const { userId, notification } = job.data;
     
-    // IMPORTANT: Fetch fresh config from Redis, don't trust job data
+    // CRITICAL: Fetch fresh config from Redis, don't trust job data
     const config = await getUserConfig(userId);
     
     if (!config) {
@@ -34,24 +34,29 @@ export const notificationWorker = new Worker<NotificationJob>(
     }
     
     // Find the current version of this notification
-    const currentNotification = config.notifications.find(n => n.id === notification.id);
+    const currentNotif = config.notifications.find(n => n.id === notification.id);
     
-    if (!currentNotification) {
+    if (!currentNotif) {
       console.log(`⏭️ Notification ${notification.id} no longer exists`);
       return { skipped: true, reason: 'notification_deleted' };
     }
     
-    // Check with CURRENT lastSentDate, not the one from job data
-    if (await isAlreadySentToday(userId, currentNotification.id)) {
-      console.log(`⏭️ Already sent notification ${currentNotification.id} today`);
-      return { skipped: true, reason: 'already_sent_today' };
+    const today = new Date().toISOString().split("T")[0]!;
+    
+    // Check if already sent or dismissed
+    if (currentNotif.lastSentDate === today || 
+        (currentNotif.lastSentDate && currentNotif.lastSentDate > today)) {
+      console.log(`⏭️ Already sent notification ${currentNotif.id} today (lastSentDate: ${currentNotif.lastSentDate})`);
+      return { skipped: true, reason: 'already_sent_or_dismissed' };
     }
     
     // Send with current message (in case it was edited)
-    await sendTelegramMessage(chatId, currentNotification.message);
+    await sendTelegramMessage(config.chatId, currentNotif.message);
     
-    const today = new Date().toISOString().split("T")[0]!;
-    await updateLastSentDate(userId, currentNotification.id, today);
+    // Update lastSentDate in Redis
+    currentNotif.lastSentDate = today;
+    await setUserConfig(userId, config);
+    console.log(`📝 Updated lastSentDate for ${currentNotif.id} to ${today}`);
     
     return { sent: true, timestamp: new Date().toISOString() };
   },
@@ -62,6 +67,7 @@ export const notificationWorker = new Worker<NotificationJob>(
     removeOnFail: { count: 5 },
   }
 );
+
 
 notificationWorker.on("completed", (job) => {
   console.log(`✓ Job ${job.id} completed`);

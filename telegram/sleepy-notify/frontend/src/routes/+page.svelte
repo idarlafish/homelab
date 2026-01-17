@@ -9,10 +9,108 @@
   let enabled = true;
   let loading = true;
   let error = '';
+  let now = Date.now();
 
-  onMount(async () => {
+  // Reactive: recalculates whenever 'now' or 'reminders' changes
+  $: reminderStates = reminders.map(reminder => {
+    const currentTime = new Date(now);
+    const today = currentTime.toISOString().split('T')[0];
+    
+    const isDismissed = reminder.lastSentDate && reminder.lastSentDate >= today;
+    const [hours, minutes] = reminder.time.split(':').map(Number);
+    
+    let next = new Date(currentTime);
+    next.setHours(hours, minutes, 0, 0);
+    
+    if (reminder.lastSentDate && reminder.lastSentDate >= today) {
+      const dismissedUntil = new Date(reminder.lastSentDate);
+      dismissedUntil.setHours(hours, minutes, 0, 0);
+      next = new Date(dismissedUntil);
+      next.setDate(next.getDate() + 1);
+    } else {
+      if (next <= currentTime) {
+        next.setDate(next.getDate() + 1);
+      }
+    }
+    
+    const diffMs = next.getTime() - currentTime.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    let statusText = '';
+    if (!reminder.lastSentDate) {
+      if (diffHours > 24) {
+        const days = Math.floor(diffHours / 24);
+        statusText = `⏳ Next in ${days} day${days > 1 ? 's' : ''}`;
+      } else if (diffHours > 0) {
+        statusText = `⏳ Next in ${diffHours}h ${diffMinutes}m`;
+      } else {
+        statusText = `⏳ Next in ${diffMinutes}m`;
+      }
+    } else {
+      const lastSentDate = new Date(reminder.lastSentDate);
+      const todayDate = new Date(today);
+      
+      if (reminder.lastSentDate === today) {
+        const todayAtReminderTime = new Date(currentTime);
+        todayAtReminderTime.setHours(hours, minutes, 0, 0);
+        
+        if (todayAtReminderTime > currentTime) {
+          statusText = '✓ Dismissed for today · Next: tomorrow';
+        } else {
+          if (diffHours > 24) {
+            const days = Math.floor(diffHours / 24);
+            statusText = `⏳ Next in ${days} day${days > 1 ? 's' : ''}`;
+          } else if (diffHours > 0) {
+            statusText = `⏳ Next in ${diffHours}h ${diffMinutes}m`;
+          } else {
+            statusText = `⏳ Next in ${diffMinutes}m`;
+          }
+        }
+      } else if (lastSentDate > todayDate) {
+        const diffDays = Math.ceil((lastSentDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+        const nextDay = diffDays + 1;
+        statusText = `✓ Stopped for ${diffDays} day${diffDays > 1 ? 's' : ''} · Next in ${nextDay} day${nextDay > 1 ? 's' : ''}`;
+      } else {
+        if (diffHours > 24) {
+          const days = Math.floor(diffHours / 24);
+          statusText = `⏳ Next in ${days} day${days > 1 ? 's' : ''}`;
+        } else if (diffHours > 0) {
+          statusText = `⏳ Next in ${diffHours}h ${diffMinutes}m`;
+        } else {
+          statusText = `⏳ Next in ${diffMinutes}m`;
+        }
+      }
+    }
+    
+    return {
+      ...reminder,
+      isDismissed: !!isDismissed,
+      statusText
+    };
+  });
+
+  onMount(() => {
     tg?.MainButton.hide();
-    await loadReminders();
+    tg?.BackButton.hide();
+    loadReminders();
+
+    const current = new Date();
+    const msUntilNextMinute = (60 - current.getSeconds()) * 1000 - current.getMilliseconds();
+    let interval: NodeJS.Timeout;
+    
+    const timeout = setTimeout(() => {
+      now = Date.now();
+      
+      interval = setInterval(() => {
+        now = Date.now();
+      }, 60000);
+    }, msUntilNextMinute);
+    
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
   });
 
   async function loadReminders() {
@@ -47,104 +145,18 @@
     );
   }
 
-    async function handleDismiss(reminder: Reminder) {
-        try {
-            const result = await toggleReminderDismiss(reminder.id, reminder);
-            tg?.HapticFeedback.impactOccurred('light');
-            
-            // Update the reminder in the array properly
-            reminders = reminders.map(r => 
-            r.id === reminder.id 
-                ? { ...r, lastSentDate: result.reminder.lastSentDate }
-                : r
-            );
-        } catch (e) {
-            tg?.showAlert(e instanceof Error ? e.message : 'Failed to update');
-        }
-    }
-
-  function isDismissed(reminder: Reminder): boolean {
-    if (!reminder.lastSentDate) return false;
-    const today = new Date().toISOString().split('T')[0];
-    return reminder.lastSentDate >= today;
-  }
-
-    function getNextOccurrence(reminder: Reminder): Date {
-    const [hours, minutes] = reminder.time.split(':').map(Number);
-    const now = new Date();
-    const today = new Date().toISOString().split('T')[0];
-    
-    let next = new Date();
-    next.setHours(hours, minutes, 0, 0);
-    
-    // If lastSentDate exists and is today or in the future, next occurrence is day after lastSentDate
-    if (reminder.lastSentDate && reminder.lastSentDate >= today) {
-        const dismissedUntil = new Date(reminder.lastSentDate);
-        dismissedUntil.setHours(hours, minutes, 0, 0);
-        
-        // Next occurrence is the day after lastSentDate
-        next = new Date(dismissedUntil);
-        next.setDate(next.getDate() + 1);
-    } else {
-        // Not dismissed - calculate based on current time
-        if (next <= now) {
-        next.setDate(next.getDate() + 1);
-        }
-    }
-    
-    return next;
-    }
-
-  function getStatusText(reminder: Reminder): string {
-    const today = new Date().toISOString().split('T')[0];
-    const todayDate = new Date(today);
-    
-    if (!reminder.lastSentDate) {
-      // Not dismissed - show time until
-      return getTimeUntilText(reminder);
-    }
-    
-    const lastSentDate = new Date(reminder.lastSentDate);
-    
-    if (reminder.lastSentDate === today) {
-      // Dismissed for today
-      const [hours, minutes] = reminder.time.split(':').map(Number);
-      const now = new Date();
-      const todayAtReminderTime = new Date();
-      todayAtReminderTime.setHours(hours, minutes, 0, 0);
+  async function handleDismiss(reminder: Reminder) {
+    try {
+      const result = await toggleReminderDismiss(reminder.id, reminder);
+      tg?.HapticFeedback.impactOccurred('light');
       
-      if (todayAtReminderTime > now) {
-        // Time hasn't passed yet
-        return '✓ Dismissed for today · Next: tomorrow';
-      } else {
-        // Time already passed (shouldn't normally happen)
-        return getTimeUntilText(reminder);
-      }
-    } else if (lastSentDate > todayDate) {
-      // Dismissed for future days
-      const diffDays = Math.ceil((lastSentDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
-      const nextDay = diffDays + 1;
-      return `✓ Stopped for ${diffDays} day${diffDays > 1 ? 's' : ''} · Next in ${nextDay} day${nextDay > 1 ? 's' : ''}`;
-    } else {
-      // lastSentDate is in the past - show time until next
-      return getTimeUntilText(reminder);
-    }
-  }
-
-  function getTimeUntilText(reminder: Reminder): string {
-    const nextOccurrence = getNextOccurrence(reminder);
-    const now = new Date();
-    const diffMs = nextOccurrence.getTime() - now.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-    if (diffHours > 24) {
-      const days = Math.floor(diffHours / 24);
-      return `⏳ Next in ${days} day${days > 1 ? 's' : ''}`;
-    } else if (diffHours > 0) {
-      return `⏳ Next in ${diffHours}h ${diffMinutes}m`;
-    } else {
-      return `⏳ Next in ${diffMinutes}m`;
+      reminders = reminders.map(r => 
+        r.id === reminder.id 
+          ? { ...r, lastSentDate: result.reminder.lastSentDate }
+          : r
+      );
+    } catch (e) {
+      tg?.showAlert(e instanceof Error ? e.message : 'Failed to update');
     }
   }
 </script>
@@ -157,7 +169,7 @@
   <div class="empty-state">
     <div class="empty-state-text">{error}</div>
   </div>
-{:else if reminders.length === 0}
+{:else if reminderStates.length === 0}
   <div class="empty-state">
     <div class="empty-state-icon">⏰</div>
     <div class="empty-state-text">
@@ -167,16 +179,16 @@
   </div>
 {:else}
   <div class="reminder-list">
-    {#each reminders as reminder (reminder.id)}
-      <div class="reminder-card" class:dismissed={isDismissed(reminder)}>
+    {#each reminderStates as reminder (reminder.id)}
+      <div class="reminder-card" class:dismissed={reminder.isDismissed}>
         <div class="action-buttons">
           <button 
             class="dismiss-btn" 
-            class:active={isDismissed(reminder)}
+            class:active={reminder.isDismissed}
             on:click={() => handleDismiss(reminder)}
-            title={isDismissed(reminder) ? 'Reset' : 'Dismiss'}
+            title={reminder.isDismissed ? 'Reset' : 'Dismiss'}
           >
-            {isDismissed(reminder) ? '✓' : '○'}
+            {reminder.isDismissed ? '✓' : '○'}
           </button>
           <button class="delete-btn" on:click={() => handleDelete(reminder)}>
             🗑️
@@ -186,7 +198,7 @@
           <div class="reminder-time">⏰ {reminder.time}</div>
           <div class="reminder-message">{reminder.message}</div>
           <div class="reminder-status">
-            {getStatusText(reminder)}
+            {reminder.statusText}
           </div>
         </div>
       </div>

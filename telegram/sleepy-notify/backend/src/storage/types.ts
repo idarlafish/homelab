@@ -8,7 +8,6 @@ export interface UserNotification {
 
 export interface UserScheduleConfig {
   chatId: number;
-  enabled: boolean;
   notifications: UserNotification[];
 }
 

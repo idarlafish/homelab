@@ -14,7 +14,6 @@ export const routes = new Elysia({ prefix: "/api/reminders" })
         const userConfig = await getUserConfig(user.id);
         
         return {
-            enabled: userConfig?.enabled ?? true,
             reminders: userConfig?.notifications ?? []
         };
     })
