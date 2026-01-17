@@ -10,7 +10,6 @@
   import sunSvg from '$lib/assets/sun.svg?raw';
   import sunsetSvg from '$lib/assets/sunset.svg?raw';
   import sunriseSvg from '$lib/assets/sunrise.svg?raw';
-    import plusSvg from '$lib/assets/plus.svg?raw';
   import ActionButton from '$lib/components/ActionButton.svelte';
 
   let reminders: Reminder[] = [];

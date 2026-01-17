@@ -1,6 +1,5 @@
 {
   "name": "sleepy-notify",
-  "workspaces": ["frontend", "backend"],
   "scripts": {
     "build": "cd frontend && bun run build && cd .. && bun run copy-frontend",
     "copy-frontend": "rm -rf backend/public && cp -r frontend/build backend/public",

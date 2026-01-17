@@ -1,7 +1,8 @@
 import { initTelegram } from "$lib/telegram";
 
-export const ssr = false; // Disable SSR for Telegram WebApp
 export const prerender = false;
+export const ssr = false;
+export const trailingSlash = 'always';
 
 export async function load() {
   if (typeof window !== 'undefined' && window.Telegram?.WebApp) {

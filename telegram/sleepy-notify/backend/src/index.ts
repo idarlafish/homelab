@@ -11,7 +11,7 @@ import "./commands/start";
 import "./commands/list";
 import "./commands/done";
 import { logger } from "elysia-logger";
-import { GrammyError, HttpError } from "grammy";
+import { GrammyError, HttpError, webhookCallback } from "grammy";
 import cors from "@elysiajs/cors";
 import { redis } from "./storage/redis";
 
@@ -53,6 +53,8 @@ process.on("unhandledRejection", (error) => {
 // Create Elysia app
 const app = new Elysia()
 	.use(cors())
+	// Elysia logger
+	.use(logger({ level: 'debug' }))
     // Global error handler
     .onError(({ code, error, set }) => {
         console.error(`[${code}]`, error);
@@ -81,19 +83,24 @@ const app = new Elysia()
         if (config.NODE_ENV === "development") {
             console.log(`📥 ${request.method} ${new URL(request.url).pathname}`);
         }
-    })
+	})
+	
+	.post(
+		`/telegram-webhook`,
+		webhookCallback(bot, 'elysia')
+	)
 
     // Webhook endpoint (production only)
-    .post(
-        `/${config.BOT_TOKEN}`,
-        async ({ body }) => {
-            if (config.NODE_ENV === "production") {
-                await bot.handleUpdate(body as any);
-                return "OK";
-            }
-            return { error: "Webhook only available in production" };
-        }
-    )
+    // .post(
+    //     `/${config.BOT_TOKEN}`,
+    //     async ({ body }) => {
+    //         if (config.NODE_ENV === "production") {
+    //             await bot.handleUpdate(body as any);
+    //             return "OK";
+    //         }
+    //         return { error: "Webhook only available in production" };
+    //     }
+    // )
 
     // API routes
     .use(routes)
@@ -106,9 +113,8 @@ const app = new Elysia()
             alwaysStatic: true,
         })
 	)
-    
-    // Elysia logger
-    .use(logger())
+	.get('/health', () => ({ status: 'ok' }))
+	.get('/*',() => Bun.file("public/404.html"))
 
     // Start server
     .listen(config.PORT);
@@ -117,7 +123,7 @@ console.log(`🚀 Server running on http://localhost:${app.server?.port}`);
 
 // Bot startup
 if (config.NODE_ENV === "production") {
-    await bot.api.setWebhook(`${config.API_URL}/${config.BOT_TOKEN}`);
+	await bot.api.setWebhook(`${config.API_URL}/telegram-webhook`, { secret_token: "my-secret" });
     console.log(`✨ Bot ready for webhook`);
 } else {
     bot.start();

@@ -1,8 +1,9 @@
 {
+	"name": "sleepy-notify-backend",
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "bun --watch src/index.ts",
+		"dev": "NODE_ENV=development bun --watch src/index.ts",
 		"start": "NODE_ENV=production bun src/index.ts",
 		"lint": "bun x @biomejs/biome check",
 		"lint:fix": "bun run lint --fix"

@@ -1,6 +1,1 @@
-dist
-node_modules
-.env
-.env.production
-.DS_Store
 public

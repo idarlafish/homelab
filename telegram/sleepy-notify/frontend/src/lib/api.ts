@@ -1,8 +1,8 @@
 import { getInitData } from './telegram.ts';
 import type { RemindersResponse, CreateReminderRequest, Reminder } from './types';
 
-// const API_BASE = import.meta.env.DEV ? 'http://localhost:3000' : 'https://chan-intercrural-lissa.ngrok-free.dev';
-const API_BASE = 'https://chan-intercrural-lissa.ngrok-free.dev';
+const API_BASE = import.meta.env.DEV ? 'http://localhost:3000' : '';
+// const API_BASE = import.meta.env.DEV ? 'https://chan-intercrural-lissa.ngrok-free.dev' : '';
 
 async function apiRequest<T>(
   endpoint: string,
