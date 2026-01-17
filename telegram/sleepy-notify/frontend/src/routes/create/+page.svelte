@@ -41,6 +41,7 @@
         },
         () => goto('/')
       );
+      tg?.MainButton.hide();
     } catch (e) {
       tg?.showAlert(e instanceof Error ? e.message : 'Failed to save');
       tg?.MainButton.hideProgress();

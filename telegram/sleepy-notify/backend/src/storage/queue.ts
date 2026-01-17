@@ -1,74 +1,57 @@
 import { Queue, Worker } from "bullmq";
-import { redisConnection } from "./redis"; // ← IMPORT THIS, not redis
+import { redisConnection, updateLastSentDate, isAlreadySentToday, redis } from "./redis";
 import { bot } from "../bot";
-import type { UserNotification } from "./types";
-
-interface NotificationJob {
-    userId: number;
-    chatId: number;
-    notification: UserNotification;
-}
+import type { NotificationJob } from "./types";
 
 export const notificationQueue = new Queue<NotificationJob>("notifications", {
-    connection: redisConnection,
+  connection: redisConnection,
 });
 
-export const notificationWorker = new Worker(
-    "notifications",
-    async (job) => {
-        const { userId, chatId, notification } = job.data;
-        const today = new Date().toISOString().split("T")[0]!;
-
-        // 🔥 Idempotency check
-        if (notification.lastSentDate === today) {
-            console.log(`⏭️  Already sent notification ${notification.id} today (${today})`);
-            return { skipped: true, reason: 'already_sent_today' };
-        }
-
-        try {
-            await bot.api.sendMessage(
-                chatId,
-                notification.message,
-                { disable_notification: false }
-            );
-
-            console.log(`✅ Sent notification to ${chatId}: ${notification.message}`);
-
-            // Update lastSentDate atomically
-            const { getUserConfig, setUserConfig } = await import("./redis");
-            const config = await getUserConfig(userId);
-
-            if (config) {
-                const notif = config.notifications.find(n => n.id === notification.id);
-                if (notif) {
-                    notif.lastSentDate = today;
-                    await setUserConfig(userId, config);
-                    console.log(`📝 Updated lastSentDate for ${notification.id} to ${today}`);
-                }
-            }
-
-            return { sent: true, timestamp: new Date().toISOString() };
-
-        } catch (error: any) {
-            if (error?.description?.includes("blocked")) {
-                console.log(`🚫 User ${chatId} blocked the bot`);
-                throw new Error("USER_BLOCKED");
-            }
-            throw error;
-        }
-    },
-    {
-        connection: redisConnection,
-        limiter: { max: 20, duration: 1000 },
-        removeOnComplete: { count: 10 },
-        removeOnFail: { count: 5 },
+async function sendTelegramMessage(chatId: number, message: string): Promise<void> {
+  try {
+    await bot.api.sendMessage(chatId, message, { disable_notification: false });
+    console.log(`✅ Sent notification to ${chatId}: ${message}`);
+  } catch (error: any) {
+    if (error?.description?.includes("blocked")) {
+      console.log(`🚫 User ${chatId} blocked the bot`);
+      throw new Error("USER_BLOCKED");
     }
+    throw error;
+  }
+}
+
+export const notificationWorker = new Worker<NotificationJob>(
+  "notifications",
+  async (job) => {
+    const { userId, chatId, notification } = job.data;
+    
+    // Idempotency check
+    if (await isAlreadySentToday(userId, notification.id)) {
+      console.log(`⏭️ Already sent notification ${notification.id} today`);
+      return { skipped: true, reason: 'already_sent_today' };
+    }
+    
+    // Send message
+    await sendTelegramMessage(chatId, notification.message);
+    
+    // Update lastSentDate
+    const today = new Date().toISOString().split("T")[0]!;
+    await updateLastSentDate(userId, notification.id, today);
+    
+    return { sent: true, timestamp: new Date().toISOString() };
+  },
+  {
+    connection: redisConnection,
+    limiter: { max: 20, duration: 1000 },
+    removeOnComplete: { count: 10 },
+    removeOnFail: { count: 5 },
+  }
 );
 
 notificationWorker.on("completed", (job) => {
-    console.log(`Job ${job.id} completed`);
+  console.log(`✓ Job ${job.id} completed`);
 });
 
 notificationWorker.on("failed", (job, err) => {
-    console.error(`Job ${job?.id} failed:`, err.message);
+  console.error(`✗ Job ${job?.id} failed:`, err.message);
 });

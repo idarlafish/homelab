@@ -12,15 +12,32 @@ import "./commands/list";
 import { logger } from "elysia-logger";
 import { GrammyError, HttpError } from "grammy";
 import cors from "@elysiajs/cors";
+import { redis } from "./storage/redis";
 
 // Graceful shutdown
 const signals = ["SIGINT", "SIGTERM"];
 for (const signal of signals) {
     process.on(signal, async () => {
-        console.log(`Received ${signal}. Shutting down...`);
-        await notificationWorker.close();
-        await bot.stop();
-        process.exit(0);
+        console.log(`Received ${signal}. Shutting down gracefully...`);
+        
+        try {
+            // 1. Stop accepting new jobs & wait for active jobs to complete
+            await notificationWorker.close();
+            console.log('Worker closed');
+            
+            // 2. Stop the bot
+            await bot.stop();
+            console.log('Bot stopped');
+            
+            // 3. Close Redis last (after all operations complete)
+            await redis.quit();
+            console.log('Redis connection closed');
+            
+            process.exit(0);
+        } catch (error) {
+            console.error('Error during shutdown:', error);
+            process.exit(1);
+        }
     });
 }
 
