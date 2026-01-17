@@ -6,6 +6,10 @@ export const telegramAuth = new Elysia({ name: 'telegram-auth' })
         getTelegramUser: () => {
             const authHeader = request.headers.get('authorization');
 
+            // return {
+            //     id: 671615920,
+            // }
+
             if (!authHeader?.startsWith('tma ')) {
                 throw new Error('Missing auth');
             }

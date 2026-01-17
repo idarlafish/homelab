@@ -8,6 +8,7 @@
 		"lint:fix": "bun run lint --fix"
 	},
 	"dependencies": {
+		"@elysiajs/cors": "^1.4.1",
 		"@elysiajs/static": "^1.4.7",
 		"bullmq": "^5.66.5",
 		"elysia": "^1.4.22",
