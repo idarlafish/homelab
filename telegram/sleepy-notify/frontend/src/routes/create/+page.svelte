@@ -1,6 +1,6 @@
 <!-- frontend/src/routes/create/+page.svelte -->
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { goto } from '$app/navigation';
   import { createReminder } from '$lib/api';
   import { tg, getTimezone } from '$lib/telegram';
@@ -8,15 +8,6 @@
   let time = '09:00';
   let message = '';
   let saving = false;
-
-  onMount(() => {
-    tg?.BackButton.show();
-    tg?.BackButton.onClick(() => goto('/'));
-
-    tg?.MainButton.setText('Save Reminder');
-    tg?.MainButton.show();
-    tg?.MainButton.onClick(handleSave);
-  });
 
   async function handleSave() {
     if (!time || !message.trim()) {
@@ -41,13 +32,32 @@
         },
         () => goto('/')
       );
-      tg?.MainButton.hide();
     } catch (e) {
       tg?.showAlert(e instanceof Error ? e.message : 'Failed to save');
       tg?.MainButton.hideProgress();
       saving = false;
     }
   }
+
+  function handleBack() {
+    goto('/');
+  }
+
+  onMount(() => {
+    tg?.BackButton.show();
+    tg?.BackButton.onClick(handleBack);
+
+    tg?.MainButton.setText('Save Reminder');
+    tg?.MainButton.hideProgress();
+    tg?.MainButton.show();
+    tg?.MainButton.onClick(handleSave);
+  });
+
+  onDestroy(() => {
+    // Clean up event handlers to prevent duplicates
+    tg?.BackButton.offClick(handleBack);
+    tg?.MainButton.offClick(handleSave);
+  });
 </script>
 
 <div class="header">

@@ -4,13 +4,20 @@ import { getUserConfig } from "./redis";
 export async function scheduleUserNotifications(userId: number) {
   const config = await getUserConfig(userId);
   
-  // Remove all existing job schedulers for this user
   const schedulers = await notificationQueue.getJobSchedulers();
-  for (const scheduler of schedulers) {
-    if (scheduler.key.includes(`user:${userId}:`)) {
-      await notificationQueue.removeJobScheduler(scheduler.key);
-      console.log(`🗑️ Removed old scheduler: ${scheduler.key}`);
-    }
+  console.log(`🔍 Found ${schedulers.length} total schedulers`);
+  
+  // Filter by userId in template.data
+  const userSchedulers = schedulers.filter(s => {
+    return s.template?.data?.userId === userId;
+  });
+  
+  console.log(`🔍 Found ${userSchedulers.length} schedulers for user ${userId}`);
+  
+  for (const scheduler of userSchedulers) {
+    await notificationQueue.removeJobScheduler(scheduler.key);
+    const notifId = scheduler.template?.data?.notification?.id;
+    console.log(`🗑️ Removed scheduler for notification ${notifId} (key: ${scheduler.key})`);
   }
   
   if (!config || !config.enabled || config.notifications.length === 0) {
@@ -41,6 +48,6 @@ export async function scheduleUserNotifications(userId: number) {
       }
     );
     
-    console.log(`📅 Scheduled ${notif.time} ${notif.timezone} for user ${userId}`);
+    console.log(`📅 Scheduled ${notif.time} ${notif.timezone} for user ${userId} (id: ${notif.id})`);
   }
 }

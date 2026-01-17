@@ -1,5 +1,5 @@
 import { Queue, Worker } from "bullmq";
-import { redisConnection, updateLastSentDate, isAlreadySentToday, redis } from "./redis";
+import { redisConnection, updateLastSentDate, isAlreadySentToday, redis, getUserConfig } from "./redis";
 import { bot } from "../bot";
 import type { NotificationJob } from "./types";
 
@@ -25,18 +25,33 @@ export const notificationWorker = new Worker<NotificationJob>(
   async (job) => {
     const { userId, chatId, notification } = job.data;
     
-    // Idempotency check
-    if (await isAlreadySentToday(userId, notification.id)) {
-      console.log(`⏭️ Already sent notification ${notification.id} today`);
+    // IMPORTANT: Fetch fresh config from Redis, don't trust job data
+    const config = await getUserConfig(userId);
+    
+    if (!config) {
+      console.log(`⏭️ User config not found for ${userId}`);
+      return { skipped: true, reason: 'config_not_found' };
+    }
+    
+    // Find the current version of this notification
+    const currentNotification = config.notifications.find(n => n.id === notification.id);
+    
+    if (!currentNotification) {
+      console.log(`⏭️ Notification ${notification.id} no longer exists`);
+      return { skipped: true, reason: 'notification_deleted' };
+    }
+    
+    // Check with CURRENT lastSentDate, not the one from job data
+    if (await isAlreadySentToday(userId, currentNotification.id)) {
+      console.log(`⏭️ Already sent notification ${currentNotification.id} today`);
       return { skipped: true, reason: 'already_sent_today' };
     }
     
-    // Send message
-    await sendTelegramMessage(chatId, notification.message);
+    // Send with current message (in case it was edited)
+    await sendTelegramMessage(chatId, currentNotification.message);
     
-    // Update lastSentDate
     const today = new Date().toISOString().split("T")[0]!;
-    await updateLastSentDate(userId, notification.id, today);
+    await updateLastSentDate(userId, currentNotification.id, today);
     
     return { sent: true, timestamp: new Date().toISOString() };
   },

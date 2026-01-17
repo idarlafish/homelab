@@ -46,7 +46,7 @@ export async function updateLastSentDate(
   date: string
 ): Promise<void> {
   const config = await getUserConfig(userId);
-  
+
   if (config) {
     const notif = config.notifications.find(n => n.id === notificationId);
     if (notif) {
