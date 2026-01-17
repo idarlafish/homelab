@@ -9,6 +9,7 @@ import { routes } from "./api/reminders/routes";
 // Import commands
 import "./commands/start";
 import "./commands/list";
+import "./commands/done";
 import { logger } from "elysia-logger";
 import { GrammyError, HttpError } from "grammy";
 import cors from "@elysiajs/cors";

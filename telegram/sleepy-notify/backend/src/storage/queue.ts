@@ -9,7 +9,25 @@ export const notificationQueue = new Queue<NotificationJob>("notifications", {
 
 async function sendTelegramMessage(chatId: number, message: string): Promise<void> {
   try {
-    await bot.api.sendMessage(chatId, message, { disable_notification: false });
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    });
+
+    const messageId = await bot.api.sendMessage(
+      chatId,
+      `⏰ ${timeString}`, 
+      {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: '✅ Mark as done', callback_data: `done` }
+          ]]
+        }
+      }
+    );
+    
     console.log(`✅ Sent notification to ${chatId}: ${message}`);
   } catch (error: any) {
     if (error?.description?.includes("blocked")) {
