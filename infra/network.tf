@@ -1,5 +1,5 @@
 resource "hcloud_network" "private_network" {
-  name     = "game-servers-private-network"
+  name     = "tools-private-network"
   ip_range = "10.0.0.0/16"
 }
 
