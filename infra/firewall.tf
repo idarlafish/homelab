@@ -22,6 +22,20 @@ resource "hcloud_firewall" "common" {
       "0.0.0.0/0"
     ]
   }
+  rule {
+    direction       = "out"
+    protocol        = "udp"
+    port            = "7844"
+    destination_ips = ["0.0.0.0/0", "::/0"]
+    description     = "Cloudflare Tunnel QUIC"
+  }
+  rule {
+    direction       = "out"
+    protocol        = "udp"
+    port            = "443"
+    destination_ips = ["0.0.0.0/0", "::/0"]
+    description     = "Cloudflare QUIC fallback"
+  }
 }
 
 resource "hcloud_firewall" "telegram" {
