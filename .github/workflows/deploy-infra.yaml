@@ -107,6 +107,11 @@ jobs:
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
 
+      - name: Fix K3s CoreDNS Bootstrap
+        run: |
+          kubectl wait nodes --for=condition=Ready --timeout=90s
+          kubectl patch configmap coredns -n kube-system --type='merge' -p '{"data":{"NodeHosts":"hosts {\n  fallthrough\n}\n"}}'
+          kubectl rollout status deployment/coredns -n kube-system --timeout=120s
       - name: Set up hetzner secrets
         run: |
           kubectl create secret generic hcloud \
