@@ -1,5 +1,5 @@
 resource "hcloud_firewall" "common" {
-  name = "common-firewall"
+  name = "tools-common-firewall"
   rule {
     direction   = "in"
     protocol    = "tcp"
@@ -23,6 +23,71 @@ resource "hcloud_firewall" "common" {
     ]
   }
 }
+
+resource "hcloud_firewall" "telegram" {
+  name = "telegram-firewall"
+  
+  # Inbound Web (nginx Ingress)
+  rule {
+    direction  = "in"
+    protocol   = "tcp"
+    port       = "80"
+    source_ips = ["0.0.0.0/0", "::/0"]
+    description = "HTTP"
+  }
+  rule {
+    direction  = "in"
+    protocol   = "tcp"
+    port       = "443"
+    source_ips = ["0.0.0.0/0", "::/0"]
+    description = "HTTPS"
+  }
+  
+  # Outbound Internet
+  rule {
+    direction       = "out"
+    protocol        = "tcp"
+    port            = "443"
+    destination_ips = ["0.0.0.0/0", "::/0"]
+    description     = "Telegram API HTTPS"
+  }
+  rule {
+    direction       = "out"
+    protocol        = "tcp"
+    port            = "80"
+    destination_ips = ["0.0.0.0/0", "::/0"]
+    description     = "HTTP"
+  }
+  
+  # Cluster internal (split protocols)
+  rule {
+    direction       = "out"
+    protocol        = "tcp"
+    port            = "1-65535"
+    destination_ips = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fd00::/8"]
+    description     = "K8s TCP"
+  }
+  rule {
+    direction       = "out"
+    protocol        = "udp"
+    port            = "1-65535"
+    destination_ips = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fd00::/8"]
+    description     = "K8s UDP"
+  }
+  rule {
+    direction       = "out"
+    protocol        = "icmp"
+    destination_ips = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fd00::/8"]
+    description     = "K8s ICMP"
+  }
+  rule {
+    direction       = "out"
+    protocol        = "icmp"
+    destination_ips = ["0.0.0.0/0", "::/0"]
+    description     = "PING"
+  }
+}
+
 
 resource "hcloud_firewall" "vpn" {
   name = "vpn-firewall"

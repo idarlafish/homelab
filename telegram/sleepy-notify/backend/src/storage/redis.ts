@@ -10,6 +10,9 @@ export const redis = new Redis({
   maxRetriesPerRequest: null,
 });
 
+redis.on('error', err => console.warn('Redis:', err.message));
+redis.on('connect', () => console.log('Redis connected'));
+
 // Connection options for BullMQ
 export const redisConnection = {
   host: config.REDIS_HOST,

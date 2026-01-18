@@ -26,6 +26,20 @@ spec:
           value: "sleepy-notify-redis"
         - name: NODE_ENV
           value: "production"
+        - name: PORT
+          value: "3000"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: sleepy-bot-secrets
+              key: bot-token
+        - name: PUBLIC_DOMAIN
+          valueFrom:
+            secretKeyRef:
+              name: sleepy-bot-secrets
+              key: public-domain
         resources:
           requests:
             cpu: 100m
