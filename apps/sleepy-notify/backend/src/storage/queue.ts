@@ -1,5 +1,5 @@
 import { Queue, Worker } from "bullmq";
-import { redisConnection, updateLastSentDate, isAlreadySentToday, redis, getUserConfig, setUserConfig } from "./redis";
+import { redisConnection, getUserConfig, setUserConfig } from "./redis";
 import { bot } from "../bot";
 import type { NotificationJob } from "./types";
 
@@ -9,16 +9,9 @@ export const notificationQueue = new Queue<NotificationJob>("notifications", {
 
 async function sendTelegramMessage(chatId: number, message: string): Promise<void> {
   try {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
-    });
-
     const messageId = await bot.api.sendMessage(
       chatId,
-        `⏰ ${timeString}: ${message}`, 
+        message, 
       {
         reply_markup: {
           inline_keyboard: [[
