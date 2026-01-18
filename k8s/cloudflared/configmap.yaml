@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cf-tunnel-config
+  namespace: cloudflared
+data:
+  config.yaml: |
+    tunnel: sleepy-notify
+    credentials-file: /etc/cloudflared/creds/credentials.json
+    ingress:
+      - hostname: sleepy-notify.la.fish
+        service: http://sleepy-notify-bot.telegram.svc.cluster.local:3000
+      - service: http_status:404

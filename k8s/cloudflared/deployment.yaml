@@ -1,0 +1,55 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cf-tunnel
+  namespace: cloudflared
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cf-tunnel
+  template:
+    metadata:
+      labels:
+        app: cf-tunnel
+    spec:
+      containers:
+      - name: cloudflared
+        image: cloudflare/cloudflared:latest
+        args:
+        - tunnel
+        - --config=/etc/cloudflared/config/config.yaml
+        - run
+        volumeMounts:
+        - name: config
+          mountPath: /etc/cloudflared/config
+          readOnly: true
+        - name: creds
+          mountPath: /etc/cloudflared/creds
+          readOnly: true
+        env:
+        - name: TUNNEL_ID
+          value: "abc123-uuid-here"  # Your Tunnel ID
+        - name: ACCOUNT_TAG
+          value: "05a2023b115696..."  # From credentials JSON "AccountTag"
+        livenessProbe:
+          httpGet:
+            path: /ready
+            port: 2000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+      volumes:
+      - name: config
+        configMap:
+          name: cf-tunnel-config
+      - name: creds
+        secret:
+          secretName: cf-tunnel-secret
