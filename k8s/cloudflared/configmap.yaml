@@ -10,4 +10,5 @@ data:
     ingress:
       - hostname: sleepy-notify.la.fish
         service: http://sleepy-notify-bot.telegram.svc.cluster.local:3000
+        httpHostHeader: sleepy-notify-bot.telegram.svc.cluster.local
       - service: http_status:404
