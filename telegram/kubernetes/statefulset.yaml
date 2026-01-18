@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-data
+  namespace: telegram
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi  # Hetzner CSI auto-provisions
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sleepy-notify-redis
+  namespace: telegram
+spec:
+  serviceName: sleepy-notify-redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sleepy-notify-redis
+  template:
+    metadata:
+      labels:
+        app: sleepy-notify-redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        args: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sleepy-notify-redis
+  namespace: telegram
+spec:
+  clusterIP: None  # Headless for StatefulSet
+  selector:
+    app: sleepy-notify-redis

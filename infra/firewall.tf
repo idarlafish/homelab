@@ -1,3 +1,29 @@
+resource "hcloud_firewall" "common" {
+  name = "common-firewall"
+  rule {
+    direction   = "in"
+    protocol    = "tcp"
+    port        = "6443"
+    source_ips  = ["0.0.0.0/0", "::/0"]
+    description = "Kubernetes"
+  }
+  rule {
+    direction   = "in"
+    protocol    = "tcp"
+    port        = "22"
+    source_ips  = ["0.0.0.0/0", "::/0"]
+    description = "Allow SSH from my IP"
+  }
+  rule {
+    description = "Allow PING"
+    direction   = "in"
+    protocol    = "icmp"
+    source_ips  = [
+      "0.0.0.0/0"
+    ]
+  }
+}
+
 resource "hcloud_firewall" "vpn" {
   name = "vpn-firewall"
   rule {

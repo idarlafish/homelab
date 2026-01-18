@@ -1,6 +1,6 @@
 resource "hcloud_server" "main" {
   name        = "tools"
-  server_type = "cax11"
+  server_type = "cpx11"
   image       = "ubuntu-24.04"
   backups     = true
   ssh_keys    = [data.hcloud_ssh_key.main.id]
@@ -9,7 +9,9 @@ resource "hcloud_server" "main" {
     network_id = hcloud_network.private_network.id
     ip         = "10.0.1.1"
   }
-  firewall_ids = []
+  firewall_ids = [
+    hcloud_firewall.common.id,
+  ]
   user_data   = file("${path.module}/cloud-init.yaml")
   depends_on = [hcloud_network_subnet.private_network_subnet]
 }

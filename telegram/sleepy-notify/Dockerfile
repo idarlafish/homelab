@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 oven/bun:1.2.19 AS base
+FROM oven/bun:1.2.19 AS base
 
 FROM base AS frontend
 WORKDIR /app/frontend
