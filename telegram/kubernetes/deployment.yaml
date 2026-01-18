@@ -54,28 +54,11 @@ metadata:
   name: sleepy-notify-bot
   namespace: telegram
 spec:
+  type: NodePort
   selector:
     app: sleepy-notify-bot
   ports:
   - port: 3000
     targetPort: 3000
+    nodePort: 30080
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: sleepy-notify
-  namespace: telegram
-  annotations:
-    kubernetes.io/ingress.class: nginx
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-spec:
-  rules:
-  - http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: sleepy-notify-bot
-            port:
-              number: 3000

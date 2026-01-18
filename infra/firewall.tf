@@ -42,6 +42,15 @@ resource "hcloud_firewall" "telegram" {
     source_ips = ["0.0.0.0/0", "::/0"]
     description = "HTTPS"
   }
+
+  # Inbout NodePort
+  rule {
+    direction  = "in"
+    protocol   = "tcp"
+    port       = "30080"  # Your NodePort
+    source_ips = ["0.0.0.0/0", "::/0"]
+    description = "Bot NodePort"
+  }
   
   # Outbound Internet
   rule {
