@@ -4,7 +4,7 @@ metadata:
   name: sleepy-notify-bot
   namespace: telegram
 spec:
-  replicas: 2  # Scale!
+  replicas: 2
   selector:
     matchLabels:
       app: sleepy-notify-bot
@@ -17,7 +17,7 @@ spec:
         - name: ghcr-secret
       containers:
       - name: bot
-        image: ghcr.io/idarlafish/sleepy-notify:arm64-fixed
+        image: ghcr.io/idarlafish/sleepy-notify:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
@@ -66,12 +66,11 @@ metadata:
   name: sleepy-notify
   namespace: telegram
   annotations:
-    kubernetes.io/ingress.class: nginx  # Install nginx-ingress
-    cert-manager.io/cluster-issuer: letsencrypt-prod  # Optional HTTPS
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   rules:
-  - host: sleepy.yourdomain.com
-    http:
+  - http:
       paths:
       - path: /
         pathType: Prefix

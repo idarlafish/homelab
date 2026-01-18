@@ -1,9 +1,11 @@
 name: Build & Push App
 on:
     workflow_dispatch:
+
 permissions:
     contents: read
     packages: write
+
 jobs:
     docker:
         runs-on: ubuntu-latest
@@ -16,10 +18,7 @@ jobs:
               with:
                   images: ghcr.io/${{ github.repository_owner }}/sleepy-notify
                   tags: |
-                      type=raw,value=latest-multi
-                      type=raw,value=amd64-fixed
                       type=raw,value=latest
-                      type=ref,event=branch
                       type=sha
 
             - uses: docker/login-action@v3
@@ -36,7 +35,7 @@ jobs:
               with:
                   context: ./telegram/sleepy-notify
                   file: ./telegram/sleepy-notify/Dockerfile
-                  platforms: linux/amd64,linux/arm64
+                  platforms: linux/arm64
                   push: true
                   tags: ${{ steps.meta.outputs.tags }}
                   provenance: false

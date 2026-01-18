@@ -63,6 +63,14 @@ jobs:
         run: |
           echo "SERVER_IP=$(terraform output -raw server_ip)" >> $GITHUB_OUTPUT
           echo "NETWORK_ID=$(terraform output -raw network_id)" >> $GITHUB_OUTPUT
+  dns:
+    uses: ./.github/workflows/dns-update.yaml
+    needs: terraform
+    with:
+      zone-id: ${{ vars.CLOUDFLARE_ZONE_ID }}
+      domain: ${{ vars.PUBLIC_DOMAIN }}
+      ip-address: ${{ needs.terraform.outputs.server_ip }}
+    secrets: inherit
 
   deploy:
     runs-on: ubuntu-latest
