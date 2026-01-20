@@ -9,7 +9,7 @@ export const notificationQueue = new Queue<NotificationJob>("notifications", {
 
 async function sendTelegramMessage(chatId: number, message: string): Promise<void> {
   try {
-    const messageId = await bot.api.sendMessage(
+    await bot.api.sendMessage(
       chatId,
         message, 
       {

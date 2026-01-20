@@ -7,11 +7,9 @@ bot.command("start", async (ctx) => {
 		menu_button: {
 			type: "web_app",
 			text: "Start",
-			web_app: { url: config.API_URL }
-		}
+			web_app: { url: config.API_URL },
+		},
 	});
 
-	await ctx.reply(
-		"👋 Welcome to Sleepy Notify Bot!"
-	);
+	await ctx.reply("👋 Welcome to Sleepy Notify Bot!");
 });
