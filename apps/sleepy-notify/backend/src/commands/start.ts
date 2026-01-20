@@ -6,8 +6,8 @@ bot.command("start", async (ctx) => {
 		chat_id: ctx.chat.id,
 		menu_button: {
 			type: "web_app",
-			text: "📝",
-			web_app: { url: `${config.API_URL}/index.html` }
+			text: "Start",
+			web_app: { url: config.API_URL }
 		}
 	});
 

@@ -8,7 +8,6 @@ import { routes } from "./api/reminders/routes";
 
 // Import commands
 import "./commands/start";
-import "./commands/list";
 import "./commands/done";
 import { logger } from "elysia-logger";
 import { GrammyError, HttpError, webhookCallback } from "grammy";
@@ -89,18 +88,6 @@ const app = new Elysia()
 		`/telegram-webhook`,
 		webhookCallback(bot, 'elysia')
 	)
-
-    // Webhook endpoint (production only)
-    // .post(
-    //     `/${config.BOT_TOKEN}`,
-    //     async ({ body }) => {
-    //         if (config.NODE_ENV === "production") {
-    //             await bot.handleUpdate(body as any);
-    //             return "OK";
-    //         }
-    //         return { error: "Webhook only available in production" };
-    //     }
-    // )
 
     // API routes
     .use(routes)
