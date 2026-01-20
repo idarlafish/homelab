@@ -43,56 +43,21 @@
     const diffMs = next.getTime() - currentTime.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     let statusText = '';
-    if (!reminder.lastSentDate) {
-      if (diffHours > 24) {
-        const days = Math.floor(diffHours / 24);
-        statusText = `⏳ Next in ${days} day${days > 1 ? 's' : ''}`;
-      } else if (diffHours > 0) {
-        statusText = `⏳ Next in ${diffHours}h ${diffMinutes}m`;
-      } else {
-        statusText = `⏳ Next in ${diffMinutes}m`;
-      }
+    if (diffHours > 24) {
+      const days = Math.floor(diffHours / 24);
+      statusText = `⏳ Next in ${days} day${days > 1 ? 's' : ''}`;
+    } else if (diffHours > 0) {
+      statusText = `⏳ Next in ${diffHours}h ${diffMinutes}m`;
     } else {
-      const lastSentDate = new Date(reminder.lastSentDate);
-      const todayDate = new Date(today);
-      
-      if (reminder.lastSentDate === today) {
-        const todayAtReminderTime = new Date(currentTime);
-        todayAtReminderTime.setHours(hours, minutes, 0, 0);
-        
-        if (todayAtReminderTime > currentTime) {
-          statusText = '✓ Dismissed for today · Next: tomorrow';
-        } else {
-          if (diffHours > 24) {
-            const days = Math.floor(diffHours / 24);
-            statusText = `⏳ Next in ${days} day${days > 1 ? 's' : ''}`;
-          } else if (diffHours > 0) {
-            statusText = `⏳ Next in ${diffHours}h ${diffMinutes}m`;
-          } else {
-            statusText = `⏳ Next in ${diffMinutes}m`;
-          }
-        }
-      } else if (lastSentDate > todayDate) {
-        const diffDays = Math.ceil((lastSentDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
-        const nextDay = diffDays + 1;
-        statusText = `✓ Stopped for ${diffDays} day${diffDays > 1 ? 's' : ''} · Next in ${nextDay} day${nextDay > 1 ? 's' : ''}`;
-      } else {
-        if (diffHours > 24) {
-          const days = Math.floor(diffHours / 24);
-          statusText = `⏳ Next in ${days} day${days > 1 ? 's' : ''}`;
-        } else if (diffHours > 0) {
-          statusText = `⏳ Next in ${diffHours}h ${diffMinutes}m`;
-        } else {
-          statusText = `⏳ Next in ${diffMinutes}m`;
-        }
-      }
+      statusText = `⏳ Next in ${diffMinutes}m`;
     }
     
     return {
       ...reminder,
-      isDismissed: !!isDismissed,
+      // isDismissed: !!isDismissed,
+      isDismissed: false,
       statusText
     };
   });
