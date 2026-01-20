@@ -114,25 +114,35 @@ resource "hcloud_firewall" "telegram" {
 
 resource "hcloud_firewall" "vpn" {
   name = "vpn-firewall"
+  
+  # Inbound WireGuard
   rule {
     direction   = "in"
     protocol    = "udp"
     port        = "30000"
     source_ips  = ["0.0.0.0/0", "::/0"]
-    description = "wg-easy wire guard"
+    description = "wg-easy WireGuard VPN"
+  }
+  
+  # Outbound rules (required for return traffic)
+  rule {
+    direction       = "out"
+    protocol        = "udp"
+    port            = "1-65535"
+    destination_ips = ["0.0.0.0/0", "::/0"]
+    description     = "Allow all outbound UDP"
   }
   rule {
-    direction   = "in"
-    protocol    = "tcp"
-    port        = "80"
-    source_ips  = ["0.0.0.0/0", "::/0"]
-    description = "wg-easy HTTP-01 challenges"
+    direction       = "out"
+    protocol        = "tcp"
+    port            = "1-65535"
+    destination_ips = ["0.0.0.0/0", "::/0"]
+    description     = "Allow all outbound TCP"
   }
   rule {
-    direction   = "in"
-    protocol    = "tcp"
-    port        = "443"
-    source_ips  = ["0.0.0.0/0", "::/0"]
-    description = "wg-easy web UI"
+    direction       = "out"
+    protocol        = "icmp"
+    destination_ips = ["0.0.0.0/0", "::/0"]
+    description     = "Allow ICMP"
   }
 }

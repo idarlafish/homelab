@@ -11,4 +11,7 @@ data:
       - hostname: sleepy-notify.la.fish
         service: http://sleepy-notify-bot.telegram.svc.cluster.local:3000
         httpHostHeader: sleepy-notify-bot.telegram.svc.cluster.local
+      - hostname: wg-admin.la.fish
+        service: http://wg-easy-http.wg-easy.svc.cluster.local:51821
+        httpHostHeader: wg-easy-http.wg-easy.svc.cluster.local
       - service: http_status:404

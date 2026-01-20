@@ -12,11 +12,13 @@ resource "hcloud_server" "main" {
   firewall_ids = [
     hcloud_firewall.common.id,
     hcloud_firewall.telegram.id,
+    hcloud_firewall.vpn.id,
   ]
   user_data   = file("${path.module}/cloud-init.yaml")
   depends_on = [
     hcloud_network_subnet.private_network_subnet,
     hcloud_firewall.common,
-    hcloud_firewall.telegram
+    hcloud_firewall.telegram,
+    hcloud_firewall.vpn
   ]
 }

@@ -1,6 +1,11 @@
 name: Deploy Infra
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "infra/**"
 
 jobs:
   terraform:
@@ -22,7 +27,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: infra
+        working-directory: infra/prod
         run: |
           terraform init \
             -backend-config="access_key=${{ secrets.S3_ACCESS_KEY }}" \
@@ -30,7 +35,7 @@ jobs:
 
       - name: Terraform plan
         id: plan
-        working-directory: infra
+        working-directory: infra/prod
         run: |
           set +e
           terraform plan -detailed-exitcode -input=false -out=tfplan
@@ -53,12 +58,12 @@ jobs:
           echo "Pipeline failed."
 
       - name: Terraform apply
-        working-directory: infra
+        working-directory: infra/prod
         if: steps.plan.outcome == 'success'
         run: terraform apply -auto-approve tfplan
 
       - name: Get Terraform outputs
-        working-directory: infra
+        working-directory: infra/prod
         id: terraform_output
         run: |
           echo "SERVER_IP=$(terraform output -raw server_ip)" >> $GITHUB_OUTPUT
@@ -126,7 +131,7 @@ jobs:
         run: helm upgrade --install hccm hcloud/hcloud-cloud-controller-manager -n kube-system
 
       - name: Install Hetzner CSI driver
-        run: helm upgrade --install hcloud-csi hcloud/hcloud-csi -n kube-system --values infra/csi-config.yaml
+        run: helm upgrade --install hcloud-csi hcloud/hcloud-csi -n kube-system --values infra/prod/csi-config.yaml
 
       # - name: Create Cloudflare Tunnel
       #   env:

@@ -10,7 +10,6 @@ spec:
     matchLabels:
       app.kubernetes.io/name: wg-easy
   strategy:
-    # Restrict to a Single wg-easy instance, on redeploys it will tear down the old one before bring a new one up.
     type: Recreate
   template:
     metadata:
@@ -19,7 +18,6 @@ spec:
     spec:
       containers:
         - name: wg-easy
-          # Specify external hostname and port as environment variables
           resources:
             requests:
               cpu: 50m
@@ -30,8 +28,13 @@ spec:
           env:
             - name: WG_HOST
               value: wg.la.fish
-            - name: WG_PORT
+            - name: WG_CONFIG_PORT
               value: "30000"
+            - name: PASSWORD_HASH
+              valueFrom:
+                secretKeyRef:
+                  name: wg-easy-password
+                  key: password
           image: ghcr.io/wg-easy/wg-easy
           imagePullPolicy: IfNotPresent
           ports:
@@ -41,7 +44,6 @@ spec:
             - containerPort: 51821
               name: http
               protocol: TCP
-          # Use the http server for pod health checks
           livenessProbe:
             failureThreshold: 3
             periodSeconds: 10
@@ -63,13 +65,11 @@ spec:
             tcpSocket:
               port: http
             timeoutSeconds: 1
-          # Give pod permissions to modify iptables and load the wireguard kernel module
           securityContext:
             capabilities:
               add:
                 - NET_ADMIN
                 - SYS_MODULE
-          # Persistent storage location
           volumeMounts:
             - mountPath: /etc/wireguard
               name: config
