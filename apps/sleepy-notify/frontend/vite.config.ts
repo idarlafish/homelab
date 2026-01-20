@@ -4,12 +4,12 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	plugins: [sveltekit()],
 	build: {
-        minify: false,
-        sourcemap: true,
-        rollupOptions: {
-            output: {
-                compact: false
-            }
-        }
-    }
+		minify: false,
+		sourcemap: true,
+		rollupOptions: {
+			output: {
+				compact: false
+			}
+		}
+	}
 });
