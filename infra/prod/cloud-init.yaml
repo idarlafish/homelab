@@ -1,8 +1,0 @@
-#cloud-config
-package_update: true
-package_upgrade: true
-runcmd:
-  - curl https://get.k3s.io | INSTALL_K3S_EXEC="--disable traefik --disable-cloud-controller --kubelet-arg cloud-provider=external --flannel-backend=wireguard-native" sh -
-  - mkdir -p /root/.kube
-  - cp /etc/rancher/k3s/k3s.yaml /root/.kube/config
-  - sed -i "s|127.0.0.1|$(hostname -I | awk '{print $1}')|" /root/.kube/config
