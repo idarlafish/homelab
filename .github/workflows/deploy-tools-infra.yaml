@@ -1,11 +1,13 @@
-name: Deploy Infra
+name: Deploy Tools Infrastructure
+
 on:
   workflow_dispatch:
   push:
     branches:
       - main
     paths:
-      - "infra/**"
+      - "infra/tools/**"
+      - "infra/modules/**"
 
 jobs:
   terraform:
@@ -27,58 +29,44 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: infra/prod
+        working-directory: infra/tools
         run: |
           terraform init \
             -backend-config="access_key=${{ secrets.S3_ACCESS_KEY }}" \
             -backend-config="secret_key=${{ secrets.S3_SECRET_KEY }}"
 
-      - name: Terraform plan
+      - name: Terraform Plan
         id: plan
-        working-directory: infra/prod
+        working-directory: infra/tools
         run: |
           set +e
           terraform plan -detailed-exitcode -input=false -out=tfplan
           exit_code=$?
           set -e
           if [ $exit_code -eq 2 ]; then
-            echo "There are pending changes."
+            echo "Pending changes detected."
             exit 0
           elif [ $exit_code -eq 0 ]; then
-            echo "No changes detected in the Terraform plan."
+            echo "No changes."
             exit 0
           else
             echo "Terraform plan failed."
             exit 1
           fi
 
-      - name: Notify failure
-        if: ${{ failure() }}
-        run: |
-          echo "Pipeline failed."
-
-      - name: Terraform apply
-        working-directory: infra/prod
+      - name: Terraform Apply
+        working-directory: infra/tools
         if: steps.plan.outcome == 'success'
         run: terraform apply -auto-approve tfplan
 
-      - name: Get Terraform outputs
-        working-directory: infra/prod
+      - name: Get Terraform Outputs
+        working-directory: infra/tools
         id: terraform_output
         run: |
           echo "SERVER_IP=$(terraform output -raw server_ip)" >> $GITHUB_OUTPUT
           echo "NETWORK_ID=$(terraform output -raw network_id)" >> $GITHUB_OUTPUT
 
-  # dns:
-  #   uses: ./.github/workflows/dns-update.yaml
-  #   needs: terraform
-  #   with:
-  #     zone-id: ${{ vars.CLOUDFLARE_ZONE_ID }}
-  #     domain: ${{ vars.PUBLIC_DOMAIN }}
-  #     ip-address: ${{ needs.terraform.outputs.server_ip }}
-  #   secrets: inherit
-
-  deploy:
+  deploy-k8s:
     runs-on: ubuntu-latest
     needs: terraform
     env:
@@ -119,7 +107,7 @@ jobs:
           kubectl patch configmap coredns -n kube-system --type='merge' -p '{"data":{"NodeHosts":"hosts {\n  fallthrough\n}\n"}}'
           kubectl rollout status deployment/coredns -n kube-system --timeout=120s
 
-      - name: Set up hetzner secrets
+      - name: Set up Hetzner secrets
         run: |
           kubectl create secret generic hcloud \
             --from-literal=token="${{ secrets.HCLOUD_TOKEN }}" \
@@ -131,22 +119,4 @@ jobs:
         run: helm upgrade --install hccm hcloud/hcloud-cloud-controller-manager -n kube-system
 
       - name: Install Hetzner CSI driver
-        run: helm upgrade --install hcloud-csi hcloud/hcloud-csi -n kube-system --values infra/prod/csi-config.yaml
-
-      # - name: Create Cloudflare Tunnel
-      #   env:
-      #     CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      #     CLOUDFLARE_TUNNEL_ID: ${{ secrets.CLOUDFLARE_TUNNEL_ID }}
-      #     CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
-      #     PUBLIC_DOMAIN: ${{ vars.PUBLIC_DOMAIN }}
-      #   run: |
-      #     helm upgrade --install cf-tunnel cloudflare/cloudflare-tunnel \
-      #       --namespace cloudflared --create-namespace \
-      #       --set cloudflare.account="$CLOUDFLARE_ACCOUNT_ID" \
-      #       --set cloudflare.tunnelName="sleepy-notify" \
-      #       --set cloudflare.tunnelId="$CLOUDFLARE_TUNNEL_ID" \
-      #       --set cloudflare.secret="$CLOUDFLARE_TUNNEL_TOKEN" \
-      #       --set ingress[0].hostname="$PUBLIC_DOMAIN" \
-      #       --set ingress[0].service="http://sleepy-notify-bot.telegram.svc.cluster.local:3000" \
-      #       --set ingress[0].proto="http" \
-      #       --set ingress[1].service="http_status:404"
+        run: helm upgrade --install hcloud-csi hcloud/hcloud-csi -n kube-system --values infra/tools/csi-config.yaml

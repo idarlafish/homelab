@@ -1,0 +1,97 @@
+name: Deploy OpenClaw Infrastructure
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "infra/openclaw/**"
+      - "infra/modules/**"
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    outputs:
+      server_ip: ${{ steps.terraform_output.outputs.SERVER_IP }}
+    env:
+      TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
+      TF_VAR_ssh_key_name: ${{ secrets.HCLOUD_SSH_KEY_NAME }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_KEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: infra/openclaw
+        run: |
+          terraform init \
+            -backend-config="access_key=${{ secrets.S3_ACCESS_KEY }}" \
+            -backend-config="secret_key=${{ secrets.S3_SECRET_KEY }}"
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: infra/openclaw
+        run: |
+          set +e
+          terraform plan -detailed-exitcode -input=false -out=tfplan
+          exit_code=$?
+          set -e
+          if [ $exit_code -eq 2 ]; then
+            echo "Pending changes detected."
+            exit 0
+          elif [ $exit_code -eq 0 ]; then
+            echo "No changes."
+            exit 0
+          else
+            echo "Terraform plan failed."
+            exit 1
+          fi
+
+      - name: Terraform Apply
+        working-directory: infra/openclaw
+        if: steps.plan.outcome == 'success'
+        run: terraform apply -auto-approve tfplan
+
+      - name: Get Terraform Outputs
+        working-directory: infra/openclaw
+        id: terraform_output
+        run: |
+          echo "SERVER_IP=$(terraform output -raw server_ip)" >> $GITHUB_OUTPUT
+
+  deploy-openclaw:
+    runs-on: ubuntu-latest
+    needs: terraform
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.HCLOUD_SSH_KEY }}
+
+      - name: Wait for Docker to be ready
+        uses: nick-fields/retry@v3
+        with:
+          timeout_seconds: 30
+          max_attempts: 10
+          command: ssh -o StrictHostKeyChecking=no root@${{ needs.terraform.outputs.server_ip }} "docker info"
+
+      - name: Copy OpenClaw compose file
+        run: |
+          scp -o StrictHostKeyChecking=no apps/openclaw/docker-compose.yml \
+            root@${{ needs.terraform.outputs.server_ip }}:/root/openclaw/docker-compose.yml
+
+      - name: Start OpenClaw
+        run: |
+          ssh -o StrictHostKeyChecking=no root@${{ needs.terraform.outputs.server_ip }} \
+            "cd /root/openclaw && docker compose pull && docker compose up -d"

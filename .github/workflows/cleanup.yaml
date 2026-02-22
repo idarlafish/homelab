@@ -1,0 +1,39 @@
+name: Cleanup Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Which environment to destroy (tools or openclaw)"
+        required: true
+        type: choice
+        options:
+          - tools
+          - openclaw
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
+      TF_VAR_ssh_key_name: ${{ secrets.HCLOUD_SSH_KEY_NAME }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_KEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: infra/${{ inputs.target }}
+        run: |
+          terraform init \
+            -backend-config="access_key=${{ secrets.S3_ACCESS_KEY }}" \
+            -backend-config="secret_key=${{ secrets.S3_SECRET_KEY }}"
+
+      - name: Terraform Destroy
+        working-directory: infra/${{ inputs.target }}
+        run: terraform destroy -auto-approve
