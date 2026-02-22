@@ -1,0 +1,14 @@
+services:
+  openclaw:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw
+    restart: unless-stopped
+    volumes:
+      - openclaw-config:/root/.openclaw
+      - openclaw-workspace:/root/openclaw/workspace
+    env_file:
+      - .env
+
+volumes:
+  openclaw-config:
+  openclaw-workspace:
