@@ -43,6 +43,17 @@ infra/
 | `deploy-sleepy-notify` | push to `apps/sleepy-notify/**` |
 | `cleanup` | manual (choose `tools` or `openclaw`) |
 
+## Local sleepy-notify deploy (no registry)
+
+To deploy `sleepy-notify` from your Mac without publishing an image:
+
+```bash
+export TOOLS_SERVER_IP=<tools server IP> # same value used in GitHub Actions
+./scripts/deploy-sleepy-notify-local.sh  # builds, imports into k3s, and rolls out
+```
+
+This builds the image locally, streams it directly into k3s via `k3s ctr images import`, and updates the `sleepy-notify-bot` deployment image tag. The deployment manifest now uses `imagePullPolicy: IfNotPresent`, so k3s will prefer the locally imported image and only pull from GHCR when no local image exists (e.g. on a fresh cluster).
+
 ## Infrastructure
 
 Terraform state stored in Cloudflare R2 bucket `fabler`:
