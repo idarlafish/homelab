@@ -4,20 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-A personal infrastructure monorepo managing a Hetzner Cloud Kubernetes cluster (ARM64, k3s). Contains the `sleepy-notify` Telegram bot/mini-app, VPN configs, and Terraform infrastructure.
+A personal infrastructure monorepo managing two Hetzner Cloud ARM64 servers:
+- **tools** — k3s cluster running sleepy-notify, VPN, and content services
+- **openclaw** — Docker host running OpenClaw personal AI assistant
 
 ```
 apps/       - Application source code
   sleepy-notify/  - Telegram notification bot + SvelteKit mini-app
   vpn/            - VPN configuration
-k8s/        - Kubernetes manifests
+  openclaw/       - OpenClaw Docker Compose setup
+k8s/        - Kubernetes manifests (tools cluster only)
   cloudflared/    - Cloudflare Tunnel (public ingress)
   telegram/       - sleepy-notify bot deployment
   vpn/            - WireGuard (wg-easy) + xray
-  content/        - booklore
+  content/        - booklore + komga
 infra/      - Terraform (Hetzner Cloud)
-  prod/           - Production server config
-  staging/        - Staging environment
+  modules/
+    hcloud-server/ - Reusable server module (server, network, base firewall)
+  tools/          - tools server config (k3s, cax11)
+  openclaw/       - openclaw server config (Docker, cax11)
 ```
 
 ## sleepy-notify App
@@ -69,19 +74,51 @@ cd apps/sleepy-notify && docker compose up -d
 
 The Dockerfile compiles the Bun backend to a single binary (`bun build --compile --target bun-linux-arm64`).
 
-## Kubernetes
+## OpenClaw App
 
-Manifests are applied directly to the k3s cluster. The cluster runs on Hetzner `cax11` (ARM64) with Cloudflare Tunnel as the ingress (no Traefik). Services exposed publicly: `sleepy-notify.la.fish`, `wg-admin.la.fish`, `booklore.la.fish`.
+A self-hosted personal AI assistant running on the dedicated `openclaw` server via Docker Compose. Connects to Telegram for interaction.
+
+```bash
+# Local dev / manual deploy
+cp apps/openclaw/.env.example apps/openclaw/.env
+# Fill in OPENCLAW_ANTHROPIC_API_KEY, OPENCLAW_TELEGRAM_BOT_TOKEN
+cd apps/openclaw && docker compose up -d
+```
+
+The `deploy-openclaw-infra` GitHub Actions workflow provisions the server and deploys OpenClaw automatically on push to `infra/openclaw/**`.
+
+## Kubernetes (tools cluster)
+
+Manifests in `k8s/` are applied to the `tools` k3s cluster only. The cluster runs on Hetzner `cax11` (ARM64) with Cloudflare Tunnel as the ingress (no Traefik). Services exposed publicly: `sleepy-notify.la.fish`, `wg-admin.la.fish`, `booklore.la.fish`.
 
 Images are pulled from `ghcr.io/idarlafish/` using a `ghcr-secret` pull secret.
 
 ## Infrastructure (Terraform)
 
+Two environments share a common `infra/modules/hcloud-server/` module that provisions a server, private network, and base firewall. Each environment adds its own environment-specific resources on top.
+
 ```bash
-cd infra/prod
-terraform init   # Uses Cloudflare R2 as remote state backend
+# tools server (k3s)
+cd infra/tools
+terraform init   # Uses Cloudflare R2 as remote state backend (key: tools/terraform.tfstate)
+terraform plan
+terraform apply
+
+# openclaw server (Docker)
+cd infra/openclaw
+terraform init   # State key: openclaw/terraform.tfstate
 terraform plan
 terraform apply
 ```
 
 Provider: Hetzner Cloud (`hcloud`). State stored in Cloudflare R2 bucket `fabler`.
+
+### Module: infra/modules/hcloud-server
+
+Reusable module inputs: `name`, `server_type`, `location`, `ssh_key_id`, `private_ip`, `cloud_init`, `extra_firewall_ids`, `network_ip_range`, `subnet_ip_range`.
+
+Outputs: `server_ip`, `network_id`, `server_id`.
+
+## Commits made by Claude
+
+Do not add Co-Authored-By in the commit message.
