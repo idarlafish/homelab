@@ -14,4 +14,7 @@ data:
       - hostname: wg-admin.la.fish
         service: http://wg-easy-http.vpn.svc.cluster.local:51821
         httpHostHeader: wg-easy-http.vpn.svc.cluster.local
+      - hostname: booklore.la.fish
+        service: http://booklore.booklore.svc.cluster.local:6060
+        httpHostHeader: booklore.booklore.svc.cluster.local
       - service: http_status:404

@@ -1,0 +1,64 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booklore
+  namespace: booklore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: booklore
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: booklore
+    spec:
+      containers:
+      - name: booklore
+        image: booklore/booklore:latest
+        env:
+        - name: APP_USER_ID
+          value: "0"
+        - name: APP_GROUP_ID  
+          value: "0"
+        - name: BOOKLORE_PORT
+          value: "6060"
+        - name: DATABASE_URL
+          value: "jdbc:mariadb://mariadb:3306/booklore?createDatabaseIfNotExist=true"
+        - name: DATABASE_USERNAME
+          value: "booklore"
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: booklore-db
+              key: mysql-password
+        ports:
+        - containerPort: 6060
+          name: http
+          protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /app/data
+        - name: books
+          mountPath: /books
+        - name: bookdrop
+          mountPath: /bookdrop
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: booklore-config
+      - name: books
+        persistentVolumeClaim:
+          claimName: booklore-books
+      - name: bookdrop
+        emptyDir: {}
