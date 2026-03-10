@@ -4,25 +4,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-A personal infrastructure monorepo managing two Hetzner Cloud ARM64 servers:
-- **tools** — k3s cluster running sleepy-notify, VPN, and content services
-- **openclaw** — Docker host running OpenClaw personal AI assistant
+A personal infrastructure monorepo managing three Hetzner Cloud servers:
+- **tools** — k3s cluster (ARM64, cax11) running sleepy-notify, VPN, and content services
+- **openclaw** — Docker host (ARM64, cax11) running OpenClaw personal AI assistant
+- **game-servers** — k3s cluster (AMD, cpx32) running game servers
 
 ```
 apps/       - Application source code
   sleepy-notify/  - Telegram notification bot + SvelteKit mini-app
   vpn/            - VPN configuration
   openclaw/       - OpenClaw Docker Compose setup
-k8s/        - Kubernetes manifests (tools cluster only)
-  cloudflared/    - Cloudflare Tunnel (public ingress)
-  telegram/       - sleepy-notify bot deployment
-  vpn/            - WireGuard (wg-easy) + xray
-  content/        - booklore + komga
+k8s/        - Kubernetes manifests
+  cloudflared/    - Cloudflare Tunnel (tools cluster, public ingress)
+  telegram/       - sleepy-notify bot deployment (tools cluster)
+  vpn/            - WireGuard (wg-easy) + xray (tools cluster)
+  content/        - booklore + komga (tools cluster)
+  games/          - Game server manifests (game-servers cluster)
 infra/      - Terraform (Hetzner Cloud)
   modules/
     hcloud-server/ - Reusable server module (server, network, base firewall)
   tools/          - tools server config (k3s, cax11)
   openclaw/       - openclaw server config (Docker, cax11)
+  game-servers/   - game-servers server config (k3s, cpx32)
 ```
 
 ## sleepy-notify App
@@ -87,6 +90,18 @@ cd apps/openclaw && docker compose up -d
 
 The `deploy-openclaw-infra` GitHub Actions workflow provisions the server and deploys OpenClaw automatically on push to `infra/openclaw/**`.
 
+## Game Servers
+
+Kubernetes-based game server infrastructure on a dedicated Hetzner CPX32 (AMD, 8 vCPU, 16GB RAM) in `fsn1`. Runs k3s with Hetzner CCM + CSI.
+
+**Games:** Minecraft, Valheim, Palworld, Satisfactory, Enshrouded, Foundry, Core Keeper. Each runs in its own namespace with NodePort services.
+
+K8s manifests: `k8s/games/<game>/` (namespace.yaml, configmap.yaml, service.yaml, statefulset.yaml or deployment.yaml).
+
+Terraform: `infra/game-servers/` — uses shared `hcloud-server` module. State key: `game-servers/terraform.tfstate`.
+
+When running kubectl for the game-servers cluster, use `KUBECONFIG=.kube/game-servers`.
+
 ## Kubernetes (tools cluster)
 
 Manifests in `k8s/` are applied to the `tools` k3s cluster only. The cluster runs on Hetzner `cax11` (ARM64) with Cloudflare Tunnel as the ingress (no Traefik). Services exposed publicly: `sleepy-notify.la.fish`, `wg-admin.la.fish`, `booklore.la.fish`.
@@ -95,7 +110,7 @@ Images are pulled from `ghcr.io/idarlafish/` using a `ghcr-secret` pull secret.
 
 ## Infrastructure (Terraform)
 
-Two environments share a common `infra/modules/hcloud-server/` module that provisions a server, private network, and base firewall. Each environment adds its own environment-specific resources on top.
+Three environments share a common `infra/modules/hcloud-server/` module that provisions a server, private network, and base firewall. Each environment adds its own environment-specific resources on top.
 
 ```bash
 # tools server (k3s)
@@ -107,6 +122,12 @@ terraform apply
 # openclaw server (Docker)
 cd infra/openclaw
 terraform init   # State key: openclaw/terraform.tfstate
+terraform plan
+terraform apply
+
+# game-servers server (k3s)
+cd infra/game-servers
+terraform init   # State key: game-servers/terraform.tfstate
 terraform plan
 terraform apply
 ```
