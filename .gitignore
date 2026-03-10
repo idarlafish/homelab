@@ -3,6 +3,7 @@ node_modules
 .env
 .DS_Store
 .kube
+.terraform
 
 # Game server data (saves, blueprints, maps)
 *.gzip
