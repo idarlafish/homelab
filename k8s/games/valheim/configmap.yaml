@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: valheim-cm
+  namespace: valheim
+data:
+  PORT: "2456"
+  NAME: "fabler"
+  WORLD: "fabler"
+  TZ: "UTC"
+  PUBLIC: "1"
+  AUTO_UPDATE: "1"
+  AUTO_UPDATE_SCHEDULE: "0 1 * * *"
+  AUTO_BACKUP: "1"
+  AUTO_BACKUP_SCHEDULE: "*/15 * * * *"
+  AUTO_BACKUP_REMOVE_OLD: "1"
+  AUTO_BACKUP_DAYS_TO_LIVE: "3"
+  AUTO_BACKUP_ON_UPDATE: "1"
+  AUTO_BACKUP_ON_SHUTDOWN: "1"
+  WEBHOOK_URL: "***REDACTED***"
+  WEBHOOK_INCLUDE_PUBLIC_IP: "1"
+  UPDATE_ON_STARTUP: "1"
+  SCHEDULED_RESTART: "1"
+  SCHEDULED_RESTART_SCHEDULE: "0 6 * * *"
+  MODIFIERS: "combat=easy,portals=casual,resources=most,deathpenalty=casual"
+  SET_KEY: "playerevents"
+  TYPE: "BepInEx"
+  MODS: |
+    ValheimModding-Jotunn-2.27.0
+    Digitalroot-Max_Dungeon_Rooms-2.0.37
+    ValheimModding-YamlDotNet-16.3.1
+    JereKuusela-Expand_World_Prefabs-1.46.0
+    JereKuusela-Server_devcommands-1.100.0
+    JereKuusela-Upgrade_World-1.74.0
+    ValheimModding-HookGenPatcher-0.0.4
+    MathiasDecrock-PlanBuild-0.18.3
+

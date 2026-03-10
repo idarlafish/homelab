@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: foundry-cm
+  namespace: foundry
+data:
+  TZ: "UTC"
+  SERVER_NAME: "Fabler"
+  WORLD_NAME: "Fabler"
+  SERVER_IS_PUBLIC: "false"
+  SERVER_MAX_PLAYERS: "10"
+  AUTOSAVE_INTERVAL: "300"
+  PAUSE_SERVER_WHEN_EMPTY: "true"
+  ENABLE_MODS: "false"
+  BACKUPS: "true"
+  BACKUP_INTERVAL: "0 * * * *"
+  BACKUP_RETENTION: "10"
+  SERVER_PORT: "3724"
+  PUID: "1000"
+  PGID: "1000"

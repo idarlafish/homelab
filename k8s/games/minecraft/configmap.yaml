@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minecraft-cm
+  namespace: minecraft
+data:
+  TYPE: "MODRINTH"
+  VERSION: "1.21.1"
+  MODRINTH_LOADER: "FABRIC"
+  MODRINTH_MODPACK: "zagribozha"
+  MODRINTH_VERSION: "0.1.0"
+  MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
+  MODRINTH_ALLOWED_VERSION_TYPE: "beta"
+  MODRINTH_FORCE_SYNCHRONIZE: "true"
+  ICON: "https://oathcraft.com/minecraft/zagribozha_icon.png"
+  OVERRIDE_ICON: "true"
+  USE_AIKAR_FLAGS: "true"
+  MOTD: "Zagribozha Server"
+  GID: "1000"
+  ONLINE_MODE: "false"
+  SNOOPER_ENABLED: "false"
+  SERVER_NAME: "Zagribozha"
+  GUI: "false"
+  LEVEL: "zagribozha"
+  FORCE_GAMEMODE: "false"
+  DIFFICULTY: "normal"
+  MEMORY: "8G"

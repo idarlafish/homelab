@@ -1,0 +1,68 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: satisfactory
+  namespace: satisfactory
+spec:
+  selector:
+    matchLabels:
+      app: satisfactory
+  serviceName: "satisfactory"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: satisfactory
+    spec:
+      containers:
+        - name: satisfactory
+          image: wolveix/satisfactory-server:latest
+          env:
+            - name: DEBUG
+              value: "false"
+            - name: MAXPLAYERS
+              value: "4"
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: SKIPUPDATE
+              value: "false"
+            - name: STEAMBETA
+              value: "false"
+          envFrom:
+            - configMapRef:
+                name: satisfactory-cm
+          ports:
+            - name: "api"
+              containerPort: 7777
+              protocol: TCP
+            - name: "game"
+              containerPort: 7777
+              protocol: UDP
+            - name: "messaging"
+              containerPort: 18888
+              protocol: TCP
+          volumeMounts:
+            - name: satisfactory-config
+              mountPath: /config
+            - name: satisfactory-data
+              mountPath: /config/gamefiles
+  volumeClaimTemplates:
+    - metadata:
+        name: satisfactory-config
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: hcloud-volumes
+    - metadata:
+        name: satisfactory-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 20Gi
+        storageClassName: hcloud-volumes

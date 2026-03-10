@@ -1,0 +1,58 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: valheim
+  namespace: valheim
+spec:
+  selector:
+    matchLabels:
+      app: valheim
+  serviceName: "valheim"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: valheim
+    spec:
+      containers:
+        - name: valheim
+          image: mbround18/valheim:latest
+          imagePullPolicy: Always
+          env:
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: valheim-secrets
+                  key: serverPassword
+          envFrom:
+            - configMapRef:
+                name: valheim-cm
+          ports:
+            - name: gameport
+              containerPort: 2456
+              protocol: UDP
+            - name: queryport
+              containerPort: 2457
+              protocol: UDP
+            - containerPort: 2458
+              protocol: UDP
+          volumeMounts:
+            - name: valheim-data
+              mountPath: /home/steam/.config/unity3d/IronGate/Valheim
+      volumes:
+        - name: config-volume
+          configMap:
+            name: valheim-cm
+        - name: valheim-data
+          persistentVolumeClaim:
+            claimName: valheim-data
+  volumeClaimTemplates:
+    - metadata:
+        name: valheim-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: hcloud-volumes

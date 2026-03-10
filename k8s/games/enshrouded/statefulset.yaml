@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: enshrouded
+  namespace: enshrouded
+spec:
+  selector:
+    matchLabels:
+      app: enshrouded
+  serviceName: "enshrouded"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: enshrouded
+    spec:
+      containers:
+        - name: enshrouded
+          image: mornedhels/enshrouded-server:latest
+          imagePullPolicy: Always
+          env:
+            - name: SERVER_ROLE_0_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: enshrouded-secrets
+                  key: adminPassword
+          envFrom:
+            - configMapRef:
+                name: enshrouded-cm
+          ports:
+            - name: "game"
+              containerPort: 15637
+              protocol: UDP
+          volumeMounts:
+            - name: enshrouded-data
+              mountPath: /opt/enshrouded/server/savegame
+      volumes:
+        - name: config-volume
+          configMap:
+            name: enshrouded-cm
+        - name: enshrouded-data
+          persistentVolumeClaim:
+            claimName: enshrouded-data
+  volumeClaimTemplates:
+    - metadata:
+        name: enshrouded-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: hcloud-volumes

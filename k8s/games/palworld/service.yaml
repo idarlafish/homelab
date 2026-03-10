@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: palworld
+  name: palworld
+  namespace: palworld
+spec:
+  ports:
+    - name: server
+      port: 8211
+      protocol: UDP
+      targetPort: server
+      nodePort: 30821
+    - name: query
+      port: 27015
+      protocol: UDP
+      targetPort: query
+      nodePort: 30921
+  selector:
+    app: palworld
+  type: NodePort
