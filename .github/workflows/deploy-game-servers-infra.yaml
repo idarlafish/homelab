@@ -1,0 +1,122 @@
+name: Deploy Game Servers Infrastructure
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "infra/game-servers/**"
+      - "infra/modules/**"
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    outputs:
+      server_ip: ${{ steps.terraform_output.outputs.SERVER_IP }}
+      network_id: ${{ steps.terraform_output.outputs.NETWORK_ID }}
+    env:
+      TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
+      TF_VAR_ssh_key_name: ${{ secrets.HCLOUD_SSH_KEY_NAME }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_KEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: infra/game-servers
+        run: |
+          terraform init \
+            -backend-config="access_key=${{ secrets.S3_ACCESS_KEY }}" \
+            -backend-config="secret_key=${{ secrets.S3_SECRET_KEY }}"
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: infra/game-servers
+        run: |
+          set +e
+          terraform plan -detailed-exitcode -input=false -out=tfplan
+          exit_code=$?
+          set -e
+          if [ $exit_code -eq 2 ]; then
+            echo "Pending changes detected."
+            exit 0
+          elif [ $exit_code -eq 0 ]; then
+            echo "No changes."
+            exit 0
+          else
+            echo "Terraform plan failed."
+            exit 1
+          fi
+
+      - name: Terraform Apply
+        working-directory: infra/game-servers
+        if: steps.plan.outcome == 'success'
+        run: terraform apply -auto-approve tfplan
+
+      - name: Get Terraform Outputs
+        working-directory: infra/game-servers
+        id: terraform_output
+        run: |
+          echo "SERVER_IP=$(terraform output -raw server_ip)" >> $GITHUB_OUTPUT
+          echo "NETWORK_ID=$(terraform output -raw network_id)" >> $GITHUB_OUTPUT
+
+  deploy-k8s:
+    runs-on: ubuntu-latest
+    needs: terraform
+    env:
+      KUBECONFIG: /tmp/kubeconfig
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.HCLOUD_SSH_KEY }}
+
+      - name: Fetch kubeconfig
+        uses: nick-fields/retry@v3
+        with:
+          timeout_seconds: 30
+          max_attempts: 6
+          command: scp -o StrictHostKeyChecking=no root@${{ needs.terraform.outputs.server_ip }}:/root/.kube/config $KUBECONFIG
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Add Helm repositories
+        run: |
+          helm repo add hcloud https://charts.hetzner.cloud
+          helm repo update
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Fix K3s CoreDNS Bootstrap
+        run: |
+          kubectl wait --for=condition=Ready nodes --all --timeout=90s
+          kubectl patch configmap coredns -n kube-system --type='merge' -p '{"data":{"NodeHosts":"hosts {\n  fallthrough\n}\n"}}'
+          kubectl rollout status deployment/coredns -n kube-system --timeout=120s
+
+      - name: Set up Hetzner secrets
+        run: |
+          kubectl create secret generic hcloud \
+            --from-literal=token="${{ secrets.HCLOUD_TOKEN }}" \
+            --from-literal=network="${{ needs.terraform.outputs.network_id }}" \
+            --namespace kube-system \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Install Hetzner Cloud Controller Manager
+        run: helm upgrade --install hccm hcloud/hcloud-cloud-controller-manager -n kube-system
+
+      - name: Install Hetzner CSI driver
+        run: helm upgrade --install hcloud-csi hcloud/hcloud-csi -n kube-system --values infra/game-servers/csi-config.yaml
