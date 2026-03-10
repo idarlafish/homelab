@@ -105,7 +105,6 @@ jobs:
         run: |
           kubectl wait --for=condition=Ready nodes --all --timeout=90s
           kubectl patch configmap coredns -n kube-system --type='merge' -p '{"data":{"NodeHosts":"hosts {\n  fallthrough\n}\n"}}'
-          kubectl rollout status deployment/coredns -n kube-system --timeout=120s
 
       - name: Set up Hetzner secrets
         run: |
