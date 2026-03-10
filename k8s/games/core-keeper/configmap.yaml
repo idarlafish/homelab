@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: core-keeper-cm
+  namespace: core-keeper
+data:
+  TZ: "UTC"
+  WORLD_NAME: "Fabler"
+  MAX_PLAYERS: "10"
+  WORLD_INDEX: "0"
+  WORLD_MODE: "4"
+  SERVER_IP: "0.0.0.0"
+  ALLOW_ONLY_PLATFORM: "Steam"
+  PUID: "1000"
+  PGID: "1000"
+  MODS_ENABLED: "true"
+  MODS: "infinite-ore-boulders-dedicated-linux,keep-inventory-on-death-for-dedicated-servers"

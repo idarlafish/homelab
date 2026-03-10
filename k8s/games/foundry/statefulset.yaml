@@ -1,0 +1,51 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: foundry
+  namespace: foundry
+spec:
+  selector:
+    matchLabels:
+      app: foundry
+  serviceName: "foundry"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: foundry
+    spec:
+      containers:
+        - name: foundry
+          image: luxusburg/docker-foundry:latest
+          imagePullPolicy: Always
+          env:
+            - name: SERVER_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: foundry-secrets
+                  key: serverPassword
+          envFrom:
+            - configMapRef:
+                name: foundry-cm
+          ports:
+            - name: game
+              containerPort: 3724
+              protocol: UDP
+          volumeMounts:
+            - name: foundry-saves
+              mountPath: /home/foundry/persistent_data
+            - name: server-files
+              mountPath: /home/foundry/server_files
+      volumes:
+        - name: server-files
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: foundry-saves
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: hcloud-volumes

@@ -1,0 +1,56 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: core-keeper
+  namespace: core-keeper
+spec:
+  selector:
+    matchLabels:
+      app: core-keeper
+  serviceName: "core-keeper"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: core-keeper
+    spec:
+      containers:
+        - name: core-keeper
+          image: escaping/core-keeper-dedicated:latest
+          imagePullPolicy: Always
+          env:
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: core-keeper-secrets
+                  key: serverPassword
+            - name: MODIO_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: core-keeper-secrets
+                  key: modioApiKey
+            - name: MODIO_API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: core-keeper-secrets
+                  key: modioApiUrl
+          envFrom:
+            - configMapRef:
+                name: core-keeper-cm
+          ports:
+            - name: game
+              containerPort: 30668
+              protocol: UDP
+          volumeMounts:
+            - name: core-keeper-data
+              mountPath: /home/steam/core-keeper-data
+  volumeClaimTemplates:
+    - metadata:
+        name: core-keeper-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: hcloud-volumes
