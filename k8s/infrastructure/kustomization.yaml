@@ -6,3 +6,4 @@ resources:
   - hetzner-ccm.yaml
   - hetzner-csi.yaml
   - coredns-patch.yaml
+  - kube-prometheus-stack.yaml
