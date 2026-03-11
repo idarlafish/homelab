@@ -11,3 +11,4 @@ spec:
     requests:
       storage: 10Gi
   storageClassName: hcloud-volumes
+  volumeName: pv-booklore-books-old
