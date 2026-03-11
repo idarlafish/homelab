@@ -1,14 +1,15 @@
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: mariadb
   namespace: booklore
 spec:
-  serviceName: mariadb
   replicas: 1
   selector:
     matchLabels:
       app: mariadb
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -38,6 +39,7 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql
+          subPath: mariadb
         resources:
           requests:
             memory: "512Mi"
@@ -45,12 +47,7 @@ spec:
           limits:
             memory: "1Gi"
             cpu: "500m"
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      resources:
-        requests:
-          storage: 3Gi
-      storageClassName: local-path
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: booklore-books
