@@ -15,12 +15,19 @@ spec:
         name: prometheus-community
         namespace: flux-system
   values:
+    prometheusOperator:
+      resources:
+        requests:
+          cpu: 1m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
     prometheus:
       prometheusSpec:
         retention: 24h
         resources:
           requests:
-            cpu: 100m
+            cpu: 1m
             memory: 256Mi
           limits:
             memory: 512Mi
@@ -32,7 +39,7 @@ spec:
         passwordKey: admin-password
       resources:
         requests:
-          cpu: 50m
+          cpu: 1m
           memory: 128Mi
         limits:
           memory: 256Mi
@@ -41,14 +48,14 @@ spec:
     nodeExporter:
       resources:
         requests:
-          cpu: 10m
+          cpu: 1m
           memory: 32Mi
         limits:
           memory: 64Mi
     kube-state-metrics:
       resources:
         requests:
-          cpu: 10m
+          cpu: 1m
           memory: 32Mi
         limits:
           memory: 64Mi
