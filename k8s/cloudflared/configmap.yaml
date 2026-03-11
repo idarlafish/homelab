@@ -17,4 +17,10 @@ data:
       - hostname: booklore.la.fish
         service: http://booklore.booklore.svc.cluster.local:6060
         httpHostHeader: booklore.booklore.svc.cluster.local
+      - hostname: grafana.la.fish
+        service: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80
+        httpHostHeader: kube-prometheus-stack-grafana.monitoring.svc.cluster.local
+      - hostname: prometheus.la.fish
+        service: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+        httpHostHeader: kube-prometheus-stack-prometheus.monitoring.svc.cluster.local
       - service: http_status:404

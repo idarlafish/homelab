@@ -6,3 +6,4 @@ resources:
   - telegram.yaml
   - vpn.yaml
   - content.yaml
+  - monitoring.yaml
