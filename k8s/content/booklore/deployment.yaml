@@ -40,10 +40,12 @@ spec:
           name: http
           protocol: TCP
         volumeMounts:
-        - name: config
+        - name: data
           mountPath: /app/data
-        - name: books
+          subPath: config
+        - name: data
           mountPath: /books
+          subPath: books
         - name: bookdrop
           mountPath: /bookdrop
         resources:
@@ -54,10 +56,7 @@ spec:
             memory: "2Gi"
             cpu: "1000m"
       volumes:
-      - name: config
-        persistentVolumeClaim:
-          claimName: booklore-config
-      - name: books
+      - name: data
         persistentVolumeClaim:
           claimName: booklore-books
       - name: bookdrop
