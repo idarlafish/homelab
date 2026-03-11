@@ -5,3 +5,4 @@ resources:
   - helm-repos.yaml
   - hetzner-ccm.yaml
   - hetzner-csi.yaml
+  - coredns-patch.yaml
