@@ -1,0 +1,32 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: hcloud-csi
+  namespace: kube-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: hcloud-csi
+      sourceRef:
+        kind: HelmRepository
+        name: hcloud
+        namespace: flux-system
+  values:
+    controller:
+      replicaCount: 1
+      priorityClassName: "system-node-critical"
+      hcloudToken:
+        existingSecret:
+          name: hcloud
+          key: token
+    node:
+      priorityClassName: "system-node-critical"
+      hostNetwork: true
+    storageClasses:
+      - name: hcloud-volumes
+        isDefault: true
+        reclaimPolicy: Delete
+        volumeBindingMode: WaitForFirstConsumer
+        allowVolumeExpansion: true
