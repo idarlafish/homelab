@@ -1,0 +1,54 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vrising
+  namespace: vrising
+spec:
+  selector:
+    matchLabels:
+      app: vrising
+  serviceName: "vrising"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: vrising
+    spec:
+      containers:
+        - name: vrising
+          image: trueosiris/vrising:latest
+          imagePullPolicy: Always
+          command: ["/bin/bash", "-c", "sed -i 's/\\r//g' /start.sh && exec /bin/bash /start.sh"]
+          env:
+            - name: HOST_SETTINGS_Password
+              valueFrom:
+                secretKeyRef:
+                  name: vrising-secrets
+                  key: serverPassword
+          envFrom:
+            - configMapRef:
+                name: vrising-cm
+          ports:
+            - name: gameport
+              containerPort: 9876
+              protocol: UDP
+            - name: queryport
+              containerPort: 9877
+              protocol: UDP
+          volumeMounts:
+            - name: vrising-data
+              mountPath: /mnt/vrising/server
+              subPath: server
+            - name: vrising-data
+              mountPath: /mnt/vrising/persistentdata
+              subPath: persistentdata
+  volumeClaimTemplates:
+    - metadata:
+        name: vrising-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: hcloud-volumes

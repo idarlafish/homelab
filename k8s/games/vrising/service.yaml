@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: vrising
+  name: vrising
+  namespace: vrising
+spec:
+  type: NodePort
+  ports:
+    - name: gameport
+      port: 9876
+      protocol: UDP
+      targetPort: 9876
+      nodePort: 30876
+    - name: queryport
+      port: 9877
+      protocol: UDP
+      targetPort: 9877
+      nodePort: 30877
+  selector:
+    app: vrising

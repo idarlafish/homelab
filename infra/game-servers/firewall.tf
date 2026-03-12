@@ -132,4 +132,20 @@ resource "hcloud_firewall" "servers" {
     source_ips  = ["0.0.0.0/0", "::/0"]
     description = "Core Keeper: Game server NodePort"
   }
+
+  rule {
+    direction   = "in"
+    protocol    = "udp"
+    port        = "30876"
+    source_ips  = ["0.0.0.0/0", "::/0"]
+    description = "V Rising: Game server NodePort"
+  }
+
+  rule {
+    direction   = "in"
+    protocol    = "udp"
+    port        = "30877"
+    source_ips  = ["0.0.0.0/0", "::/0"]
+    description = "V Rising: Query server NodePort"
+  }
 }
