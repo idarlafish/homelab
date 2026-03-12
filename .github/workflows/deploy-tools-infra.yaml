@@ -2,12 +2,6 @@ name: Deploy Tools Infrastructure
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "infra/tools/**"
-      - "infra/modules/**"
 
 jobs:
   terraform:
