@@ -2,12 +2,6 @@ name: Deploy Game Servers Infrastructure
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "infra/game-servers/**"
-      - "infra/modules/**"
 
 jobs:
   terraform:

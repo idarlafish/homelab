@@ -2,12 +2,6 @@ name: Deploy OpenClaw Infrastructure
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "infra/openclaw/**"
-      - "infra/modules/**"
 
 jobs:
   terraform:
