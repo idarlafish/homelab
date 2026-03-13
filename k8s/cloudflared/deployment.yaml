@@ -35,7 +35,7 @@ spec:
           mountPath: /etc/cloudflared/creds
           readOnly: true
         ports:
-        - containerPort: 2000
+        - containerPort: 20241
         resources:
           requests:
             cpu: 50m
@@ -46,7 +46,7 @@ spec:
         livenessProbe:
           httpGet:
             path: /ready
-            port: 2000
+            port: 20241
           initialDelaySeconds: 180
           periodSeconds: 60
           timeoutSeconds: 10
@@ -68,5 +68,5 @@ spec:
   selector:
     app: cf-tunnel
   ports:
-  - port: 2000
-    targetPort: 2000
+  - port: 20241
+    targetPort: 20241
