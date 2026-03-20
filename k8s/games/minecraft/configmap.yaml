@@ -29,3 +29,4 @@ data:
   FORCE_GAMEMODE: "false"
   DIFFICULTY: "normal"
   MEMORY: "5G"
+  WEBSOCKET_CONSOLE: "true"
