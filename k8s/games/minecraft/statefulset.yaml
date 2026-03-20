@@ -39,8 +39,6 @@ spec:
           ports:
             - containerPort: 25565
               name: gameport
-            - containerPort: 80
-              name: websocket
           volumeMounts:
             - name: minecraft-data
               mountPath: /data
