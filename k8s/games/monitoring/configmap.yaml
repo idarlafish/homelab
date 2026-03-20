@@ -1,0 +1,53 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: metrics
+data:
+  config.alloy: |
+    discovery.kubernetes "nodes" {
+      role = "node"
+    }
+
+    discovery.kubernetes "pods" {
+      role = "pod"
+    }
+
+    prometheus.scrape "kubelet" {
+      targets         = discovery.kubernetes.nodes.targets
+      forward_to      = [prometheus.remote_write.tools.receiver]
+      scrape_interval = "30s"
+      scheme          = "https"
+      bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+      tls_config {
+        insecure_skip_verify = true
+      }
+    }
+
+    prometheus.scrape "cadvisor" {
+      targets         = discovery.kubernetes.nodes.targets
+      forward_to      = [prometheus.remote_write.tools.receiver]
+      scrape_interval = "30s"
+      scheme          = "https"
+      metrics_path    = "/metrics/cadvisor"
+      bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+      tls_config {
+        insecure_skip_verify = true
+      }
+    }
+
+    prometheus.scrape "pods" {
+      targets         = discovery.kubernetes.pods.targets
+      forward_to      = [prometheus.remote_write.tools.receiver]
+      scrape_interval = "30s"
+    }
+
+    prometheus.remote_write "tools" {
+      external_labels = {
+        cluster = "game-servers",
+      }
+      endpoint {
+        url = "https://prometheus.la.fish/api/v1/write"
+      }
+    }

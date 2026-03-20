@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metrics-collector
+  namespace: metrics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metrics-collector
+  template:
+    metadata:
+      labels:
+        app: metrics-collector
+    spec:
+      serviceAccountName: metrics-collector
+      containers:
+        - name: alloy
+          image: grafana/alloy:latest
+          args:
+            - run
+            - /etc/alloy/config.alloy
+            - --storage.path=/tmp/alloy
+            - --server.http.listen-addr=0.0.0.0:12345
+          ports:
+            - containerPort: 12345
+              name: http
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alloy
+      volumes:
+        - name: config
+          configMap:
+            name: alloy-config
