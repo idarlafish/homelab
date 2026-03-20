@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: minecraft
-          image: itzg/minecraft-server
+          image: itzg/minecraft-server:java21
           tty: true
           stdin: true
           imagePullPolicy: Always
@@ -32,6 +32,12 @@ spec:
           envFrom:
             - configMapRef:
                 name: minecraft-cm
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "2"
+            limits:
+              memory: "6Gi"
           volumeMounts:
             - name: minecraft-data
               mountPath: /data

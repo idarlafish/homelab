@@ -100,6 +100,20 @@ OpenTofu: `infra/game-servers/` — uses shared `hcloud-server` module. State ke
 
 When running kubectl for the game-servers cluster, use `KUBECONFIG=.kube/game-servers`.
 
+### Backups
+
+Game server world data is backed up to Cloudflare R2 (`s3://fabler/backups/game-servers/<game>/`). Each game has a `backup-job.yaml` that runs as a k8s Job — requires the game to be scaled to 0 first (RWO volumes).
+
+```bash
+# Backup a game (scales down, backs up, scales back up)
+./scripts/backup-game.sh minecraft
+
+# One-time setup per game namespace (r2-credentials secret)
+source .env && KUBECONFIG=.kube/game-servers kubectl create secret generic r2-credentials \
+  -n <game> --from-literal=access-key-id="$S3_ACCESS_KEY" \
+  --from-literal=secret-access-key="$S3_SECRET_KEY"
+```
+
 ## Kubernetes (tools cluster)
 
 Manifests in `k8s/` are applied to the `tools` k3s cluster only. The cluster runs on Hetzner `cax11` (ARM64) with Cloudflare Tunnel as the ingress (no Traefik). Services exposed publicly: `sleepy-notify.la.fish`, `wg-admin.la.fish`, `booklore.la.fish`.
