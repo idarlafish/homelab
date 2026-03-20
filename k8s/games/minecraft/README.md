@@ -8,15 +8,27 @@ Modded Minecraft server running on the `game-servers` k3s cluster using [itzg/mi
 
 All commands below assume `KUBECONFIG=.kube/game-servers` from the repo root.
 
-## Server Console
+## Server Console (WebSocket)
 
-Use `rcon-cli` to run server commands (e.g. `/lp editor`):
+The server exposes a WebSocket console on port 80 that streams full log output (including chat messages like LuckPerms editor URLs). Connect via `kubectl port-forward` and [websocat](https://github.com/vi/websocat):
 
 ```bash
-KUBECONFIG=.kube/game-servers kubectl exec -it minecraft-0 -n minecraft -- rcon-cli
+# Terminal 1: port-forward
+KUBECONFIG=.kube/game-servers kubectl port-forward minecraft-0 -n minecraft 8080:80
+
+# Terminal 2: connect (password is the RCON_PASSWORD from minecraft-secrets)
+websocat ws://localhost:8080/console -H "Sec-WebSocket-Protocol: mc-server-runner-ws-v1, <password>"
 ```
 
-Ctrl+C exits the console without stopping the server.
+Once connected, type commands directly (e.g. `lp editor`) and see full output including links.
+
+## RCON (quick commands)
+
+For simple commands where you don't need to see chat output:
+
+```bash
+KUBECONFIG=.kube/game-servers kubectl exec minecraft-0 -n minecraft -- rcon-cli "list"
+```
 
 ## View Logs
 
