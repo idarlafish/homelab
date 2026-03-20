@@ -32,6 +32,8 @@ spec:
           limits:
             memory: 512Mi
         enableRemoteWriteReceiver: true
+        externalLabels:
+          cluster: tools
     grafana:
       admin:
         existingSecret: grafana-admin
