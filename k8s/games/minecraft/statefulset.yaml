@@ -18,8 +18,6 @@ spec:
       containers:
         - name: minecraft
           image: itzg/minecraft-server:java21
-          tty: true
-          stdin: true
           imagePullPolicy: Always
           env:
             - name: EULA
