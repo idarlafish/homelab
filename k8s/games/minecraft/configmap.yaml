@@ -28,4 +28,4 @@ data:
   LEVEL: "zagribozha"
   FORCE_GAMEMODE: "false"
   DIFFICULTY: "normal"
-  MEMORY: "4G"
+  MEMORY: "5G"

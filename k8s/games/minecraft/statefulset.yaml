@@ -34,10 +34,10 @@ spec:
                 name: minecraft-cm
           resources:
             requests:
-              memory: "4Gi"
+              memory: "5Gi"
               cpu: "2"
             limits:
-              memory: "6Gi"
+              memory: "7Gi"
           volumeMounts:
             - name: minecraft-data
               mountPath: /data
