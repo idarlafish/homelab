@@ -11,10 +11,12 @@ data:
   MODRINTH_MODPACK: "zagribozha"
   MODRINTH_VERSION: "0.2.1"
   MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
-  MODRINTH_ALLOWED_VERSION_TYPE: "beta"
+  MODRINTH_ALLOWED_VERSION_TYPE: "alpha"
   MODRINTH_PROJECTS: |
     luckperms
     vanilla-permissions
+    c2me-fabric:0.3.0+alpha.0.362+1.21.1
+    noisium
   MODRINTH_FORCE_SYNCHRONIZE: "true"
   ICON: "https://oathcraft.com/minecraft/zagribozha_icon.png"
   OVERRIDE_ICON: "true"
@@ -28,4 +30,5 @@ data:
   LEVEL: "zagribozha"
   FORCE_GAMEMODE: "false"
   DIFFICULTY: "normal"
+  MODE: "spectator"
   MEMORY: "5G"
