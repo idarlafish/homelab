@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: mariadb
-        image: mariadb:11
+        image: mariadb:11.4.5
         env:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
@@ -42,10 +42,10 @@ spec:
           subPath: mariadb
         resources:
           requests:
-            memory: "512Mi"
+            memory: "256Mi"
             cpu: "250m"
           limits:
-            memory: "1Gi"
+            memory: "512Mi"
             cpu: "500m"
       volumes:
       - name: data
