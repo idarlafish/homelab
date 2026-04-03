@@ -24,6 +24,8 @@ spec:
           value: "0"
         - name: APP_GROUP_ID
           value: "0"
+        - name: BOOKLORE_PORT
+          value: "6060"
         - name: DATABASE_URL
           value: "jdbc:mariadb://mariadb:3306/booklore?createDatabaseIfNotExist=true"
         - name: DATABASE_USERNAME
