@@ -18,14 +18,12 @@ spec:
     spec:
       containers:
       - name: booklore
-        image: booklore/booklore:latest
+        image: ghcr.io/grimmory-tools/grimmory:latest
         env:
         - name: APP_USER_ID
           value: "0"
-        - name: APP_GROUP_ID  
+        - name: APP_GROUP_ID
           value: "0"
-        - name: BOOKLORE_PORT
-          value: "6060"
         - name: DATABASE_URL
           value: "jdbc:mariadb://mariadb:3306/booklore?createDatabaseIfNotExist=true"
         - name: DATABASE_USERNAME
@@ -50,10 +48,10 @@ spec:
           mountPath: /bookdrop
         resources:
           requests:
-            memory: "1Gi"
+            memory: "256Mi"
             cpu: "500m"
           limits:
-            memory: "2Gi"
+            memory: "1Gi"
             cpu: "1000m"
       volumes:
       - name: data
