@@ -34,6 +34,15 @@ infra/
 - `wg-admin.la.fish` — WireGuard VPN admin UI
 - `booklore.la.fish` — Booklore e-book manager
 
+### sleepy-notify architecture
+
+A Telegram bot + Mini App for scheduling daily recurring notifications. Backend is [GramIO](https://gramio.dev/) (Telegram Bot API) + [Elysia](https://elysiajs.com/) (HTTP) + [BullMQ](https://docs.bullmq.io/) (Redis-backed cron jobs), compiled to a single Bun binary. Frontend is a Telegram Mini App (SvelteKit, `@sveltejs/adapter-static`), built into `backend/public/` and served by the backend.
+
+- User configs stored in Redis under `user:{userId}:schedule`
+- Notifications are BullMQ repeating jobs with cron patterns; jobs deduplicated by `jobId`
+- Production: Telegram webhook at `/telegram-webhook`; local dev: long polling
+- Cloudflare Tunnel exposes `sleepy-notify.la.fish` → k8s service on the `tools` cluster
+
 ## CI/CD
 
 | Workflow | Trigger |
