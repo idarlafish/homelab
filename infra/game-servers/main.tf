@@ -2,7 +2,7 @@ module "server" {
   source = "../modules/hcloud-server"
 
   name        = "game-servers"
-  server_type = "cpx32"
+  server_type = "cx43"
   location    = var.hcloud_location
   ssh_key_id  = data.hcloud_ssh_key.main.id
   private_ip  = "10.0.1.1"

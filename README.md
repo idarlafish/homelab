@@ -7,7 +7,7 @@ Personal infrastructure monorepo. Manages Hetzner Cloud servers using OpenTofu +
 | Machine | Type | Runtime | Purpose |
 |---|---|---|---|
 | `tools` | cax11 (ARM64) | k3s | sleepy-notify bot, VPN, content services |
-| `game-servers` | cpx32 (AMD) | k3s | Game server cluster |
+| `game-servers` | cx43 (Intel) | k3s | Game server cluster |
 
 ## Structure
 
