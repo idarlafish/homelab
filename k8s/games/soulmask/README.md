@@ -19,6 +19,12 @@ All commands below assume `KUBECONFIG=.kube/game-servers` from the repo root.
 
 ## One-time setup
 
+Create the namespace first so the secrets land in the right place:
+
+```bash
+KUBECONFIG=.kube/game-servers kubectl create namespace soulmask
+```
+
 ### 1. Create the server-password secret
 
 ```bash
@@ -29,7 +35,19 @@ KUBECONFIG=.kube/game-servers kubectl create secret generic soulmask-secrets \
   --from-literal=rconPassword='CHANGE_ME_RCON'
 ```
 
-### 2. Create the R2 credentials secret (for scheduled backups)
+### 2. Create the ghcr pull secret (required — image is private)
+
+The `soulmask-server` image is published as a private package on GHCR. Kubernetes image pull secrets are **namespace-scoped**, so this has to be created in the `soulmask` namespace specifically, even if you already created one elsewhere. The StatefulSet references it as `imagePullSecrets: [{name: ghcr-secret}]`.
+
+```bash
+source .env && KUBECONFIG=.kube/game-servers kubectl create secret docker-registry ghcr-secret \
+  -n soulmask \
+  --docker-server=ghcr.io \
+  --docker-username="$GHCR_USERNAME" \
+  --docker-password="$GHCR_TOKEN"
+```
+
+### 3. Create the R2 credentials secret (for scheduled backups)
 
 ```bash
 source .env && KUBECONFIG=.kube/game-servers kubectl create secret generic r2-credentials \
@@ -38,17 +56,17 @@ source .env && KUBECONFIG=.kube/game-servers kubectl create secret generic r2-cr
   --from-literal=secret-access-key="$S3_SECRET_KEY"
 ```
 
-### 3. Build and push the image
+### 4. Build and push the image
 
 See `apps/soulmask-server/README.md`. Only required once — subsequent Soulmask updates are handled by SteamCMD on pod start, not by image rebuilds.
 
-### 4. Apply the Hetzner firewall rules
+### 5. Apply the Hetzner firewall rules
 
 ```bash
 source .env && cd infra/game-servers && tofu init && tofu plan && tofu apply
 ```
 
-### 5. Apply the manifests
+### 6. Apply the manifests
 
 ```bash
 KUBECONFIG=.kube/game-servers kubectl apply -f k8s/games/soulmask/
