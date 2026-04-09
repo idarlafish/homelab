@@ -13,6 +13,7 @@ resource "hcloud_server" "this" {
   backups     = true
   ssh_keys    = [var.ssh_key_id]
   location    = var.location
+  keep_disk   = true
 
   network {
     network_id = hcloud_network.this.id
