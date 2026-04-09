@@ -4,12 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: "Which environment to destroy (tools, openclaw, or game-servers)"
+        description: "Which environment to destroy (tools or game-servers)"
         required: true
         type: choice
         options:
           - tools
-          - openclaw
           - game-servers
 
 jobs:

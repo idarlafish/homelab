@@ -1,31 +1,31 @@
 # tools
 
-Personal infrastructure monorepo. Manages two Hetzner Cloud ARM64 servers using Terraform + k3s/Docker.
+Personal infrastructure monorepo. Manages Hetzner Cloud servers using OpenTofu + k3s.
 
 ## Machines
 
 | Machine | Type | Runtime | Purpose |
 |---|---|---|---|
 | `tools` | cax11 (ARM64) | k3s | sleepy-notify bot, VPN, content services |
-| `openclaw` | cax11 (ARM64) | Docker | OpenClaw personal AI assistant |
+| `game-servers` | cpx32 (AMD) | k3s | Game server cluster |
 
 ## Structure
 
 ```
 apps/
   sleepy-notify/   Telegram bot + SvelteKit Mini App
-  openclaw/        OpenClaw Docker Compose setup
   vpn/             VPN configuration
-k8s/               Kubernetes manifests (tools cluster)
-  cloudflared/     Cloudflare Tunnel ingress
-  telegram/        sleepy-notify deployment
-  vpn/             WireGuard (wg-easy) + xray
-  content/         booklore + komga
+k8s/               Kubernetes manifests
+  cloudflared/     Cloudflare Tunnel ingress (tools)
+  telegram/        sleepy-notify deployment (tools)
+  vpn/             WireGuard (wg-easy) + xray (tools)
+  content/         booklore + komga (tools)
+  games/           Game server manifests (game-servers)
 infra/
   modules/
     hcloud-server/ Reusable Hetzner server Terraform module
   tools/           tools server (k3s bootstrap)
-  openclaw/        openclaw server (Docker install)
+  game-servers/    game-servers server (k3s bootstrap)
 ```
 
 ## Services
@@ -39,9 +39,9 @@ infra/
 | Workflow | Trigger |
 |---|---|
 | `deploy-tools-infra` | push to `infra/tools/**` or `infra/modules/**` |
-| `deploy-openclaw-infra` | push to `infra/openclaw/**` or `infra/modules/**` |
+| `deploy-game-servers-infra` | push to `infra/game-servers/**` or `infra/modules/**` |
 | `deploy-sleepy-notify` | push to `apps/sleepy-notify/**` |
-| `cleanup` | manual (choose `tools` or `openclaw`) |
+| `cleanup` | manual (choose `tools` or `game-servers`) |
 
 ## Local sleepy-notify deploy (no registry)
 
@@ -58,4 +58,4 @@ This builds the image locally, streams it directly into k3s via `k3s ctr images 
 
 Terraform state stored in Cloudflare R2 bucket `fabler`:
 - `tools/terraform.tfstate`
-- `openclaw/terraform.tfstate`
+- `game-servers/terraform.tfstate`

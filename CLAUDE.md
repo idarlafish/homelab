@@ -4,16 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-A personal infrastructure monorepo managing three Hetzner Cloud servers:
+A personal infrastructure monorepo managing two Hetzner Cloud servers:
 - **tools** — k3s cluster (ARM64, cax11) running sleepy-notify, VPN, and content services
-- **openclaw** — Docker host (ARM64, cax11) running OpenClaw personal AI assistant
 - **game-servers** — k3s cluster (AMD, cpx32) running game servers
 
 ```
 apps/       - Application source code
   sleepy-notify/  - Telegram notification bot + SvelteKit mini-app
   vpn/            - VPN configuration
-  openclaw/       - OpenClaw Docker Compose setup
 k8s/        - Kubernetes manifests
   cloudflared/    - Cloudflare Tunnel (tools cluster, public ingress)
   telegram/       - sleepy-notify bot deployment (tools cluster)
@@ -24,7 +22,6 @@ infra/      - OpenTofu (Hetzner Cloud)
   modules/
     hcloud-server/ - Reusable server module (server, network, base firewall)
   tools/          - tools server config (k3s, cax11)
-  openclaw/       - openclaw server config (Docker, cax11)
   game-servers/   - game-servers server config (k3s, cpx32)
 ```
 
@@ -74,19 +71,6 @@ cd apps/sleepy-notify && docker compose up -d
 ```
 
 The Dockerfile compiles the Bun backend to a single binary (`bun build --compile --target bun-linux-arm64`).
-
-## OpenClaw App
-
-A self-hosted personal AI assistant running on the dedicated `openclaw` server via Docker Compose. Connects to Telegram for interaction.
-
-```bash
-# Local dev / manual deploy
-cp apps/openclaw/.env.example apps/openclaw/.env
-# Fill in OPENCLAW_ANTHROPIC_API_KEY, OPENCLAW_TELEGRAM_BOT_TOKEN
-cd apps/openclaw && docker compose up -d
-```
-
-The `deploy-openclaw-infra` GitHub Actions workflow provisions the server and deploys OpenClaw automatically on push to `infra/openclaw/**`.
 
 ## Game Servers
 
@@ -146,21 +130,15 @@ Copy `.env.example` to `.env` and fill in values. Source with `source .env` befo
 **sleepy-notify local dev** (in `apps/sleepy-notify/backend/.env`):
 - `BOT_TOKEN` (required), `REDIS_HOST` (default: localhost), `REDIS_PORT` (default: 6379), `REDIS_PASSWORD`, `PORT` (default: 3000), `API_URL` / `PUBLIC_DOMAIN`
 
-**OpenClaw** (in `apps/openclaw/.env`, see `.env.example`):
-- `OPENCLAW_AI_PROVIDER`, `OPENCLAW_ANTHROPIC_API_KEY`, `OPENCLAW_TELEGRAM_BOT_TOKEN`
-
 ## Infrastructure (OpenTofu)
 
-Uses OpenTofu (`tofu` CLI, not `terraform`). Three environments share a common `infra/modules/hcloud-server/` module that provisions a server, private network, and base firewall. Each environment adds its own resources on top.
+Uses OpenTofu (`tofu` CLI, not `terraform`). Two environments share a common `infra/modules/hcloud-server/` module that provisions a server, private network, and base firewall. Each environment adds its own resources on top.
 
 ```bash
 source .env
 
 # tools server (k3s)
 cd infra/tools && tofu init && tofu plan   # State key: tools/terraform.tfstate
-
-# openclaw server (Docker)
-cd infra/openclaw && tofu init && tofu plan   # State key: openclaw/terraform.tfstate
 
 # game-servers server (k3s)
 cd infra/game-servers && tofu init && tofu plan   # State key: game-servers/terraform.tfstate
