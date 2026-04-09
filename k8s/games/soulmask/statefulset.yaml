@@ -15,6 +15,9 @@ spec:
       labels:
         app: soulmask
     spec:
+      # Give Soulmask up to 3 minutes to finish saving on pod termination.
+      # entrypoint.sh traps SIGTERM and forwards it to WSServer-Linux-Shipping.
+      terminationGracePeriodSeconds: 180
       securityContext:
         fsGroup: 1000
       imagePullSecrets:
@@ -60,14 +63,26 @@ spec:
               containerPort: 25575
               protocol: TCP
           volumeMounts:
-            - name: soulmask-saves
-              mountPath: /home/steam/soulmask/WS/Saved
+            # PVC holds the whole Soulmask install (game binaries + saves).
+            # SteamCMD auto-update runs on every pod start and writes here.
+            - name: soulmask-data
+              mountPath: /home/steam/soulmask
+          livenessProbe:
+            exec:
+              command: ["pgrep", "-f", "WSServer-Linux-Shipping"]
+            # Cold start can take 3-5 min on a fresh PVC (SteamCMD download),
+            # ~30-60s on subsequent starts. Give steamcmd time to finish before
+            # the liveness probe starts expecting a running game process.
+            initialDelaySeconds: 300
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
   volumeClaimTemplates:
     - metadata:
-        name: soulmask-saves
+        name: soulmask-data
       spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 10Gi
+            storage: 15Gi
         storageClassName: hcloud-volumes
