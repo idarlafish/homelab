@@ -1,0 +1,45 @@
+---
+# ServiceAccount used by the soulmask scheduled restart and backup CronJobs.
+# Grants just enough to scale/restart the StatefulSet and to create/watch
+# backup Jobs in this namespace.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: soulmask-ops
+  namespace: soulmask
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: soulmask-ops
+  namespace: soulmask
+rules:
+  - apiGroups: ["apps"]
+    resources: ["statefulsets"]
+    verbs: ["get", "list", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["statefulsets/scale"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "delete", "watch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: soulmask-ops
+  namespace: soulmask
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: soulmask-ops
+subjects:
+  - kind: ServiceAccount
+    name: soulmask-ops
+    namespace: soulmask

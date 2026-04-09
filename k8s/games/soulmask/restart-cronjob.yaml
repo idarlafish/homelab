@@ -1,0 +1,39 @@
+---
+# Scheduled rollout restart of the soulmask StatefulSet.
+#
+# Runs once per day at 04:00 UTC (low-traffic window) and restarts the pod
+# to keep the Unreal Engine process fresh (memory creep is a known
+# long-running-server issue) and to pick up any Soulmask server patches
+# via the auto-update in entrypoint.sh.
+#
+# RBAC comes from rbac.yaml (ServiceAccount: soulmask-ops).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: soulmask-scheduled-restart
+  namespace: soulmask
+spec:
+  schedule: "0 4 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 3600
+      template:
+        spec:
+          serviceAccountName: soulmask-ops
+          restartPolicy: Never
+          containers:
+            - name: kubectl
+              image: bitnami/kubectl:latest
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -euo pipefail
+                  echo "[$(date -Iseconds)] restarting soulmask statefulset..."
+                  kubectl -n soulmask rollout restart statefulset/soulmask
+                  kubectl -n soulmask rollout status statefulset/soulmask --timeout=10m
+                  echo "[$(date -Iseconds)] restart complete"
