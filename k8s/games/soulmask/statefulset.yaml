@@ -1,0 +1,73 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: soulmask
+  namespace: soulmask
+spec:
+  selector:
+    matchLabels:
+      app: soulmask
+  serviceName: "soulmask"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: soulmask
+    spec:
+      securityContext:
+        fsGroup: 1000
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: soulmask
+          image: ghcr.io/idarlafish/soulmask-server:latest
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: soulmask-cm
+          env:
+            - name: SERVER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: soulmask-secrets
+                  key: serverPassword
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: soulmask-secrets
+                  key: adminPassword
+            - name: RCON_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: soulmask-secrets
+                  key: rconPassword
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "10Gi"
+            limits:
+              cpu: "3500m"
+              memory: "14Gi"
+          ports:
+            - name: gameport
+              containerPort: 27050
+              protocol: UDP
+            - name: queryport
+              containerPort: 27051
+              protocol: UDP
+            - name: rconport
+              containerPort: 25575
+              protocol: TCP
+          volumeMounts:
+            - name: soulmask-saves
+              mountPath: /home/steam/soulmask/WS/Saved
+  volumeClaimTemplates:
+    - metadata:
+        name: soulmask-saves
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: hcloud-volumes

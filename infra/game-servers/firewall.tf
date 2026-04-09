@@ -148,4 +148,28 @@ resource "hcloud_firewall" "servers" {
     source_ips  = ["0.0.0.0/0", "::/0"]
     description = "V Rising: Query server NodePort"
   }
+
+  rule {
+    direction   = "in"
+    protocol    = "udp"
+    port        = "30750"
+    source_ips  = ["0.0.0.0/0", "::/0"]
+    description = "Soulmask: Game server NodePort"
+  }
+
+  rule {
+    direction   = "in"
+    protocol    = "udp"
+    port        = "30751"
+    source_ips  = ["0.0.0.0/0", "::/0"]
+    description = "Soulmask: Query server NodePort"
+  }
+
+  rule {
+    direction   = "in"
+    protocol    = "tcp"
+    port        = "30752"
+    source_ips  = ["0.0.0.0/0", "::/0"]
+    description = "Soulmask: RCON server NodePort"
+  }
 }
