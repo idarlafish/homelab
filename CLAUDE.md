@@ -1,39 +1,8 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Repository Overview
-
-A personal infrastructure monorepo managing two Hetzner Cloud servers:
-- **tools** — k3s cluster (ARM64, cax11) running sleepy-notify, VPN, and content services
-- **game-servers** — k3s cluster (Intel, cx43) running game servers
-
-```
-apps/       - Application source code
-  sleepy-notify/  - Telegram notification bot + SvelteKit mini-app
-  vpn/            - VPN configuration
-k8s/        - Kubernetes manifests
-  cloudflared/    - Cloudflare Tunnel (tools cluster, public ingress)
-  telegram/       - sleepy-notify bot deployment (tools cluster)
-  vpn/            - WireGuard (wg-easy) + xray (tools cluster)
-  content/        - booklore + komga (tools cluster)
-  games/          - Game server manifests (game-servers cluster)
-infra/      - OpenTofu (Hetzner Cloud)
-  modules/
-    hcloud-server/ - Reusable server module (server, network, base firewall)
-  tools/          - tools server config (k3s, cax11)
-  game-servers/   - game-servers server config (k3s, cx43)
-```
+Guidance for Claude Code when working in this repository. See [README.md](README.md) for the high-level overview, machine inventory, directory layout, and app architecture.
 
 ## sleepy-notify App
-
-A Telegram bot + Mini App for scheduling daily recurring notifications. Backend uses BullMQ with Redis for job scheduling (cron-based), GrammY for the Telegram Bot API, and Elysia as the HTTP server. The frontend is a Telegram Mini App (SvelteKit, `@sveltejs/adapter-static`), built and served as static files from `backend/public/`.
-
-**Architecture:**
-- User configs stored in Redis under `user:{userId}:schedule`
-- Notifications scheduled as BullMQ repeating jobs with cron patterns; jobs are deduplicated by `jobId`
-- In production: Telegram webhook at `/telegram-webhook`; in development: long polling
-- Cloudflare Tunnel exposes `sleepy-notify.la.fish` → k8s service
 
 ### Development
 
