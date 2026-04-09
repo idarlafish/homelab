@@ -1,6 +1,6 @@
 # Soulmask Server
 
-[Soulmask](https://store.steampowered.com/app/2646460/Soulmask/) dedicated server running on the `game-servers` k3s cluster, using the custom image built from `apps/soulmask-server/`.
+[Soulmask](https://store.steampowered.com/app/2646460/Soulmask/) dedicated server running on the `game-servers` k3s cluster, using the custom self-contained image built from `apps/soulmask-server/`.
 
 ## At a glance
 
@@ -8,24 +8,28 @@
 - **Query port:** 27051 (UDP, NodePort 30751)
 - **RCON / EchoPort:** 25575 (TCP, NodePort 30752)
 - **Resources:** 10 Gi request / 14 Gi limit — **Soulmask dominates the cx43 when running.** Scale other heavy games (Satisfactory, Palworld) down to 0 before playing.
-- **Storage:** 15 Gi `hcloud-volumes` PVC at `/home/steam/soulmask` — holds both the game binaries (installed via SteamCMD on each pod start) and the save data under `WS/Saved/`.
-- **Auto-update:** `entrypoint.sh` runs SteamCMD on every pod start, so the server picks up Soulmask patches automatically. Set `SKIP_UPDATE=1` in the configmap to pin a version.
-- **Graceful shutdown:** SIGTERM from k8s is trapped and forwarded to `WSServer-Linux-Shipping`; the StatefulSet's `terminationGracePeriodSeconds: 180` gives Soulmask time to flush saves.
-- **Liveness probe:** `pgrep WSServer-Linux-Shipping` (k8s restarts the pod if the game process dies).
-- **Scheduled restart:** CronJob runs `kubectl rollout restart` daily at 04:00 UTC (see `restart-cronjob.yaml`).
-- **Scheduled backup to R2:** CronJob runs every 6 hours — scales down, snapshots `WS/Saved/` to `s3://fabler/backups/game-servers/soulmask/`, scales back up (see `backup-cronjob.yaml`). ~2 min of downtime per cycle.
+- **Storage:** 15 Gi `hcloud-volumes` PVC at `/home/steam/soulmask` — holds both the game binaries (installed via SteamCMD on every pod start) and the save data under `WS/Saved/`.
+- **Auto-update:** SteamCMD runs on every pod (re)start; the daily auto-reboot picks up new Soulmask builds. Set `SKIP_UPDATE=1` in the configmap to pin a version.
+- **Auto-reboot:** In-container supercronic cron — `AUTO_REBOOT_ENABLED=true` + `AUTO_REBOOT_CRON_EXPRESSION=0 4 * * *` (04:00 UTC daily). No k8s CronJob required.
+- **Graceful shutdown:** SIGTERM from k8s → `init.sh` → `start.sh` → `WSServer-Linux-Shipping`. The StatefulSet has `terminationGracePeriodSeconds: 180` to allow the save-on-exit to finish.
+- **Liveness probe:** `pgrep -f WSServer-Linux-Shipping` every 30 s (k8s restarts the pod if the game process dies).
+- **Backups:** Soulmask's own in-game backup (`-backup=960`, roughly every 16 min) writes rollback snapshots into `WS/Saved/` on the PVC. **No off-node backup** — if the PVC is lost, saves are lost. Take manual R2 snapshots if you care.
+
+## Architecture
+
+The image is self-contained (see `apps/soulmask-server/README.md`). All operational logic — auto-reboot, auto-update-on-restart, signal handling — runs inside the container via `init.sh` + `start.sh` + `supercronic`. This namespace has **no k8s CronJobs, no RBAC, no external orchestration** — just Namespace + ConfigMap + Service + StatefulSet + (manually-created) Secrets.
 
 All commands below assume `KUBECONFIG=.kube/game-servers` from the repo root.
 
 ## One-time setup
 
-Create the namespace first so the secrets land in the right place:
+### 1. Create the namespace
 
 ```bash
 KUBECONFIG=.kube/game-servers kubectl create namespace soulmask
 ```
 
-### 1. Create the server-password secret
+### 2. Create the server-password secret
 
 ```bash
 KUBECONFIG=.kube/game-servers kubectl create secret generic soulmask-secrets \
@@ -35,9 +39,9 @@ KUBECONFIG=.kube/game-servers kubectl create secret generic soulmask-secrets \
   --from-literal=rconPassword='CHANGE_ME_RCON'
 ```
 
-### 2. Create the ghcr pull secret (required — image is private)
+### 3. Create the ghcr pull secret
 
-The `soulmask-server` image is published as a private package on GHCR. Kubernetes image pull secrets are **namespace-scoped**, so this has to be created in the `soulmask` namespace specifically, even if you already created one elsewhere. The StatefulSet references it as `imagePullSecrets: [{name: ghcr-secret}]`.
+The `soulmask-server` image is a private GHCR package. Pull secrets are namespace-scoped and must be created here even if you have one in another namespace.
 
 ```bash
 source .env && KUBECONFIG=.kube/game-servers kubectl create secret docker-registry ghcr-secret \
@@ -47,20 +51,13 @@ source .env && KUBECONFIG=.kube/game-servers kubectl create secret docker-regist
   --docker-password="$GHCR_TOKEN"
 ```
 
-### 3. Create the R2 credentials secret (for scheduled backups)
-
-```bash
-source .env && KUBECONFIG=.kube/game-servers kubectl create secret generic r2-credentials \
-  -n soulmask \
-  --from-literal=access-key-id="$S3_ACCESS_KEY" \
-  --from-literal=secret-access-key="$S3_SECRET_KEY"
-```
-
 ### 4. Build and push the image
 
-See `apps/soulmask-server/README.md`. Only required once — subsequent Soulmask updates are handled by SteamCMD on pod start, not by image rebuilds.
+See `apps/soulmask-server/README.md`. Only required on Dockerfile or script changes — Soulmask itself updates at runtime via SteamCMD.
 
 ### 5. Apply the Hetzner firewall rules
+
+`infra/game-servers/firewall.tf` contains rules for NodePorts `30750/udp`, `30751/udp`, `30752/tcp`. Apply once:
 
 ```bash
 source .env && cd infra/game-servers && tofu init && tofu plan && tofu apply
@@ -72,35 +69,33 @@ source .env && cd infra/game-servers && tofu init && tofu plan && tofu apply
 KUBECONFIG=.kube/game-servers kubectl apply -f k8s/games/soulmask/
 ```
 
-First pod start will be slow (~3–5 min while SteamCMD downloads ~5 GB to the PVC). Subsequent starts are ~30–60 s.
+First pod start is slow (~3–5 min SteamCMD download). Subsequent starts are ~30–60 s.
 
-## View logs
+## Day-to-day operations
+
+### View logs
 
 ```bash
 KUBECONFIG=.kube/game-servers kubectl logs -f soulmask-0 -n soulmask
 ```
 
-## Restart
-
-Manual:
+### Restart manually
 
 ```bash
 KUBECONFIG=.kube/game-servers kubectl rollout restart statefulset/soulmask -n soulmask
 ```
 
-Automatic (daily 04:00 UTC): configured in `restart-cronjob.yaml`. Adjust `spec.schedule` and re-apply to change the cadence.
-
-## Scale Down / Up
+### Scale down / up
 
 ```bash
-# Stop (free RAM for other games)
+# Stop (frees RAM for other games)
 KUBECONFIG=.kube/game-servers kubectl scale statefulset soulmask -n soulmask --replicas=0
 
 # Start
 KUBECONFIG=.kube/game-servers kubectl scale statefulset soulmask -n soulmask --replicas=1
 ```
 
-## Apply Config Changes
+### Apply config changes
 
 After editing `configmap.yaml` or `statefulset.yaml`:
 
@@ -109,45 +104,19 @@ KUBECONFIG=.kube/game-servers kubectl apply -f k8s/games/soulmask/
 KUBECONFIG=.kube/game-servers kubectl rollout restart statefulset/soulmask -n soulmask
 ```
 
-## Backups
+### Change the auto-reboot schedule
 
-### Run a backup on demand
+Edit `AUTO_REBOOT_CRON_EXPRESSION` in `configmap.yaml`, reapply, and roll the pod. `init.sh` reads the env var at startup and configures supercronic accordingly. Set `AUTO_REBOOT_ENABLED: "false"` to disable the in-container cron entirely.
 
-```bash
-KUBECONFIG=.kube/game-servers kubectl create job \
-  --from=cronjob/soulmask-scheduled-backup \
-  -n soulmask \
-  soulmask-backup-manual-$(date +%s)
-```
+### Pin a Soulmask version
 
-Check progress with `kubectl logs -f job/soulmask-backup-manual-... -n soulmask`.
+Add `SKIP_UPDATE: "1"` to `configmap.yaml`. `start.sh` will skip the SteamCMD call on next (re)start and launch whatever is already on the PVC.
 
-### Pause scheduled backups temporarily
+## Gameplay tuning
 
-```bash
-KUBECONFIG=.kube/game-servers kubectl patch cronjob soulmask-scheduled-backup \
-  -n soulmask -p '{"spec":{"suspend":true}}'
-```
+Connect to the server as admin (enter `ADMIN_PASSWORD` in the in-game chat / console). Open the GM menu → "Open Coefficient Settings" — you get English-labeled sliders for XP rate, resource yield, invasion frequency, breeding interval, building decay, etc. Changes are written to section 1 of `WS/Saved/GameplaySettings/GameXishu.json` and persist across pod restarts and SteamCMD updates.
 
-Re-enable with `suspend: false`.
-
-### Pin a Soulmask version (skip auto-update)
-
-Edit `configmap.yaml` to add `SKIP_UPDATE: "1"`, reapply, and roll the pod. This keeps whatever build is already on the PVC.
-
-## Update the custom image
-
-Only needed when `apps/soulmask-server/Dockerfile` or `entrypoint.sh` change — **not** when Soulmask releases a server patch.
-
-```bash
-docker buildx build \
-  --platform linux/amd64 \
-  -t ghcr.io/idarlafish/soulmask-server:latest \
-  --push \
-  apps/soulmask-server/
-
-KUBECONFIG=.kube/game-servers kubectl rollout restart statefulset/soulmask -n soulmask
-```
+There are no env vars for gameplay tuning by design — Soulmask's config keys are Chinese-pinyin (`CaiJiDiaoLuoRatio`, `JianZhuFuLanKaiGuan`, etc.) and the in-game menu provides a much friendlier interface than forwarding opaque names via a configmap.
 
 ## Connect via Steam
 
