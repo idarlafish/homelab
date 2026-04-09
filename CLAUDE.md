@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A personal infrastructure monorepo managing two Hetzner Cloud servers:
 - **tools** — k3s cluster (ARM64, cax11) running sleepy-notify, VPN, and content services
-- **game-servers** — k3s cluster (AMD, cpx32) running game servers
+- **game-servers** — k3s cluster (Intel, cx43) running game servers
 
 ```
 apps/       - Application source code
@@ -22,7 +22,7 @@ infra/      - OpenTofu (Hetzner Cloud)
   modules/
     hcloud-server/ - Reusable server module (server, network, base firewall)
   tools/          - tools server config (k3s, cax11)
-  game-servers/   - game-servers server config (k3s, cpx32)
+  game-servers/   - game-servers server config (k3s, cx43)
 ```
 
 ## sleepy-notify App
@@ -74,7 +74,7 @@ The Dockerfile compiles the Bun backend to a single binary (`bun build --compile
 
 ## Game Servers
 
-Kubernetes-based game server infrastructure on a dedicated Hetzner CPX32 (AMD, 4 shared vCPU, 8 GB RAM, 160 GB disk) in `fsn1`. Runs k3s with Hetzner CCM + CSI.
+Kubernetes-based game server infrastructure on a dedicated Hetzner CX43 (Intel, 8 shared vCPU, 16 GB RAM, 160 GB disk) in `fsn1`. Runs k3s with Hetzner CCM + CSI.
 
 **Games:** Minecraft, Valheim, Palworld, Satisfactory, Enshrouded, Foundry, Core Keeper, V Rising. Each runs in its own namespace with NodePort services.
 
