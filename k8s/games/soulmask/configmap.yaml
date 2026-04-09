@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: soulmask-cm
+  namespace: soulmask
+data:
+  GAME_MODE: "pve"
+  SERVER_NAME: "Fabler"
+  SERVER_SLOTS: "8"
+  GAME_PORT: "27050"
+  QUERY_PORT: "27051"
+  RCON_PORT: "25575"
+  SAVING: "600"
+  BACKUP: "960"

@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: soulmask
+  name: soulmask
+  namespace: soulmask
+spec:
+  type: NodePort
+  ports:
+    - name: gameport
+      port: 27050
+      protocol: UDP
+      targetPort: 27050
+      nodePort: 30750
+    - name: queryport
+      port: 27051
+      protocol: UDP
+      targetPort: 27051
+      nodePort: 30751
+    - name: rconport
+      port: 25575
+      protocol: TCP
+      targetPort: 25575
+      nodePort: 30752
+  selector:
+    app: soulmask
