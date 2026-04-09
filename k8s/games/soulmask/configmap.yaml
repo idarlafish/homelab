@@ -5,11 +5,27 @@ metadata:
   name: soulmask-cm
   namespace: soulmask
 data:
+  # --- Server identity and networking (consumed by scripts/start.sh) ---
   GAME_MODE: "pve"
   SERVER_NAME: "Fabler"
   SERVER_SLOTS: "8"
   GAME_PORT: "27050"
   QUERY_PORT: "27051"
   RCON_PORT: "25575"
+  # In-game autosave and in-game backup intervals (seconds). These are
+  # Soulmask's own -saving and -backup flags; the game writes autosaves
+  # and rollback snapshots into WS/Saved/ on the PVC on this cadence.
   SAVING: "600"
   BACKUP: "960"
+  # Set SKIP_UPDATE: "1" to pin the installed version (skip SteamCMD update on start)
+  # SKIP_UPDATE: "0"
+
+  # --- In-container scheduled auto-reboot (consumed by scripts/init.sh) ---
+  # When AUTO_REBOOT_ENABLED is true, scripts/init.sh launches supercronic
+  # inside the container and schedules scripts/auto_reboot.sh to run on
+  # AUTO_REBOOT_CRON_EXPRESSION. auto_reboot.sh sends SIGTERM to PID 1,
+  # which cascades through start.sh → WSServer, saves the world, exits
+  # cleanly, and lets Kubernetes restart the pod. Restart re-runs
+  # SteamCMD, so this doubles as the auto-update mechanism.
+  AUTO_REBOOT_ENABLED: "true"
+  AUTO_REBOOT_CRON_EXPRESSION: "0 4 * * *"   # 04:00 UTC daily (low-traffic)

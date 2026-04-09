@@ -1,8 +1,28 @@
 # soulmask-server
 
-Custom Docker image for the [Soulmask](https://store.steampowered.com/app/2646460/Soulmask/) dedicated server. Minimal: just [`cm2network/steamcmd`](https://hub.docker.com/r/cm2network/steamcmd) + `libatomic1` + `procps` + our `entrypoint.sh`. **The game binaries are not baked into the image** — `entrypoint.sh` installs/updates Steam app `3017300` (native Linux dedicated server) into the PVC on every pod start, so the server auto-updates whenever the pod restarts.
+Custom Docker image for the [Soulmask](https://store.steampowered.com/app/2646460/Soulmask/) dedicated server. The image is **self-contained**: all operational features (game launch, SteamCMD auto-update, graceful shutdown, scheduled auto-reboot via in-container cron) live inside the image. The k8s (or docker-compose) side is just a dumb consumer — set env vars, run the container, done. Pattern inspired by [thijsvanloef/palworld-server-docker](https://github.com/thijsvanloef/palworld-server-docker).
 
-Kubernetes manifests that consume this image live at `k8s/games/soulmask/`.
+## Layout
+
+```
+apps/soulmask-server/
+├── Dockerfile
+├── scripts/
+│   ├── init.sh              # Container PID 1. Signal handler, child orchestration, supercronic launcher.
+│   ├── start.sh             # Runs SteamCMD, launches WSServer-Linux-Shipping, forwards SIGTERM.
+│   ├── helper_functions.sh  # Small shared logging / truthy-parsing helpers.
+│   └── auto_reboot.sh       # Invoked by supercronic on AUTO_REBOOT_CRON_EXPRESSION; sends SIGTERM to PID 1.
+└── README.md
+```
+
+## Features
+
+- **Native Linux build** of Soulmask (Steam app `3017300`). No Proton/Wine.
+- **Auto-update on every (re)start** via SteamCMD `+app_update 3017300 validate`. The game binary lives on the PVC, not in the image, so the image itself rarely needs to be rebuilt.
+- **Graceful shutdown**: `init.sh` traps SIGTERM/SIGINT, cascades to `start.sh`, which cascades to the game process; the server saves and exits cleanly before Kubernetes sends SIGKILL.
+- **In-container scheduled auto-reboot** via [supercronic](https://github.com/aptible/supercronic). When `AUTO_REBOOT_ENABLED=true`, a cron job runs `auto_reboot.sh` on `AUTO_REBOOT_CRON_EXPRESSION` (default `0 4 * * *`, i.e. 04:00 UTC daily). That triggers a clean container exit; Kubernetes' restart policy brings the pod back, which re-runs SteamCMD — so the daily reboot is also the auto-update mechanism.
+- **In-game saving + rollback snapshots** via Soulmask's own `-saving` and `-backup` CLI flags. These write to `WS/Saved/` on the PVC. No off-node backup (by design — we rely on the PVC surviving).
+- **Minimal image**: `cm2network/steamcmd` + `libatomic1` + `procps` + `ca-certificates` + `curl` + `supercronic` + four small shell scripts.
 
 ## Build and push
 
@@ -14,34 +34,57 @@ docker buildx build \
   apps/soulmask-server/
 ```
 
-This should only need to be rebuilt when `entrypoint.sh` or the `Dockerfile` change — not when Soulmask releases a server patch. Game updates happen automatically on the next pod restart.
+Rebuilds are only needed when the Dockerfile or one of the scripts under `scripts/` changes. Soulmask game updates are handled at runtime by SteamCMD and do not require an image rebuild.
 
-## Cold start
+## Cold start timing
 
-- **First pod start on a fresh PVC**: ~3–5 minutes while SteamCMD downloads ~5 GB to the PVC.
-- **Subsequent pod starts**: ~30–60 seconds (SteamCMD validates the existing install and only downloads deltas).
-- **Pin a version** (skip the update) by setting `SKIP_UPDATE=1` on the pod env.
+- **First pod start on a fresh PVC**: ~3–5 min while SteamCMD downloads the game (~1.5–5 GB depending on Soulmask's current build).
+- **Subsequent starts** (PVC already populated): ~30–60 s — SteamCMD validates the existing install and only fetches deltas.
+- Set `SKIP_UPDATE=1` in the configmap to skip SteamCMD entirely and launch whatever is already on the PVC.
 
 ## Runtime env vars
 
-Set in `k8s/games/soulmask/configmap.yaml` unless noted:
+Set in `k8s/games/soulmask/configmap.yaml` unless noted.
 
-| Var | Default | Source | Notes |
-|---|---|---|---|
-| `GAME_MODE` | `pve` | ConfigMap | `pve` or `pvp` |
-| `SERVER_NAME` | `Fabler` | ConfigMap | Steam browser server name |
-| `SERVER_SLOTS` | `8` | ConfigMap | Max players |
-| `GAME_PORT` | `27050` | ConfigMap | UDP |
-| `QUERY_PORT` | `27051` | ConfigMap | UDP |
-| `RCON_PORT` | `25575` | ConfigMap | TCP (EchoPort) |
-| `SAVING` | `600` | ConfigMap | In-game autosave interval (seconds) |
-| `BACKUP` | `960` | ConfigMap | In-game backup interval (seconds) |
-| `SKIP_UPDATE` | `0` | ConfigMap (optional) | Set to `1` to pin the installed version |
-| `STEAM_APP_ID` | `3017300` | ConfigMap (optional) | Override if SteamDB changes the app id |
-| `SERVER_PASSWORD` | — | `soulmask-secrets` | **Required** |
-| `ADMIN_PASSWORD` | — | `soulmask-secrets` | **Required** |
-| `RCON_PASSWORD` | — | `soulmask-secrets` | Required when using RCON |
+### Server identity & networking (consumed by `start.sh`)
 
-## Graceful shutdown
+| Var | Default | Notes |
+|---|---|---|
+| `GAME_MODE` | `pve` | `pve` or `pvp` |
+| `SERVER_NAME` | `Fabler` | Steam browser server name |
+| `SERVER_SLOTS` | `8` | Max players |
+| `GAME_PORT` | `27050` | UDP |
+| `QUERY_PORT` | `27051` | UDP |
+| `RCON_PORT` | `25575` | TCP (Soulmask's EchoPort) |
+| `SAVING` | `600` | In-game autosave interval (seconds) |
+| `BACKUP` | `960` | In-game backup interval (seconds) |
+| `SKIP_UPDATE` | `0` | Set to `1` to pin the installed Soulmask version (skip SteamCMD) |
+| `STEAM_APP_ID` | `3017300` | Override if SteamDB changes the app id |
+| `INSTALL_DIR` | `/home/steam/soulmask` | Where SteamCMD installs the game — matches the PVC mount path |
+| `SERVER_PASSWORD` | — | **Required**, inject via `soulmask-secrets` k8s Secret |
+| `ADMIN_PASSWORD` | — | **Required**, inject via `soulmask-secrets` k8s Secret |
+| `RCON_PASSWORD` | — | Required when using the EchoPort for admin; inject via `soulmask-secrets` |
 
-`entrypoint.sh` traps `SIGTERM` / `SIGINT` and forwards them to the `WSServer-Linux-Shipping` process, then `wait`s for it to exit. The StatefulSet sets `terminationGracePeriodSeconds: 180` so Kubernetes gives Soulmask up to 3 minutes to flush saves before a forced kill.
+### Scheduled auto-reboot (consumed by `init.sh`)
+
+| Var | Default | Notes |
+|---|---|---|
+| `AUTO_REBOOT_ENABLED` | `true` (in configmap) | Set to any of `1/true/on/yes` to enable. If disabled, supercronic is not launched. |
+| `AUTO_REBOOT_CRON_EXPRESSION` | `0 4 * * *` | Standard 5-field cron. Any expression supercronic accepts. |
+
+## Graceful shutdown chain
+
+```
+k8s SIGTERM → init.sh (PID 1)
+               └─ trap: kill -TERM $MAIN_PID
+                        └─ start.sh
+                               └─ trap: kill -TERM $GAME_PID
+                                        └─ WSServer-Linux-Shipping
+                                             (saves to WS/Saved/, exits)
+                                        wait $GAME_PID
+                               exits
+                        wait $MAIN_PID
+               exits
+```
+
+The StatefulSet in `k8s/games/soulmask/statefulset.yaml` sets `terminationGracePeriodSeconds: 180`, so Kubernetes gives this chain up to 3 minutes before SIGKILLing the pod. Soulmask's save-on-exit is fast in practice (a few seconds) but that budget leaves room for slow disk flushes during scheduled reboots.
