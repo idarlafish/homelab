@@ -74,7 +74,7 @@ The Dockerfile compiles the Bun backend to a single binary (`bun build --compile
 
 ## Game Servers
 
-Kubernetes-based game server infrastructure on a dedicated Hetzner CPX32 (AMD, 8 vCPU, 16GB RAM) in `fsn1`. Runs k3s with Hetzner CCM + CSI.
+Kubernetes-based game server infrastructure on a dedicated Hetzner CPX32 (AMD, 4 shared vCPU, 8 GB RAM, 160 GB disk) in `fsn1`. Runs k3s with Hetzner CCM + CSI.
 
 **Games:** Minecraft, Valheim, Palworld, Satisfactory, Enshrouded, Foundry, Core Keeper, V Rising. Each runs in its own namespace with NodePort services.
 
