@@ -10,7 +10,11 @@ Guidance for Claude Code. See [README.md](README.md) for overview, machine inven
   - `game-servers` → `KUBECONFIG=.kube/game-servers`
 - **`tools` is ARM64** (Hetzner cax11) — k8s manifests and images for that cluster need `arm64`. **`game-servers` is Intel/amd64** (cx43).
 - **No Traefik / no Ingress resources** on tools — Cloudflare Tunnel is the only ingress. Expose services via `Service` + a tunnel route.
-- **Images come from `ghcr.io/idarlafish/`** using the `ghcr-secret` pull secret. Reference that secret in every new deployment that pulls a private image.
+- **Images come from `ghcr.io/idarlafish/`** using the `ghcr-secret` pull secret. Reference it as `imagePullSecrets: [{name: ghcr-secret}]` in every deployment that pulls a private image, **and** create the secret per-namespace (image pull secrets are namespace-scoped, not cluster-scoped) with:
+  ```
+  kubectl create secret docker-registry ghcr-secret -n <ns> \
+    --docker-server=ghcr.io --docker-username="$GHCR_USERNAME" --docker-password="$GHCR_TOKEN"
+  ```
 - **Commits:** never add `Co-Authored-By`.
 
 ## Environment
