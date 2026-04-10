@@ -58,9 +58,12 @@ Set in `k8s/games/soulmask/configmap.yaml` unless noted.
 | `RCON_PORT` | `25575` | TCP (Soulmask's EchoPort) |
 | `SAVING` | `600` | In-game autosave interval (seconds) |
 | `BACKUP` | `960` | In-game backup interval (seconds) |
+| `GAME_WORLD` | `Level01_Main` | Map to load: `Level01_Main` (base game) or `DLC_Level01_Main` (Shifting Sands DLC) |
 | `SKIP_UPDATE` | `0` | Set to `1` to pin the installed Soulmask version (skip SteamCMD) |
 | `STEAM_APP_ID` | `3017300` | Override if SteamDB changes the app id |
 | `INSTALL_DIR` | `/home/steam/soulmask` | Where SteamCMD installs the game — matches the PVC mount path |
+| `CROSS_SERVER_MAIN_PORT` | — | Port the main server advertises for cross-server linkage (`-mainserverport` flag). Only set when running two map instances. |
+| `CROSS_SERVER_CONNECT` | — | Address (`host:port`) a child server uses to connect to the main (`-clientserverconnect` flag). |
 | `SERVER_PASSWORD` | — | **Required**, inject via `soulmask-secrets` k8s Secret |
 | `ADMIN_PASSWORD` | — | **Required**, inject via `soulmask-secrets` k8s Secret |
 | `RCON_PASSWORD` | — | Required when using the EchoPort for admin; inject via `soulmask-secrets` |

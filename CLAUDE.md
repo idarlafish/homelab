@@ -16,6 +16,7 @@ Guidance for Claude Code. See [README.md](README.md) for overview, machine inven
     --docker-server=ghcr.io --docker-username="$GHCR_USERNAME" --docker-password="$GHCR_TOKEN"
   ```
 - **Commits:** never add `Co-Authored-By`.
+- **New env vars must be documented** in both the image's `README.md` (env var table) and the k8s game's `README.md` (runbook). If the var is added to `configmap.yaml`, add an inline `# comment` explaining it.
 
 ## Environment
 
