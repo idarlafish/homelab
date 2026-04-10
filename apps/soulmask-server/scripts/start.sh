@@ -23,6 +23,7 @@ BACKUP="${BACKUP:-960}"
 INSTALL_DIR="${INSTALL_DIR:-/home/steam/soulmask}"
 SKIP_UPDATE="${SKIP_UPDATE:-0}"
 STEAM_APP_ID="${STEAM_APP_ID:-3017300}"
+GAME_WORLD="${GAME_WORLD:-Level01_Main}"       # Level01_Main (base) or DLC_Level01_Main (Shifting Sands DLC)
 
 if [[ -z "${SERVER_PASSWORD:-}" || -z "${ADMIN_PASSWORD:-}" ]]; then
   log_err start "SERVER_PASSWORD and ADMIN_PASSWORD are required (inject via k8s Secret)"
@@ -51,7 +52,7 @@ if [[ ! -x ./WS/Binaries/Linux/WSServer-Linux-Shipping ]]; then
   exit 1
 fi
 
-log start "starting server: name='${SERVER_NAME}' mode=${GAME_MODE} slots=${SERVER_SLOTS}"
+log start "starting server: name='${SERVER_NAME}' mode=${GAME_MODE} slots=${SERVER_SLOTS} world=${GAME_WORLD}"
 log start "ports: game=${GAME_PORT}/udp query=${QUERY_PORT}/udp rcon=${RCON_PORT}/tcp"
 
 # --- Graceful shutdown: forward SIGTERM / SIGINT to the game and wait for
@@ -70,8 +71,21 @@ shutdown_handler() {
 }
 trap shutdown_handler SIGTERM SIGINT
 
+# Build the launch argument list. Cross-server flags are only appended if
+# their env vars are set, so single-server deploys don't see them at all.
+EXTRA_ARGS=""
+if [[ -n "${CROSS_SERVER_MAIN_PORT:-}" ]]; then
+  EXTRA_ARGS="${EXTRA_ARGS} -mainserverport=${CROSS_SERVER_MAIN_PORT}"
+  log start "cross-server: main server port ${CROSS_SERVER_MAIN_PORT}"
+fi
+if [[ -n "${CROSS_SERVER_CONNECT:-}" ]]; then
+  EXTRA_ARGS="${EXTRA_ARGS} -clientserverconnect=${CROSS_SERVER_CONNECT}"
+  log start "cross-server: connecting to main at ${CROSS_SERVER_CONNECT}"
+fi
+
+# shellcheck disable=SC2086
 ./WS/Binaries/Linux/WSServer-Linux-Shipping \
-  WS Level01_Main \
+  WS "${GAME_WORLD}" \
   -server \
   -log \
   -UTF8Output \
@@ -86,6 +100,9 @@ trap shutdown_handler SIGTERM SIGINT
   -saving="${SAVING}" \
   -backup="${BACKUP}" \
   -MULTIHOME=0.0.0.0 \
+  -online=Steam \
+  -forcepassthrough \
+  ${EXTRA_ARGS} \
   &
 
 GAME_PID=$!
