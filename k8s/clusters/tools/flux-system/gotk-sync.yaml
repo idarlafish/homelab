@@ -21,7 +21,7 @@ metadata:
 spec:
   interval: 10m0s
   path: ./k8s/clusters/tools
-  prune: true
+  prune: false  # intentional — see CLAUDE.md footguns; re-patch after bootstrap
   sourceRef:
     kind: GitRepository
     name: flux-system
