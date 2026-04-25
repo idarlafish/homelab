@@ -9,7 +9,7 @@ spec:
     matchLabels:
       app: vrising
   serviceName: "vrising"
-  replicas: 1
+  replicas: 0
   template:
     metadata:
       labels:
