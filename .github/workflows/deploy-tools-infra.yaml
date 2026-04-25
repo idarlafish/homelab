@@ -103,7 +103,7 @@ jobs:
             --owner=idarlafish \
             --repository=tools \
             --branch=main \
-            --path=k8s/flux-system \
+            --path=k8s/clusters/tools \
             --personal \
             --token-auth
         env:
