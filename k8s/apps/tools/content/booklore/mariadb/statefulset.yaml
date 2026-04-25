@@ -36,6 +36,23 @@ spec:
         ports:
         - containerPort: 3306
           name: mysql
+        startupProbe:
+          exec:
+            command: ["sh", "-c", 'mariadb-admin ping -uroot -p"$MYSQL_ROOT_PASSWORD"']
+          periodSeconds: 5
+          failureThreshold: 30  # ~2.5 min startup budget (first-init + InnoDB warmup)
+        livenessProbe:
+          exec:
+            command: ["sh", "-c", 'mariadb-admin ping -uroot -p"$MYSQL_ROOT_PASSWORD"']
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command: ["sh", "-c", 'mariadb-admin ping -uroot -p"$MYSQL_ROOT_PASSWORD"']
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql

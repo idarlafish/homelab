@@ -39,6 +39,26 @@ spec:
         - containerPort: 6060
           name: http
           protocol: TCP
+        startupProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 6060
+          periodSeconds: 5
+          failureThreshold: 36  # ~3 min startup budget (Spring Boot + JVM warmup)
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 6060
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 6060
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
         volumeMounts:
         - name: data
           mountPath: /app/data
