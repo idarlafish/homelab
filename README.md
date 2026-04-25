@@ -12,27 +12,41 @@ Personal infrastructure monorepo. Manages Hetzner Cloud servers using OpenTofu +
 ## Structure
 
 ```
-apps/
-  sleepy-notify/   Telegram bot + SvelteKit Mini App
-  vpn/             VPN configuration
-k8s/               Kubernetes manifests
-  cloudflared/     Cloudflare Tunnel ingress (tools)
-  telegram/        sleepy-notify deployment (tools)
-  vpn/             WireGuard (wg-easy) + xray (tools)
-  content/         booklore + komga (tools)
-  games/           Game server manifests (game-servers)
+apps/                              # source code (NOT k8s manifests — see k8s/ for those)
+  sleepy-notify/                   # Telegram bot + SvelteKit Mini App
+  vpn/                             # VPN configuration
+
+k8s/                               # GitOps tree, both clusters managed by Flux
+  clusters/
+    tools/                         # tools cluster Flux bootstrap (--path=k8s/clusters/tools)
+    game-servers/                  # game-servers cluster Flux bootstrap
+  apps/
+    tools/                         # cloudflared, content/booklore, monitoring stack, telegram, vpn
+    game-servers/                  # 9 games (default replicas: 0) + Grafana Alloy metrics agent
+  infrastructure/
+    base/                          # shared by both clusters: hcloud HelmRepository, hetzner-csi, hetzner-ccm, coredns-patch
+    tools/                         # tools-only: prometheus-community, monitoring namespace
+    game-servers/                  # overlay (just inherits ../base for now)
+  secrets/
+    .sops.yaml                     # SOPS config — recipient + encrypted_regex
+    tools/                         # SOPS-encrypted secrets for tools workloads
+    game-servers/                  # SOPS-encrypted secrets for game workloads
+
 infra/
   modules/
-    hcloud-server/ Reusable Hetzner server Terraform module
-  tools/           tools server (k3s bootstrap)
-  game-servers/    game-servers server (k3s bootstrap)
+    hcloud-server/                 # Reusable Hetzner server Terraform module
+  tools/                           # tools server (k3s bootstrap)
+  game-servers/                    # game-servers server (k3s bootstrap)
 ```
+
+See [CLAUDE.md](CLAUDE.md) for the operating model: how to start/stop a game, add a SOPS secret, run a backup, and avoid the Flux prune cascade.
 
 ## Services
 
 - `sleepy-notify.la.fish` — Telegram bot web app
-- `wg-admin.la.fish` — WireGuard VPN admin UI
 - `booklore.la.fish` — Booklore e-book manager
+- `prometheus.la.fish` — tools-cluster Prometheus (game-servers metrics-collector ships here)
+- ~~`wg-admin.la.fish`~~ — WireGuard parked: PVC was on `local-path` SC and lost during the multi-cluster Flux refactor; configs need to be regenerated before re-enabling. See `k8s/apps/tools/vpn/wg-easy/`.
 
 ### sleepy-notify architecture
 
@@ -47,10 +61,12 @@ A Telegram bot + Mini App for scheduling daily recurring notifications. Backend 
 
 | Workflow | Trigger |
 |---|---|
-| `deploy-tools-infra` | push to `infra/tools/**` or `infra/modules/**` |
+| `deploy-tools-infra` | push to `infra/tools/**` or `infra/modules/**` (re-runs `flux bootstrap` against `k8s/clusters/tools`) |
 | `deploy-game-servers-infra` | push to `infra/game-servers/**` or `infra/modules/**` |
 | `deploy-sleepy-notify` | push to `apps/sleepy-notify/**` |
 | `cleanup` | manual (choose `tools` or `game-servers`) |
+
+**Most app/manifest changes don't need CI** — Flux watches `main` and reconciles directly. Only Tofu / image-build changes go through GitHub Actions.
 
 ## Local sleepy-notify deploy (no registry)
 
