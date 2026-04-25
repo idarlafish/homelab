@@ -14,7 +14,7 @@
 - **Graceful shutdown:** SIGTERM from k8s → `init.sh` → `start.sh` → `WSServer-Linux-Shipping`. The StatefulSet has `terminationGracePeriodSeconds: 180` to allow the save-on-exit to finish.
 - **Liveness probe:** `pgrep -f WSServer-Linux-Shipping` every 30 s (k8s restarts the pod if the game process dies).
 - **Backups:** Soulmask's own in-game backup (`-backup=960`, roughly every 16 min) writes rollback snapshots into `WS/Saved/` on the PVC. **No off-node backup** — if the PVC is lost, saves are lost. Take manual R2 snapshots if you care.
-- **Map:** `GAME_WORLD=Level01_Main` (base game). Set to `DLC_Level01_Main` for the Shifting Sands DLC.
+- **Map:** `GAME_WORLD=DLC_Level01_Main` (Shifting Sands DLC). Set to `Level01_Main` to switch back to the base game — saves are per-map under `WS/Saved/Worlds/Dedicated/<MapName>/`, so switching is non-destructive.
 - **Cross-server:** Set `CROSS_SERVER_MAIN_PORT` + `CROSS_SERVER_CONNECT` in configmap to link two map instances. See `apps/soulmask-server/README.md` for details.
 
 ## Architecture

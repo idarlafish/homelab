@@ -75,6 +75,56 @@ Set in `k8s/games/soulmask/configmap.yaml` unless noted.
 | `AUTO_REBOOT_ENABLED` | `true` (in configmap) | Set to any of `1/true/on/yes` to enable. If disabled, supercronic is not launched. |
 | `AUTO_REBOOT_CRON_EXPRESSION` | `0 4 * * *` | Standard 5-field cron. Any expression supercronic accepts. |
 
+## SteamCMD failure recovery
+
+SteamCMD periodically wedges itself with:
+
+```
+Error! App '3017300' state is 0x6 after update job.
+```
+
+State `0x6` means the Steam client state machine thinks the install is simultaneously "update required" (`0x2`) and "fully installed" (`0x4`) — a contradiction that `+app_update … validate` cannot fix on its own, because validate exits immediately with the same `0x6`. Common triggers:
+
+- A prior update was interrupted (pod killed mid-download, SIGKILL at end of `terminationGracePeriodSeconds`, node reboot).
+- Steam published a new Soulmask build midway through our download.
+- Stale scratch space under `steamapps/downloading/` or `steamapps/temp/`.
+- A corrupt `~/Steam/appcache/appinfo.vdf`.
+- Rarely: a stuck `steamapps/appmanifest_3017300.acf` disagreeing with the on-disk tree.
+
+The manual fix (documented on the [SCP:SL server techwiki](https://techwiki.scpslgame.com/) and reproduced in many community threads) is to delete the stuck appmanifest and re-run. `start.sh` automates that with an escalating retry loop so a transient 0x6 no longer produces a 3-day CrashLoopBackOff:
+
+| Attempt | Cleanup before SteamCMD is invoked |
+|---|---|
+| 1 | `rm -rf steamapps/downloading steamapps/temp` |
+| 2 | everything from attempt 1, plus `rm -f steamapps/appmanifest_${STEAM_APP_ID}.acf` |
+| 3 | everything from attempt 2, plus `rm -f ~/Steam/appcache/appinfo.vdf` |
+
+After the third failure the script exits non-zero and Kubernetes surfaces the issue as CrashLoopBackOff — at that point it is almost certainly *not* a cache-corruption issue (network outage, Steam down, Soulmask depot pulled, etc.) and needs human attention.
+
+Tunables live at the top of the SteamCMD block in `scripts/start.sh`:
+
+| Constant | Default | Notes |
+|---|---|---|
+| `STEAMCMD_MAX_ATTEMPTS` | `3` | Total attempts, not extra retries. Set to `1` to disable the retry loop entirely. |
+| `STEAMCMD_RETRY_SLEEP` | `30` | Seconds between attempts. Short enough to stay inside k8s' liveness-probe `initialDelaySeconds` budget (300s) on a warm PVC. |
+
+### Interpreting the logs
+
+During a recovery cycle you will see lines like:
+
+```
+[soulmask] [start] SteamCMD attempt 1/3
+…
+[soulmask] [start] ERR: SteamCMD attempt 1 failed (exit 8)
+[soulmask] [start] recovery: removing stuck appmanifest_3017300.acf
+[soulmask] [start] sleeping 30s before retry
+[soulmask] [start] SteamCMD attempt 2/3
+…
+[soulmask] [start] SteamCMD update complete
+```
+
+If you see all three attempts fail, check `kubectl logs` for the SteamCMD stdout between the retry banners — that is the real error (network, auth, Steam outage). The retry loop exists to eat transient cache corruption, not to paper over genuine failures.
+
 ## Graceful shutdown chain
 
 ```
