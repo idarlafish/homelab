@@ -1,0 +1,89 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: booklore-backup
+  namespace: booklore
+spec:
+  schedule: "0 3 * * *"  # daily 03:00 UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: OnFailure
+          initContainers:
+            - name: mysqldump
+              image: mariadb:11.4.5
+              command: ["sh", "-c"]
+              args:
+                - |
+                  set -e
+                  mariadb-dump -h mariadb -uroot -p"$MYSQL_ROOT_PASSWORD" \
+                    --single-transaction --routines --triggers --all-databases \
+                    > /backup/db.sql
+                  echo "Dump size: $(du -h /backup/db.sql | cut -f1)"
+              env:
+                - name: MYSQL_ROOT_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: booklore-db
+                      key: mysql-root-password
+              volumeMounts:
+                - name: scratch
+                  mountPath: /backup
+          containers:
+            - name: backup
+              image: amazon/aws-cli:latest
+              command: ["sh", "-c"]
+              args:
+                - |
+                  set -e
+                  TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
+                  DOW=$(date -u +%u)  # 1=Mon..7=Sun
+
+                  echo "==> tar (db.sql + books + config; skip mariadb raw files)"
+                  tar czf /tmp/backup.tar.gz -C /backup db.sql -C /pvc books config
+                  echo "Archive size: $(du -h /tmp/backup.tar.gz | cut -f1)"
+
+                  echo "==> upload daily"
+                  aws s3 cp /tmp/backup.tar.gz \
+                    "s3://fabler/backups/tools/booklore/daily/${TIMESTAMP}.tar.gz" \
+                    --endpoint-url "$AWS_ENDPOINT_URL"
+
+                  if [ "$DOW" = "7" ]; then
+                    echo "==> Sunday: also upload weekly"
+                    aws s3 cp /tmp/backup.tar.gz \
+                      "s3://fabler/backups/tools/booklore/weekly/${TIMESTAMP}.tar.gz" \
+                      --endpoint-url "$AWS_ENDPOINT_URL"
+                  fi
+                  echo "==> done"
+              env:
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: r2-credentials
+                      key: access-key-id
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: r2-credentials
+                      key: secret-access-key
+                - name: AWS_ENDPOINT_URL
+                  value: "https://95c5c6e1c01ea2d0c9fab69ee9e28462.r2.cloudflarestorage.com"
+              volumeMounts:
+                - name: data
+                  mountPath: /pvc
+                  readOnly: true
+                - name: scratch
+                  mountPath: /backup
+                  readOnly: true
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: booklore-books
+            - name: scratch
+              emptyDir: {}
