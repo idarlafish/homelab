@@ -11,3 +11,4 @@ resources:
   - palworld.yaml
   - satisfactory.yaml
   - valheim.yaml
+  - metrics.yaml
