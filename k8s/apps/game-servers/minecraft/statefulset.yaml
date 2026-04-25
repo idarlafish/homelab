@@ -42,18 +42,23 @@ spec:
           volumeMounts:
             - name: minecraft-data
               mountPath: /data
+          startupProbe:
+            exec:
+              command: ["mc-monitor", "status", "--host", "localhost", "--port", "25565"]
+            periodSeconds: 10
+            failureThreshold: 60  # ~10 min: mod-pack jar download + Forge boot can be slow
+          livenessProbe:
+            exec:
+              command: ["mc-monitor", "status", "--host", "localhost", "--port", "25565"]
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
           readinessProbe:
             exec:
-              command:
-                - mc-monitor
-                - status
-                - --host
-                - localhost
-                - --port
-                - "25565"
-            initialDelaySeconds: 30
+              command: ["mc-monitor", "status", "--host", "localhost", "--port", "25565"]
             periodSeconds: 5
-            failureThreshold: 18
+            timeoutSeconds: 5
+            failureThreshold: 3
   volumeClaimTemplates:
     - metadata:
         name: minecraft-data
