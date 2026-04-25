@@ -14,13 +14,13 @@ set -euo pipefail
 #   source .env && KUBECONFIG=.kube/game-servers kubectl create secret generic r2-credentials \
 #     -n <game> --from-literal=access-key-id="$S3_ACCESS_KEY" \
 #     --from-literal=secret-access-key="$S3_SECRET_KEY"
-# - backup-job.yaml in k8s/games/<game>/
+# - backup-job.yaml in k8s/apps/game-servers/<game>/
 
 GAME="${1:?Usage: $0 <game>}"
 KUBECONFIG="${KUBECONFIG:-$(git rev-parse --show-toplevel)/.kube/game-servers}"
 export KUBECONFIG
 
-MANIFEST="$(git rev-parse --show-toplevel)/k8s/games/${GAME}/backup-job.yaml"
+MANIFEST="$(git rev-parse --show-toplevel)/k8s/apps/game-servers/${GAME}/backup-job.yaml"
 if [[ ! -f "$MANIFEST" ]]; then
   echo "Error: $MANIFEST not found"
   exit 1

@@ -43,7 +43,7 @@ Backs up world data to Cloudflare R2. Scales the server down first (required for
 After editing `configmap.yaml` or `statefulset.yaml`:
 
 ```bash
-KUBECONFIG=.kube/game-servers kubectl apply -f k8s/games/minecraft/
+KUBECONFIG=.kube/game-servers kubectl apply -f k8s/apps/game-servers/minecraft/
 KUBECONFIG=.kube/game-servers kubectl rollout restart statefulset/minecraft -n minecraft
 ```
 

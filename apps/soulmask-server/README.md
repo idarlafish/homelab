@@ -44,7 +44,7 @@ Rebuilds are only needed when the Dockerfile or one of the scripts under `script
 
 ## Runtime env vars
 
-Set in `k8s/games/soulmask/configmap.yaml` unless noted.
+Set in `k8s/apps/game-servers/soulmask/configmap.yaml` unless noted.
 
 ### Server identity & networking (consumed by `start.sh`)
 
@@ -140,4 +140,4 @@ k8s SIGTERM → init.sh (PID 1)
                exits
 ```
 
-The StatefulSet in `k8s/games/soulmask/statefulset.yaml` sets `terminationGracePeriodSeconds: 180`, so Kubernetes gives this chain up to 3 minutes before SIGKILLing the pod. Soulmask's save-on-exit is fast in practice (a few seconds) but that budget leaves room for slow disk flushes during scheduled reboots.
+The StatefulSet in `k8s/apps/game-servers/soulmask/statefulset.yaml` sets `terminationGracePeriodSeconds: 180`, so Kubernetes gives this chain up to 3 minutes before SIGKILLing the pod. Soulmask's save-on-exit is fast in practice (a few seconds) but that budget leaves room for slow disk flushes during scheduled reboots.

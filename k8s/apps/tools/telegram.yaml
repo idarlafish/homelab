@@ -9,7 +9,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./k8s/telegram
+  path: ./k8s/apps/tools/telegram
   prune: true
   wait: true
   timeout: 5m
