@@ -57,4 +57,4 @@ cd infra/game-servers && tofu init && tofu plan
 ./scripts/backup-game.sh <game>   # scales to 0, backs up to R2, scales back up
 ```
 
-See `k8s/games/minecraft/README.md` for the model runbook pattern — replicate it for other games as needed.
+See `k8s/apps/game-servers/minecraft/README.md` for the model runbook pattern — replicate it for other games as needed.

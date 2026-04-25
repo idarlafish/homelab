@@ -7,7 +7,7 @@
 - **Game port:** 27050 (UDP, NodePort 30750)
 - **Query port:** 27051 (UDP, NodePort 30751)
 - **RCON / EchoPort:** 25575 (TCP, NodePort 30752)
-- **Resources:** 10 Gi request / 14 Gi limit — **Soulmask dominates the cx43 when running.** Scale other heavy games (Satisfactory, Palworld) down to 0 before playing.
+- **Resources:** 10 Gi request / 14 Gi limit — **Soulmask dominates the cx43 when running.** All game StatefulSets default to `replicas: 0` in their manifests, so this is normally a non-issue — just confirm no other heavy game (Satisfactory, Palworld) is currently scaled up.
 - **Storage:** 15 Gi `hcloud-volumes` PVC at `/home/steam/soulmask` — holds both the game binaries (installed via SteamCMD on every pod start) and the save data under `WS/Saved/`.
 - **Auto-update:** SteamCMD runs on every pod (re)start; the daily auto-reboot picks up new Soulmask builds. Set `SKIP_UPDATE=1` in the configmap to pin a version.
 - **Auto-reboot:** In-container supercronic cron — `AUTO_REBOOT_ENABLED=true` + `AUTO_REBOOT_CRON_EXPRESSION=0 4 * * *` (04:00 UTC daily). No k8s CronJob required.
@@ -68,7 +68,7 @@ source .env && cd infra/game-servers && tofu init && tofu plan && tofu apply
 ### 6. Apply the manifests
 
 ```bash
-KUBECONFIG=.kube/game-servers kubectl apply -f k8s/games/soulmask/
+KUBECONFIG=.kube/game-servers kubectl apply -f k8s/apps/game-servers/soulmask/
 ```
 
 First pod start is slow (~3–5 min SteamCMD download). Subsequent starts are ~30–60 s.
@@ -102,7 +102,7 @@ KUBECONFIG=.kube/game-servers kubectl scale statefulset soulmask -n soulmask --r
 After editing `configmap.yaml` or `statefulset.yaml`:
 
 ```bash
-KUBECONFIG=.kube/game-servers kubectl apply -f k8s/games/soulmask/
+KUBECONFIG=.kube/game-servers kubectl apply -f k8s/apps/game-servers/soulmask/
 KUBECONFIG=.kube/game-servers kubectl rollout restart statefulset/soulmask -n soulmask
 ```
 

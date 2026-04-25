@@ -77,7 +77,7 @@ echo "Updating Kubernetes deployment image..."
 kubectl -n telegram set image deployment/sleepy-notify-bot bot="${FULL_IMAGE}"
 
 echo "Waiting for rollout to complete..."
-kubectl -n telegram apply -f k8s/telegram/deployment.yaml
+kubectl -n telegram apply -f k8s/apps/tools/telegram/deployment.yaml
 # kubectl -n telegram rollout status deployment/sleepy-notify-bot
 
 echo "sleepy-notify deployed with image ${FULL_IMAGE}"
