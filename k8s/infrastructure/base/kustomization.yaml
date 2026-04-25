@@ -1,0 +1,10 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Shared infrastructure manifests applied to both tools and game-servers
+# clusters. Add resources here only if they're identical for both clusters.
+resources:
+  - coredns-patch.yaml
+  - helm-repos.yaml
+  - hetzner-ccm.yaml
+  - hetzner-csi.yaml
