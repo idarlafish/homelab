@@ -37,11 +37,12 @@ spec:
                   mountPath: /backup
           containers:
             - name: backup
-              image: amazon/aws-cli:latest
+              image: alpine:latest
               command: ["sh", "-c"]
               args:
                 - |
                   set -e
+                  apk add --no-cache aws-cli tar
                   TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
                   DOW=$(date -u +%u)  # 1=Mon..7=Sun
 
