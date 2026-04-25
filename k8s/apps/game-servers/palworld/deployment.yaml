@@ -44,6 +44,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: palworld-cm
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "14Gi"
+            limits:
+              cpu: "4"
+              memory: "14Gi"
           volumeMounts:
             - mountPath: /palworld
               name: datadir

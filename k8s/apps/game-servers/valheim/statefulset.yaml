@@ -28,6 +28,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: valheim-cm
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "4Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
           ports:
             - name: gameport
               containerPort: 2456

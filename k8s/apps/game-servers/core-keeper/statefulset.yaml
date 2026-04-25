@@ -38,6 +38,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: core-keeper-cm
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "2Gi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
           ports:
             - name: game
               containerPort: 30668

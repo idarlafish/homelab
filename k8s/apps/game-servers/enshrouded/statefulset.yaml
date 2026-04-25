@@ -28,6 +28,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: enshrouded-cm
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "12Gi"
+            limits:
+              cpu: "4"
+              memory: "12Gi"
           ports:
             - name: "game"
               containerPort: 15637
