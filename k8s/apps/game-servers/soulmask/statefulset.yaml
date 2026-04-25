@@ -67,14 +67,24 @@ spec:
             # SteamCMD auto-update runs on every pod start and writes here.
             - name: soulmask-data
               mountPath: /home/steam/soulmask
-          livenessProbe:
+          startupProbe:
             exec:
               command: ["pgrep", "-f", "WSServer-Linux-Shipping"]
             # Cold start can take 3-5 min on a fresh PVC (SteamCMD download),
-            # ~30-60s on subsequent starts. Give steamcmd time to finish before
-            # the liveness probe starts expecting a running game process.
-            initialDelaySeconds: 300
+            # ~30-60s on subsequent starts. Generous failureThreshold so
+            # liveness/readiness don't kick in until the game is up.
+            periodSeconds: 10
+            failureThreshold: 60  # ~10 min budget for first SteamCMD download
+          livenessProbe:
+            exec:
+              command: ["pgrep", "-f", "WSServer-Linux-Shipping"]
             periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: ["pgrep", "-f", "WSServer-Linux-Shipping"]
+            periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
   volumeClaimTemplates:

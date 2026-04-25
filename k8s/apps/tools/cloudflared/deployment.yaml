@@ -51,6 +51,14 @@ spec:
           periodSeconds: 60
           timeoutSeconds: 10
           failureThreshold: 2
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 20241
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
       volumes:
       - name: config
         configMap:

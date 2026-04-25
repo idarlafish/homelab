@@ -41,6 +41,23 @@ spec:
             limits:
               cpu: "4"
               memory: "12Gi"
+          startupProbe:
+            tcpSocket:
+              port: 7777
+            periodSeconds: 10
+            failureThreshold: 30  # 5 min startup budget
+          livenessProbe:
+            tcpSocket:
+              port: 7777
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 7777
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           ports:
             - name: "api"
               containerPort: 7777
