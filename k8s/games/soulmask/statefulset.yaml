@@ -9,7 +9,7 @@ spec:
     matchLabels:
       app: soulmask
   serviceName: "soulmask"
-  replicas: 1
+  replicas: 0
   template:
     metadata:
       labels:

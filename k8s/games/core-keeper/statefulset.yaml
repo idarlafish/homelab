@@ -9,7 +9,7 @@ spec:
     matchLabels:
       app: core-keeper
   serviceName: "core-keeper"
-  replicas: 1
+  replicas: 0
   template:
     metadata:
       labels:
