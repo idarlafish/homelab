@@ -9,7 +9,7 @@ spec:
     matchLabels:
       app: valheim
   serviceName: "valheim"
-  replicas: 1
+  replicas: 0
   template:
     metadata:
       labels:
