@@ -19,45 +19,15 @@
 
 ## Architecture
 
-The image is self-contained (see `apps/soulmask-server/README.md`). All operational logic — auto-reboot, auto-update-on-restart, signal handling — runs inside the container via `init.sh` + `start.sh` + `supercronic`. This namespace has **no k8s CronJobs, no RBAC, no external orchestration** — just Namespace + ConfigMap + Service + StatefulSet + (manually-created) Secrets.
+The image is self-contained (see `apps/soulmask-server/README.md`). All operational logic — auto-reboot, auto-update-on-restart, signal handling — runs inside the container via `init.sh` + `start.sh` + `supercronic`. The namespace has **no k8s CronJobs, no RBAC, no external orchestration** — just Namespace + ConfigMap + Service + StatefulSet, applied by Flux from this directory. Secrets (`soulmask-secrets`, `ghcr-secret`, `r2-credentials`) live SOPS-encrypted in `k8s/secrets/game-servers/` and are reconciled by the `secrets` Flux Kustomization.
 
 All commands below assume `KUBECONFIG=.kube/game-servers` from the repo root.
 
-## One-time setup
+## One-time setup (only if rebuilding the cluster)
 
-### 1. Create the namespace
+The cluster is Flux-managed: applying the manifests = pushing the manifests. Most of these steps are already done.
 
-```bash
-KUBECONFIG=.kube/game-servers kubectl create namespace soulmask
-```
-
-### 2. Create the server-password secret
-
-```bash
-KUBECONFIG=.kube/game-servers kubectl create secret generic soulmask-secrets \
-  -n soulmask \
-  --from-literal=serverPassword='CHANGE_ME' \
-  --from-literal=adminPassword='CHANGE_ME_ADMIN' \
-  --from-literal=rconPassword='CHANGE_ME_RCON'
-```
-
-### 3. Create the ghcr pull secret
-
-The `soulmask-server` image is a private GHCR package. Pull secrets are namespace-scoped and must be created here even if you have one in another namespace.
-
-```bash
-source .env && KUBECONFIG=.kube/game-servers kubectl create secret docker-registry ghcr-secret \
-  -n soulmask \
-  --docker-server=ghcr.io \
-  --docker-username="$GHCR_USERNAME" \
-  --docker-password="$GHCR_TOKEN"
-```
-
-### 4. Build and push the image
-
-See `apps/soulmask-server/README.md`. Only required on Dockerfile or script changes — Soulmask itself updates at runtime via SteamCMD.
-
-### 5. Apply the Hetzner firewall rules
+### 1. Apply the Hetzner firewall rules
 
 `infra/game-servers/firewall.tf` contains rules for NodePorts `30750/udp`, `30751/udp`, `30752/tcp`. Apply once:
 
@@ -65,13 +35,22 @@ See `apps/soulmask-server/README.md`. Only required on Dockerfile or script chan
 source .env && cd infra/game-servers && tofu init && tofu plan && tofu apply
 ```
 
-### 6. Apply the manifests
+### 2. Build and push the image (first time only)
+
+See `apps/soulmask-server/README.md`. Only required on Dockerfile or script changes — Soulmask itself updates at runtime via SteamCMD.
+
+### 3. Secrets
+
+Already in git as `k8s/secrets/game-servers/soulmask-{soulmask-secrets,ghcr-secret,r2-credentials}.yaml` (SOPS-encrypted). To rotate:
 
 ```bash
-KUBECONFIG=.kube/game-servers kubectl apply -f k8s/apps/game-servers/soulmask/
+sops k8s/secrets/game-servers/soulmask-soulmask-secrets.yaml   # opens in $EDITOR, re-encrypts on save
+git commit -am "rotate soulmask secrets" && git push
 ```
 
-First pod start is slow (~3–5 min SteamCMD download). Subsequent starts are ~30–60 s.
+### 4. Manifests are already applied via Flux
+
+If you've just bootstrapped a new game-servers cluster, `flux bootstrap github --path=k8s/clusters/game-servers` brings up everything in this directory automatically. First pod start is slow (~3–5 min SteamCMD download). Subsequent starts are ~30–60 s.
 
 ## Day-to-day operations
 
@@ -87,23 +66,39 @@ KUBECONFIG=.kube/game-servers kubectl logs -f soulmask-0 -n soulmask
 KUBECONFIG=.kube/game-servers kubectl rollout restart statefulset/soulmask -n soulmask
 ```
 
-### Scale down / up
+### Pause / Resume
+
+`replicas` in `statefulset.yaml` is the source of truth. Edit + push:
 
 ```bash
-# Stop (frees RAM for other games)
-KUBECONFIG=.kube/game-servers kubectl scale statefulset soulmask -n soulmask --replicas=0
+# Stop (frees RAM for other games):
+sed -i '' 's/replicas: 1/replicas: 0/' k8s/apps/game-servers/soulmask/statefulset.yaml
+git commit -am "chore(soulmask): stop" && git push
 
-# Start
-KUBECONFIG=.kube/game-servers kubectl scale statefulset soulmask -n soulmask --replicas=1
+# Start:
+sed -i '' 's/replicas: 0/replicas: 1/' k8s/apps/game-servers/soulmask/statefulset.yaml
+git commit -am "chore(soulmask): start" && git push
+
+# Force immediate reconcile (otherwise wait ≤10 min):
+KUBECONFIG=.kube/game-servers flux reconcile kustomization soulmask -n flux-system
 ```
+
+`kubectl scale --replicas=N` directly on the StatefulSet is reverted by Flux within 10 min — don't use it.
 
 ### Apply config changes
 
 After editing `configmap.yaml` or `statefulset.yaml`:
 
 ```bash
-KUBECONFIG=.kube/game-servers kubectl apply -f k8s/apps/game-servers/soulmask/
+git add k8s/apps/game-servers/soulmask/ && git commit -m "tweak soulmask config" && git push
+KUBECONFIG=.kube/game-servers flux reconcile kustomization soulmask -n flux-system  # optional, force
+```
+
+ConfigMap-only changes don't auto-restart the pod (Flux doesn't track ConfigMap → pod hash). Force a rollout:
+
+```bash
 KUBECONFIG=.kube/game-servers kubectl rollout restart statefulset/soulmask -n soulmask
+# Runtime action — Flux won't undo it.
 ```
 
 ### Change the auto-reboot schedule
