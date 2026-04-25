@@ -4,7 +4,6 @@ node_modules
 .DS_Store
 .kube
 .terraform
-.terraform.lock.hcl
 
 # Game server data (saves, blueprints, maps)
 *.gzip
