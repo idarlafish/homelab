@@ -32,14 +32,87 @@ fi
 
 mkdir -p "$INSTALL_DIR"
 
-if ! is_truthy "$SKIP_UPDATE"; then
-  log start "running SteamCMD to install/update app ${STEAM_APP_ID} into ${INSTALL_DIR}"
+# --- SteamCMD with escalating recovery ---------------------------------
+# SteamCMD periodically wedges itself into "Error! App 'X' state is 0x6
+# after update job" when an earlier update was interrupted, when Steam
+# pushed a new build midway through a download, or when its state files
+# disagree with the on-disk tree. Plain `+app_update ... validate` does
+# NOT recover from this — the state machine itself is corrupt, and
+# validate exits immediately with the same 0x6. Manual recovery (per the
+# SCP:SL server wiki) is to delete the stuck appmanifest and re-run.
+#
+# We automate that recovery with a retry loop that clears one additional
+# slice of SteamCMD state between attempts:
+#
+#   attempt 1: clear transient downloading/ + temp/ dirs, then update
+#   attempt 2: also delete steamapps/appmanifest_<appid>.acf
+#   attempt 3: also delete ~/Steam/appcache/appinfo.vdf
+#   give up:   exit non-zero → k8s CrashLoopBackOff surfaces the failure
+#
+# See apps/soulmask-server/README.md § "SteamCMD failure recovery" for
+# the rationale and source links.
+STEAMCMD_MAX_ATTEMPTS=3
+STEAMCMD_RETRY_SLEEP=30
+STEAM_APPCACHE="/home/steam/Steam/appcache/appinfo.vdf"
+
+run_steamcmd_once() {
+  # Transient download artifacts from an interrupted prior update can
+  # themselves cause state 0x6. Clear them on every attempt — they are
+  # scratch space by design and safe to delete.
+  rm -rf \
+    "${INSTALL_DIR}/steamapps/downloading" \
+    "${INSTALL_DIR}/steamapps/temp" \
+    || true
+
   /home/steam/steamcmd/steamcmd.sh \
     +force_install_dir "$INSTALL_DIR" \
     +login anonymous \
     +app_update "$STEAM_APP_ID" validate \
     +quit
-  log start "SteamCMD update complete"
+}
+
+run_steamcmd_with_recovery() {
+  local attempt rc
+  for (( attempt = 1; attempt <= STEAMCMD_MAX_ATTEMPTS; attempt++ )); do
+    log start "SteamCMD attempt ${attempt}/${STEAMCMD_MAX_ATTEMPTS}"
+
+    # `|| rc=$?` suspends `set -e` for the function call so a steamcmd
+    # failure doesn't abort the script before we can retry.
+    rc=0
+    run_steamcmd_once || rc=$?
+    if (( rc == 0 )); then
+      log start "SteamCMD update complete"
+      return 0
+    fi
+    log_err start "SteamCMD attempt ${attempt} failed (exit ${rc})"
+
+    if (( attempt >= STEAMCMD_MAX_ATTEMPTS )); then
+      break
+    fi
+
+    # Escalate recovery between attempts.
+    case $attempt in
+      1)
+        log start "recovery: removing stuck appmanifest_${STEAM_APP_ID}.acf"
+        rm -f "${INSTALL_DIR}/steamapps/appmanifest_${STEAM_APP_ID}.acf" || true
+        ;;
+      2)
+        log start "recovery: removing Steam appcache ${STEAM_APPCACHE}"
+        rm -f "$STEAM_APPCACHE" || true
+        ;;
+    esac
+
+    log start "sleeping ${STEAMCMD_RETRY_SLEEP}s before retry"
+    sleep "$STEAMCMD_RETRY_SLEEP"
+  done
+
+  log_err start "SteamCMD failed after ${STEAMCMD_MAX_ATTEMPTS} attempts — giving up"
+  return 1
+}
+
+if ! is_truthy "$SKIP_UPDATE"; then
+  log start "running SteamCMD to install/update app ${STEAM_APP_ID} into ${INSTALL_DIR}"
+  run_steamcmd_with_recovery
 else
   log start "SKIP_UPDATE is set, skipping SteamCMD update"
 fi

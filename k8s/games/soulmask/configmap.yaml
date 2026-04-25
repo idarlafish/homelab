@@ -18,7 +18,7 @@ data:
   SAVING: "600"
   BACKUP: "960"
   # Map selection: Level01_Main (base game) or DLC_Level01_Main (Shifting Sands DLC)
-  GAME_WORLD: "Level01_Main"
+  GAME_WORLD: "DLC_Level01_Main"
   # Set SKIP_UPDATE: "1" to pin the installed version (skip SteamCMD update on start)
   # SKIP_UPDATE: "0"
   # Cross-server play (uncomment both to connect two map instances):
