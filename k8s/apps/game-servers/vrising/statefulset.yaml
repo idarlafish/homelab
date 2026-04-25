@@ -29,6 +29,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: vrising-cm
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "6Gi"
+            limits:
+              cpu: "2"
+              memory: "6Gi"
           ports:
             - name: gameport
               containerPort: 9876

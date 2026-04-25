@@ -34,6 +34,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: satisfactory-cm
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "12Gi"
+            limits:
+              cpu: "4"
+              memory: "12Gi"
           ports:
             - name: "api"
               containerPort: 7777
