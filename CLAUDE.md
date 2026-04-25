@@ -6,8 +6,8 @@ Operational rules and gotchas for this monorepo. See [README.md](README.md) for 
 
 - **Use `tofu`** (OpenTofu), not `terraform`. Both Hetzner servers share `infra/modules/hcloud-server/`; read it before editing either caller.
 - **Two clusters, two kubeconfigs — never mix them:**
-  - `tools` (ARM64, cax11) → `KUBECONFIG=.kube/config`
-  - `game-servers` (amd64, cx43) → `KUBECONFIG=.kube/game-servers`
+  - `tools` (ARM64) → `KUBECONFIG=.kube/config`
+  - `game-servers` (amd64) → `KUBECONFIG=.kube/game-servers`
 - **No Traefik / no Ingress on tools** — Cloudflare Tunnel is the only ingress. New services on tools cluster need a Tunnel route, not an Ingress.
 - **Both clusters are Flux-managed.** Manifests in git are the source of truth. Edit manifest → commit → push → Flux reconciles within 10 min. Never use `kubectl scale` / `kubectl edit` on Flux-managed resources — they're reverted at the next reconcile.
 - **No new `kubectl create secret`.** SOPS-encrypted secrets (including `ghcr-secret` for GHCR pulls) live in `k8s/secrets/<cluster>/`. To rotate: `sops <file>`. To create: see "SOPS gotcha" below.
