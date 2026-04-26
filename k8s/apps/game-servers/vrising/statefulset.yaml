@@ -34,7 +34,6 @@ spec:
               cpu: "500m"
               memory: "6Gi"
             limits:
-              cpu: "2"
               memory: "6Gi"
           ports:
             - name: gameport

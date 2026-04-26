@@ -39,7 +39,6 @@ spec:
               cpu: "500m"
               memory: "12Gi"
             limits:
-              cpu: "4"
               memory: "12Gi"
           startupProbe:
             tcpSocket:

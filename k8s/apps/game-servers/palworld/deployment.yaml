@@ -49,7 +49,6 @@ spec:
               cpu: "500m"
               memory: "14Gi"
             limits:
-              cpu: "4"
               memory: "14Gi"
           volumeMounts:
             - mountPath: /palworld
