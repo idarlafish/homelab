@@ -8,9 +8,6 @@ data:
     tunnel: sleepy-notify
     credentials-file: /etc/cloudflared/creds/credentials.json
     ingress:
-      - hostname: sleepy-notify.la.fish
-        service: http://sleepy-notify-bot.telegram.svc.cluster.local:3000
-        httpHostHeader: sleepy-notify-bot.telegram.svc.cluster.local
       - hostname: wg-admin.la.fish
         service: http://wg-easy-http.vpn.svc.cluster.local:51821
         httpHostHeader: wg-easy-http.vpn.svc.cluster.local
