@@ -60,13 +60,11 @@ jobs:
           echo "SERVER_IP=$(terraform output -raw server_ip)" >> $GITHUB_OUTPUT
           echo "NETWORK_ID=$(terraform output -raw network_id)" >> $GITHUB_OUTPUT
 
-  deploy-k8s:
+  bootstrap-flux:
     runs-on: ubuntu-latest
     needs: terraform
     env:
       KUBECONFIG: /tmp/kubeconfig
-    permissions:
-      contents: read
 
     steps:
       - name: Checkout repository
@@ -84,32 +82,49 @@ jobs:
           max_attempts: 6
           command: scp -o StrictHostKeyChecking=no root@${{ needs.terraform.outputs.server_ip }}:/root/.kube/config $KUBECONFIG
 
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
-
-      - name: Add Helm repositories
-        run: |
-          helm repo add hcloud https://charts.hetzner.cloud
-          helm repo update
-
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
 
-      - name: Fix K3s CoreDNS Bootstrap
-        run: |
-          kubectl wait --for=condition=Ready nodes --all --timeout=90s
-          kubectl patch configmap coredns -n kube-system --type='merge' -p '{"data":{"NodeHosts":"hosts {\n  fallthrough\n}\n"}}'
+      - name: Wait for cluster ready
+        run: kubectl wait --for=condition=Ready nodes --all --timeout=90s
 
-      - name: Set up Hetzner secrets
+      # Hetzner CCM + CSI (Flux-managed via k8s/infrastructure/base) need the
+      # `hcloud` secret in kube-system before they can start. The network_id is
+      # a terraform output, so we can't pre-encrypt this secret with SOPS the
+      # way tools does — keep this one-off bootstrap step in the workflow.
+      - name: Bootstrap Hetzner kube-system secret
+        env:
+          HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
+          NETWORK_ID: ${{ needs.terraform.outputs.network_id }}
         run: |
+          kubectl create namespace kube-system --dry-run=client -o yaml | kubectl apply -f -
           kubectl create secret generic hcloud \
-            --from-literal=token="${{ secrets.HCLOUD_TOKEN }}" \
-            --from-literal=network="${{ needs.terraform.outputs.network_id }}" \
+            --from-literal=token="$HCLOUD_TOKEN" \
+            --from-literal=network="$NETWORK_ID" \
             --namespace kube-system \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Install Hetzner Cloud Controller Manager
-        run: helm upgrade --install hccm hcloud/hcloud-cloud-controller-manager -n kube-system
+      - name: Install Flux CLI
+        uses: fluxcd/flux2/action@main
 
-      - name: Install Hetzner CSI driver
-        run: helm upgrade --install hcloud-csi hcloud/hcloud-csi -n kube-system --values infra/game-servers/csi-config.yaml
+      - name: Create SOPS age secret
+        env:
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: |
+          kubectl create namespace flux-system --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic sops-age \
+            --namespace=flux-system \
+            --from-literal=age.agekey="$SOPS_AGE_KEY" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Bootstrap FluxCD
+        run: |
+          flux bootstrap github \
+            --owner=idarlafish \
+            --repository=tools \
+            --branch=main \
+            --path=k8s/clusters/game-servers \
+            --personal \
+            --token-auth
+        env:
+          GITHUB_TOKEN: ${{ secrets.FLUX_GITHUB_PAT }}
