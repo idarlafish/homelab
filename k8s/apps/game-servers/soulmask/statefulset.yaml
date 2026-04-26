@@ -50,7 +50,6 @@ spec:
               cpu: "500m"
               memory: "10Gi"
             limits:
-              cpu: "3500m"
               memory: "14Gi"
           ports:
             - name: gameport
