@@ -88,22 +88,6 @@ jobs:
       - name: Wait for cluster ready
         run: kubectl wait --for=condition=Ready nodes --all --timeout=90s
 
-      # Hetzner CCM + CSI (Flux-managed via k8s/infrastructure/base) need the
-      # `hcloud` secret in kube-system before they can start. The network_id is
-      # a terraform output, so we can't pre-encrypt this secret with SOPS the
-      # way tools does — keep this one-off bootstrap step in the workflow.
-      - name: Bootstrap Hetzner kube-system secret
-        env:
-          HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
-          NETWORK_ID: ${{ needs.terraform.outputs.network_id }}
-        run: |
-          kubectl create namespace kube-system --dry-run=client -o yaml | kubectl apply -f -
-          kubectl create secret generic hcloud \
-            --from-literal=token="$HCLOUD_TOKEN" \
-            --from-literal=network="$NETWORK_ID" \
-            --namespace kube-system \
-            --dry-run=client -o yaml | kubectl apply -f -
-
       - name: Install Flux CLI
         uses: fluxcd/flux2/action@main
 
