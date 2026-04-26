@@ -13,6 +13,11 @@ spec:
     groupWait: 30s
     groupInterval: 5m
     repeatInterval: 4h
+    routes:
+      - matchers:
+          - name: alertname
+            value: Watchdog
+        receiver: blackhole
   receivers:
     - name: telegram
       telegramConfigs:
@@ -22,3 +27,4 @@ spec:
           chatID: 671615920
           parseMode: HTML
           sendResolved: true
+    - name: blackhole
