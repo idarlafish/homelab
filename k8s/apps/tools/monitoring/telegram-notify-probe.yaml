@@ -1,0 +1,22 @@
+---
+# Tells Prometheus to ask Blackbox Exporter to probe the cron heartbeat
+# endpoint every minute. probe_success / probe_http_status_code metrics
+# show up in Prometheus and feed the alert rule.
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: telegram-notify-cron
+  namespace: monitoring
+spec:
+  interval: 60s
+  scrapeTimeout: 15s
+  module: http_2xx
+  prober:
+    url: blackbox-exporter-prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+  targets:
+    staticConfig:
+      static:
+        - https://telegram-notify.la.fish/health/cron
+      labels:
+        service: telegram-notify
+        target: cron-heartbeat
