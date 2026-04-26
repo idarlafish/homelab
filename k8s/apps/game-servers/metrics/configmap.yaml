@@ -37,8 +37,31 @@ data:
       }
     }
 
+    discovery.relabel "pods" {
+      targets = discovery.kubernetes.pods.targets
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_scrape"]
+        regex         = "true"
+        action        = "keep"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_path"]
+        regex         = "(.+)"
+        target_label  = "__metrics_path__"
+      }
+
+      rule {
+        source_labels = ["__address__", "__meta_kubernetes_pod_annotation_prometheus_io_port"]
+        regex         = "([^:]+)(?::\\d+)?;(\\d+)"
+        replacement   = "$1:$2"
+        target_label  = "__address__"
+      }
+    }
+
     prometheus.scrape "pods" {
-      targets         = discovery.kubernetes.pods.targets
+      targets         = discovery.relabel.pods.output
       forward_to      = [prometheus.remote_write.tools.receiver]
       scrape_interval = "30s"
     }
