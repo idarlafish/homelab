@@ -6,14 +6,13 @@ Personal infrastructure monorepo. Manages Hetzner Cloud servers using OpenTofu +
 
 | Machine | Type | Runtime | Purpose |
 |---|---|---|---|
-| `tools` | cax11 (ARM64) | k3s | sleepy-notify bot, VPN, content services |
+| `tools` | cax11 (ARM64) | k3s | VPN, content services, monitoring, Cloudflared tunnel |
 | `game-servers` | cx43 (Intel) | k3s | Game server cluster |
 
 ## Structure
 
 ```
 apps/                              # source code (NOT k8s manifests — see k8s/ for those)
-  sleepy-notify/                   # Telegram bot + SvelteKit Mini App
   vpn/                             # VPN configuration
 
 k8s/                               # GitOps tree, both clusters managed by Flux
@@ -43,41 +42,22 @@ See [CLAUDE.md](CLAUDE.md) for the operating model: how to start/stop a game, ad
 
 ## Services
 
-- `sleepy-notify.la.fish` — Telegram bot web app
 - `booklore.la.fish` — Booklore e-book manager
 - `prometheus.la.fish` — tools-cluster Prometheus (game-servers metrics-collector ships here)
+- `grafana.la.fish` — Grafana dashboards
 - ~~`wg-admin.la.fish`~~ — WireGuard parked: PVC was on `local-path` SC and lost during the multi-cluster Flux refactor; configs need to be regenerated before re-enabling. See `k8s/apps/tools/vpn/wg-easy/`.
 
-### sleepy-notify architecture
-
-A Telegram bot + Mini App for scheduling daily recurring notifications. Backend is [GramIO](https://gramio.dev/) (Telegram Bot API) + [Elysia](https://elysiajs.com/) (HTTP) + [BullMQ](https://docs.bullmq.io/) (Redis-backed cron jobs), compiled to a single Bun binary. Frontend is a Telegram Mini App (SvelteKit, `@sveltejs/adapter-static`), built into `backend/public/` and served by the backend.
-
-- User configs stored in Redis under `user:{userId}:schedule`
-- Notifications are BullMQ repeating jobs with cron patterns; jobs deduplicated by `jobId`
-- Production: Telegram webhook at `/telegram-webhook`; local dev: long polling
-- Cloudflare Tunnel exposes `sleepy-notify.la.fish` → k8s service on the `tools` cluster
+> The Telegram reminder bot (formerly `sleepy-notify`, deployed here) was extracted to its own repo and now runs as a Cloudflare Worker — see [idarlafish/telegram-notify](https://github.com/idarlafish/telegram-notify).
 
 ## CI/CD
 
 | Workflow | Trigger |
 |---|---|
-| `deploy-tools-infra` | push to `infra/tools/**` or `infra/modules/**` (re-runs `flux bootstrap` against `k8s/clusters/tools`) |
-| `deploy-game-servers-infra` | push to `infra/game-servers/**` or `infra/modules/**` |
-| `deploy-sleepy-notify` | push to `apps/sleepy-notify/**` |
+| `deploy-tools-infra` | manual (re-runs `flux bootstrap` against `k8s/clusters/tools`) |
+| `deploy-game-servers-infra` | manual (re-runs `flux bootstrap` against `k8s/clusters/game-servers`) |
 | `cleanup` | manual (choose `tools` or `game-servers`) |
 
-**Most app/manifest changes don't need CI** — Flux watches `main` and reconciles directly. Only Tofu / image-build changes go through GitHub Actions.
-
-## Local sleepy-notify deploy (no registry)
-
-To deploy `sleepy-notify` from your Mac without publishing an image:
-
-```bash
-export TOOLS_SERVER_IP=<tools server IP> # same value used in GitHub Actions
-./scripts/deploy-sleepy-notify-local.sh  # builds, imports into k3s, and rolls out
-```
-
-This builds the image locally, streams it directly into k3s via `k3s ctr images import`, and updates the `sleepy-notify-bot` deployment image tag. The deployment manifest now uses `imagePullPolicy: IfNotPresent`, so k3s will prefer the locally imported image and only pull from GHCR when no local image exists (e.g. on a fresh cluster).
+**Most app/manifest changes don't need CI** — Flux watches `main` and reconciles directly. Only Tofu / cluster-bootstrap changes go through GitHub Actions.
 
 ## Infrastructure
 

@@ -42,7 +42,8 @@ Editing existing files (`sops <file>`) works fine — it reads the SOPS metadata
 
 ## Footguns (incident lessons)
 
-- **Flux prune cascade**: a root Kustomization with `prune: true` reconciling at a commit where the per-concern manifests don't exist at its bootstrap path will garbage-collect everything previously managed → cascading deletes through every child Kustomization. **When relocating a Flux bootstrap path, stage all manifests in one commit before running `flux bootstrap`**, OR temporarily patch root to `prune: false`. (Bit us in Phase 2 — sleepy-notify Redis data was lost.)
+- **Flux prune cascade**: a root Kustomization with `prune: true` reconciling at a commit where the per-concern manifests don't exist at its bootstrap path will garbage-collect everything previously managed → cascading deletes through every child Kustomization. **When relocating a Flux bootstrap path, stage all manifests in one commit before running `flux bootstrap`**, OR temporarily patch root to `prune: false`. (Hit us once during a multi-cluster restructure — Redis data on a former bot deployment was lost.)
+- **Edit + git rm in the same commit:** `git commit` only takes staged changes. If you `Edit` a `kustomization.yaml` to drop a reference *and* `git rm` the referenced file in the same step, only the `git rm` is auto-staged — the kustomization edit needs `git add` first. Forgetting this leaves the kustomization referencing a deleted file, breaking the Kustomization build (and blocking everything that depends on it via `dependsOn`). Always `git status --short` before commit.
 - **CSI uninstall mid-cascade can reformat volumes.** Even with `Retain` reclaim, volumes yanked off the node uncleanly may be reformatted by the CSI driver on next attach. Static PVs with explicit `volumeName` in the PVC give the most deterministic recovery.
 - **Game PVs are on `Retain`** (patched during Phase 3 recovery work). Don't change to `Delete`.
 - **`kubectl scale` on Flux-managed StatefulSets** is reverted within 10 min. Edit the manifest.
@@ -51,4 +52,3 @@ Editing existing files (`sops <file>`) works fine — it reads the SOPS metadata
 
 - Per-game runbook (start/stop, RCON, backup, config changes): `k8s/apps/game-servers/<game>/README.md` — minecraft and soulmask have detailed ones.
 - Game backup: `./scripts/backup-game.sh <game>` (the `backup-job.yaml` is deliberately excluded from minecraft's kustomization so Flux doesn't manage it).
-- sleepy-notify dev: `apps/sleepy-notify/` (Bun + Vite — see `package.json` scripts).
