@@ -7,6 +7,8 @@ kind: PrometheusRule
 metadata:
   name: telegram-notify
   namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
 spec:
   groups:
     - name: telegram-notify
