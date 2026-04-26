@@ -34,3 +34,15 @@ spec:
             follow_redirects: true
             fail_if_ssl: false
             fail_if_not_ssl: true
+        # Asserts on body so the probe fails even if the worker ever
+        # returns 200 with `"stale": true` (status-code contract drift).
+        telegram_notify_cron:
+          prober: http
+          timeout: 10s
+          http:
+            preferred_ip_protocol: ip4
+            valid_status_codes: [200]
+            follow_redirects: true
+            fail_if_not_ssl: true
+            fail_if_body_not_matches_regexp:
+              - '"stale"\s*:\s*false'
