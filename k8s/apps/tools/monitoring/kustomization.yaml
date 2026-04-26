@@ -6,3 +6,4 @@ resources:
   - blackbox-exporter.yaml
   - telegram-notify-probe.yaml
   - telegram-notify-rules.yaml
+  - alertmanager-config.yaml
