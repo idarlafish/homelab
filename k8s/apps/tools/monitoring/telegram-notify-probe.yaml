@@ -12,7 +12,7 @@ metadata:
 spec:
   interval: 60s
   scrapeTimeout: 15s
-  module: http_2xx
+  module: telegram_notify_cron
   prober:
     url: blackbox-exporter-prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
   targets:
