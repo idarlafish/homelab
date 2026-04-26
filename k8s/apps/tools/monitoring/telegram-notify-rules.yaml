@@ -1,0 +1,27 @@
+---
+# Fires when /health/cron returns non-200 OR is unreachable for 3+ minutes.
+# Both conditions are caught by `probe_success == 0` (Blackbox sets this on
+# any non-2xx, timeout, DNS failure, TLS error, etc.).
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: telegram-notify
+  namespace: monitoring
+spec:
+  groups:
+    - name: telegram-notify
+      rules:
+        - alert: TelegramNotifyCronStale
+          expr: probe_success{service="telegram-notify",target="cron-heartbeat"} == 0
+          for: 3m
+          labels:
+            severity: critical
+            service: telegram-notify
+          annotations:
+            summary: "telegram-notify cron heartbeat is stale"
+            description: |
+              The cron tick on telegram-notify hasn't written to KV in the
+              last 10 min (KV TTL), or /health/cron is otherwise non-200.
+              Check `wrangler tail telegram-notify` and the Cloudflare
+              Workers dashboard.
+            runbook: "https://github.com/idarlafish/telegram-notify/blob/main/docs/telegram-bot.md"
