@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pocket-id
+  namespace: identity
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: pocket-id
+  template:
+    metadata:
+      labels:
+        app: pocket-id
+    spec:
+      containers:
+        - name: pocket-id
+          image: ghcr.io/pocket-id/pocket-id:v2.6.2
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: pocket-id-config
+            - secretRef:
+                name: pocket-id-secrets
+          ports:
+            - containerPort: 1411
+              name: http
+          # Pocket-ID does not expose an HTTP /healthz endpoint as of v2.6.2.
+          # Probes use the documented CLI subcommand (matches upstream docker-compose.yml).
+          readinessProbe:
+            exec:
+              command: ["/app/pocket-id", "healthcheck"]
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command: ["/app/pocket-id", "healthcheck"]
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: pocket-id-data
