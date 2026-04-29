@@ -13,3 +13,6 @@ spec:
     - name: http
       port: 1411
       targetPort: 1411
+    - name: metrics
+      port: 9464
+      targetPort: 9464
