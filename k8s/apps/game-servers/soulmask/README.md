@@ -19,7 +19,7 @@
 
 ## Architecture
 
-The image is self-contained (see `apps/soulmask-server/README.md`). All operational logic — auto-reboot, auto-update-on-restart, signal handling — runs inside the container via `init.sh` + `start.sh` + `supercronic`. The namespace has **no k8s CronJobs, no RBAC, no external orchestration** — just Namespace + ConfigMap + Service + StatefulSet, applied by Flux from this directory. Secrets (`soulmask-secrets`, `ghcr-secret`, `r2-credentials`) live SOPS-encrypted in `k8s/secrets/game-servers/` and are reconciled by the `secrets` Flux Kustomization.
+The image is self-contained (see `apps/soulmask-server/README.md`). All operational logic — auto-reboot, auto-update-on-restart, signal handling — runs inside the container via `init.sh` + `start.sh` + `supercronic`. The namespace has **no k8s CronJobs, no RBAC, no external orchestration** — just Namespace + ConfigMap + Service + StatefulSet, applied by Flux from this directory. Secrets `soulmask-secrets` and `ghcr-secret` are SOPS-encrypted alongside this directory's manifests; `r2-credentials` (used by all game backups) is SOPS-encrypted under `k8s/infrastructure/game-servers/r2-credentials.yaml`. Each is reconciled by the same Flux Kustomization that owns its co-located manifests.
 
 All commands below assume `KUBECONFIG=.kube/game-servers` from the repo root.
 
@@ -41,10 +41,10 @@ See `apps/soulmask-server/README.md`. Only required on Dockerfile or script chan
 
 ### 3. Secrets
 
-Already in git as `k8s/secrets/game-servers/soulmask-{soulmask-secrets,ghcr-secret,r2-credentials}.yaml` (SOPS-encrypted). To rotate:
+Already in git as `k8s/apps/game-servers/soulmask/{soulmask-secret,ghcr-secret}.yaml` and `k8s/infrastructure/game-servers/r2-credentials.yaml` (all SOPS-encrypted). To rotate:
 
 ```bash
-sops k8s/secrets/game-servers/soulmask-soulmask-secrets.yaml   # opens in $EDITOR, re-encrypts on save
+sops k8s/apps/game-servers/soulmask/soulmask-secret.yaml   # opens in $EDITOR, re-encrypts on save
 git commit -am "rotate soulmask secrets" && git push
 ```
 
