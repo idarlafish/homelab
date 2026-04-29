@@ -2,15 +2,17 @@
 
 Use sops ≥ 3.12 (3.11 has a config-discovery bug for new files).
 
-`k8s/secrets/.sops.yaml` defines the age recipient and `encrypted_regex` shared between both clusters. The matching private key lives in the `sops-age` Secret in each cluster's `flux-system` namespace.
+`k8s/.sops.yaml` defines the age recipient and `encrypted_regex` shared between both clusters. The matching private key lives in the `sops-age` Secret in each cluster's `flux-system` namespace.
 
 ## Encrypting new files
 
-Pass `--config` explicitly. Sops 3.12 walks up from the **current working directory**, not from the file's path, so `.sops.yaml` at `k8s/secrets/.sops.yaml` isn't found when running from the repo root.
+Pass `--config` explicitly. Sops 3.12 walks up from the **current working directory**, not from the file's path, so `.sops.yaml` at `k8s/.sops.yaml` isn't found when running from the repo root.
 
 ```bash
-sops --config k8s/secrets/.sops.yaml --encrypt --in-place k8s/secrets/<cluster>/<file>.yaml
+sops --config k8s/.sops.yaml --encrypt --in-place k8s/apps/<cluster>/<concern>/<app>/<name>-secret.yaml
 ```
+
+Encrypted secrets are co-located with the app they belong to (under `k8s/apps/<cluster>/<concern>/<app>/`). Cluster-level secrets (e.g. Hetzner CCM/CSI credentials) live under `k8s/infrastructure/<cluster>/`. Each Flux Kustomization that includes encrypted resources has a `decryption` block referencing the `sops-age` Secret in its `flux-system` namespace.
 
 ## Decrypting locally
 
@@ -42,7 +44,7 @@ echo 'export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"' >> .env
 Once `SOPS_AGE_KEY_FILE` is set:
 
 ```bash
-sops k8s/secrets/<cluster>/<file>.yaml
+sops <path-to-encrypted-file>.yaml
 ```
 
 Sops reads metadata from the encrypted file itself; no `--config` flag needed for edit (only for first-time encrypt).
