@@ -16,3 +16,7 @@ spec:
   dependsOn:
     - name: infrastructure
     - name: secrets
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
