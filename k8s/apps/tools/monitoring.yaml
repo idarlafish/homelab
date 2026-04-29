@@ -15,7 +15,6 @@ spec:
   timeout: 5m
   dependsOn:
     - name: infrastructure
-    - name: secrets
   decryption:
     provider: sops
     secretRef:
