@@ -74,7 +74,7 @@ jobs:
           ssh-private-key: ${{ secrets.HCLOUD_SSH_KEY }}
 
       - name: Fetch kubeconfig
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@v4
         with:
           timeout_seconds: 30
           max_attempts: 6
