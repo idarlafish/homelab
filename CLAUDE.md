@@ -10,7 +10,7 @@ Operational rules and gotchas for this monorepo. See [README.md](README.md) for 
   - `game-servers` (amd64) → `KUBECONFIG=.kube/game-servers`
 - **No Traefik / no Ingress on tools** — Cloudflare Tunnel is the only ingress. New services on tools cluster need a Tunnel route, not an Ingress.
 - **Both clusters are Flux-managed.** Manifests in git are the source of truth. Edit manifest → commit → push → Flux reconciles within 10 min. Never use `kubectl scale` / `kubectl edit` on Flux-managed resources — they're reverted at the next reconcile.
-- **No new `kubectl create secret`.** SOPS-encrypted secrets (including `ghcr-secret` for GHCR pulls) live in `k8s/secrets/<cluster>/`. To rotate: `sops <file>`. To create: see "SOPS gotcha" below.
+- **No new `kubectl create secret`.** SOPS-encrypted secrets are **co-located with their app** under `k8s/apps/<cluster>/.../<app>/<name>-secret.yaml`; cluster-shared secrets (Hetzner CCM/CSI auth, R2 credentials) live under `k8s/infrastructure/<cluster>/`. Each child Flux Kustomization that contains encrypted resources has its own `decryption: { provider: sops, secretRef: { name: sops-age } }`. To rotate: `sops <path-to-file>`. To create new: see [docs/sops.md](docs/sops.md).
 - **`infrastructure/base/` is shared by both clusters.** Cluster-specific addons go in `infrastructure/<cluster>/`. Anything in `base/` must be valid for both.
 - **Commits:** never add `Co-Authored-By`.
 - **New env vars** are documented in both the image's `README.md` and the k8s game's `README.md`. Inline `# comment` in the configmap if applicable.
@@ -30,7 +30,7 @@ Terraform state lives in Cloudflare R2 bucket `fabler` (`tools/terraform.tfstate
 
 ## SOPS
 
-`k8s/secrets/.sops.yaml` defines the age recipient and `encrypted_regex` shared between both clusters. The matching private key lives in the `sops-age` Secret in each cluster's `flux-system` namespace. Use sops ≥ 3.12. See [docs/sops.md](docs/sops.md) for encrypt/decrypt setup and gotchas.
+`k8s/.sops.yaml` defines the age recipient and `encrypted_regex` shared between both clusters. The matching private key lives in the `sops-age` Secret in each cluster's `flux-system` namespace. Use sops ≥ 3.12. See [docs/sops.md](docs/sops.md) for encrypt/decrypt setup and gotchas.
 
 ## Footguns (incident lessons)
 
