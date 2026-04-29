@@ -5,3 +5,11 @@ kind: Kustomization
 # This file exists so a cluster-specific addition has a clear home in future.
 resources:
   - ../base
+  # Cluster-shared secrets that need to land before any game-app reconciles:
+  # - hcloud-secret: Hetzner CCM/CSI auth (kube-system namespace)
+  # - r2-credentials: multi-doc Secret applied to each game's namespace; backup
+  #   CronJobs reference it. NOTE: this is a layering shortcut — when the
+  #   r2-credentials key is rotated, split into per-game files in each app's
+  #   own dir (the proper co-location). See memory project_r2_rotation_owed.md.
+  - hcloud-secret.yaml
+  - r2-credentials.yaml
