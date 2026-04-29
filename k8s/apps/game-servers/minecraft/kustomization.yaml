@@ -6,6 +6,7 @@ kind: Kustomization
 # Flux from re-creating the Job on every reconcile.
 resources:
   - namespace.yaml
+  - minecraft-secret.yaml
   - configmap.yaml
   - service.yaml
   - statefulset.yaml

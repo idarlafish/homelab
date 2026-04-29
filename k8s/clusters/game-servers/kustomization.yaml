@@ -4,5 +4,4 @@ kind: Kustomization
 resources:
   - flux-system
   - infrastructure.yaml
-  - secrets.yaml
   - game-servers.yaml
