@@ -1,0 +1,23 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: pocket-id-alerts
+  namespace: monitoring
+  labels:
+    # Required so kube-prometheus-stack's Prometheus picks this up
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: pocket-id
+      rules:
+        - alert: PocketIDDown
+          # Selector targets metrics scraped via the ServiceMonitor in k8s/apps/tools/identity/pocket-id/.
+          # Will be verified against actual labels in Task 6 — adjust if Prometheus reports different labels.
+          expr: up{namespace="identity", service="pocket-id"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pocket-ID is down — SSO unavailable for all wired apps"
+            description: "Pocket-ID has been unreachable for 5+ minutes. Family members cannot sign in to any OIDC-protected app until restored."
