@@ -5,6 +5,7 @@ node_modules
 .kube
 .terraform
 .claude
+docs/superpowers/
 
 # Game server data (saves, blueprints, maps)
 *.gzip

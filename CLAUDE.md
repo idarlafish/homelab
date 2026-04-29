@@ -28,17 +28,9 @@ Operational rules and gotchas for this monorepo. See [README.md](README.md) for 
 
 Terraform state lives in Cloudflare R2 bucket `fabler` (`tools/terraform.tfstate`, `game-servers/terraform.tfstate`).
 
-## SOPS gotcha
+## SOPS
 
-sops 3.11 has a config-discovery bug — `.sops.yaml` isn't auto-found when encrypting new files. Pass flags explicitly:
-
-```bash
-sops --age age14a000yfg3226nakz8gycgtw4c7zugyply4jv29p6fmuy8ak05cqsu5cdx3 \
-     --encrypted-regex '^(data|stringData)$' \
-     --encrypt --in-place k8s/secrets/<cluster>/<file>.yaml
-```
-
-Editing existing files (`sops <file>`) works fine — it reads the SOPS metadata block. Same age recipient is shared between both clusters; the private key is in the `sops-age` Secret in each cluster's `flux-system` namespace.
+`k8s/secrets/.sops.yaml` defines the age recipient and `encrypted_regex` shared between both clusters. The matching private key lives in the `sops-age` Secret in each cluster's `flux-system` namespace. Use sops ≥ 3.12. See [docs/sops.md](docs/sops.md) for encrypt/decrypt setup and gotchas.
 
 ## Footguns (incident lessons)
 
