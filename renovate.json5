@@ -7,9 +7,7 @@
     ":semanticCommitTypeAll(chore)",
   ],
 
-  // One scheduled window per week — reduces PR noise. Sat 06:00 means PRs are
-  // ready by Saturday morning; review at leisure over the weekend.
-  schedule: ["before 6am on saturday"],
+  schedule: ["at any time"],
   timezone: "Europe/Riga",
 
   // Cap open PRs. Without this, Renovate can carpet-bomb on first run.
