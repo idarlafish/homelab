@@ -7,3 +7,4 @@ resources:
   - telegram-notify-probe.yaml
   - telegram-notify-rules.yaml
   - alertmanager-config.yaml
+  - pocket-id-alerts.yaml
