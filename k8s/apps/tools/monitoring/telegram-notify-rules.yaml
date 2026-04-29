@@ -21,9 +21,5 @@ spec:
             service: telegram-notify
           annotations:
             summary: "telegram-notify cron heartbeat is stale"
-            description: |
-              The cron tick on telegram-notify hasn't written to KV in the
-              last 10 min (KV TTL), or /health/cron is otherwise non-200.
-              Check `wrangler tail telegram-notify` and the Cloudflare
-              Workers dashboard.
+            description: "/health/cron is returning non-200 or has been unreachable. See runbook."
             runbook: "https://github.com/idarlafish/telegram-notify/blob/main/docs/telegram-bot.md"
