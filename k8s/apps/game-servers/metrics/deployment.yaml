@@ -17,7 +17,7 @@ spec:
       serviceAccountName: metrics-collector
       containers:
         - name: alloy
-          image: grafana/alloy:latest
+          image: grafana/alloy:v1.16.0
           args:
             - run
             - /etc/alloy/config.alloy

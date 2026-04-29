@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: foundry
-          image: luxusburg/docker-foundry:latest
+          image: luxusburg/docker-foundry:1.6
           imagePullPolicy: Always
           env:
             - name: SERVER_PWD

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: valheim
-          image: mbround18/valheim:latest
+          image: mbround18/valheim:3.6.0
           imagePullPolicy: Always
           env:
             - name: PASSWORD

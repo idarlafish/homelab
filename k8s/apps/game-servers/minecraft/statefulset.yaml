@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: minecraft
-          image: itzg/minecraft-server:java21
+          image: itzg/minecraft-server:2026.4.2-java21
           imagePullPolicy: Always
           env:
             - name: EULA
