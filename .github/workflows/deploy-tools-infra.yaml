@@ -81,7 +81,7 @@ jobs:
           command: scp -o StrictHostKeyChecking=no root@${{ needs.terraform.outputs.server_ip }}:/root/.kube/config $KUBECONFIG
 
       - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@v5
 
       - name: Wait for cluster ready
         run: kubectl wait --for=condition=Ready nodes --all --timeout=90s
