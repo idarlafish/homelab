@@ -5,4 +5,5 @@ resources:
   - cloudflared.yaml
   - vpn.yaml
   - content.yaml
+  - identity.yaml
   - monitoring.yaml
