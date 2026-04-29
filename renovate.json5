@@ -1,0 +1,61 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+
+  extends: [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+  ],
+
+  // One scheduled window per week — reduces PR noise. Sat 06:00 means PRs are
+  // ready by Saturday morning; review at leisure over the weekend.
+  schedule: ["before 6am on saturday"],
+  timezone: "Europe/Riga",
+
+  // Cap open PRs. Without this, Renovate can carpet-bomb on first run.
+  prConcurrentLimit: 5,
+  prHourlyLimit: 0,
+
+  // Kubernetes manager: image: tags in Deployments/StatefulSets/CronJobs/etc.
+  // Has no default file patterns — must opt in explicitly.
+  kubernetes: {
+    managerFilePatterns: ["/^k8s/.*\\.ya?ml$/"],
+  },
+
+  // Flux manager: HelmRelease.spec.chart.spec.version, HelmRepository, GitRepository.
+  flux: {
+    managerFilePatterns: ["/^k8s/.*\\.ya?ml$/"],
+  },
+
+  packageRules: [
+    {
+      description: "Auto-merge patch updates after 7-day upstream stability window",
+      matchUpdateTypes: ["patch"],
+      // Skip 0.x — semver says minor bumps can be breaking there.
+      matchCurrentVersion: "!/^0/",
+      minimumReleaseAge: "7 days",
+      automerge: true,
+    },
+    {
+      description: "Major version bumps: labelled, never auto-merged, manual review",
+      matchUpdateTypes: ["major"],
+      labels: ["major-update"],
+      automerge: false,
+    },
+    {
+      description: "Group kube-prometheus-stack components (chart + subcharts)",
+      matchPackageNames: ["**/kube-prometheus-stack"],
+      groupName: "kube-prometheus-stack",
+    },
+    {
+      description: "Group flux controllers — they want to roll together",
+      matchPackageNames: ["ghcr.io/fluxcd/**"],
+      groupName: "fluxcd",
+    },
+    {
+      description: "Game-server images: bundle all updates into one weekly PR",
+      matchFileNames: ["k8s/apps/game-servers/**"],
+      groupName: "game-server images",
+    },
+  ],
+}
