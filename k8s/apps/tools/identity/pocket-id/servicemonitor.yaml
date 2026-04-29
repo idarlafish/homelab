@@ -13,6 +13,6 @@ spec:
     matchLabels:
       app: pocket-id
   endpoints:
-    - port: http
+    - port: metrics
       path: /metrics
       interval: 30s

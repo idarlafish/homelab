@@ -25,6 +25,8 @@ data:
   LOG_JSON: "true"
   METRICS_ENABLED: "true"
   OTEL_METRICS_EXPORTER: "prometheus"
+  # Bind Prometheus exporter to 0.0.0.0 so other pods can scrape; defaults to 127.0.0.1
+  OTEL_EXPORTER_PROMETHEUS_HOST: "0.0.0.0"
 
   # --- Privacy / homelab posture ---
   ANALYTICS_DISABLED: "true"
