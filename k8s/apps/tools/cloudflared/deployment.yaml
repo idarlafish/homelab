@@ -21,7 +21,7 @@ spec:
       terminationGracePeriodSeconds: 90
       containers:
       - name: cloudflared
-        image: cloudflare/cloudflared:latest
+        image: cloudflare/cloudflared:2026.3.0
         args:
         - tunnel
         - --config=/etc/cloudflared/config/config.yaml

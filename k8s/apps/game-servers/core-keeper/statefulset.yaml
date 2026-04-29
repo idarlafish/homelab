@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: core-keeper
-          image: escaping/core-keeper-dedicated:latest
+          image: escaping/core-keeper-dedicated:v2.8.1
           imagePullPolicy: Always
           env:
             - name: PASSWORD

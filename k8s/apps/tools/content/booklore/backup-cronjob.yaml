@@ -37,7 +37,7 @@ spec:
                   mountPath: /backup
           containers:
             - name: backup
-              image: alpine:latest
+              image: alpine:3.23.4
               command: ["sh", "-c"]
               args:
                 - |

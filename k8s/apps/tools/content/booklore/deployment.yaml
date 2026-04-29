@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: booklore
-        image: ghcr.io/grimmory-tools/grimmory:latest
+        image: ghcr.io/grimmory-tools/grimmory:v3.0.2
         env:
         - name: APP_USER_ID
           value: "0"
