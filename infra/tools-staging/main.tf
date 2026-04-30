@@ -24,15 +24,9 @@ module "flux_bootstrap" {
 
   revision = var.bootstrap_revision
 
-  # Tolerate the external-cloud-provider uninitialized taint so the
-  # bootstrap Job can schedule before CCM removes it.
-  job = {
-    tolerations = [{
-      key      = "node.cloudprovider.kubernetes.io/uninitialized"
-      operator = "Exists"
-      effect   = "NoSchedule"
-    }]
-  }
+  # By the time CCM's helm release is healthy the uninitialized taint is
+  # gone, but depending on it explicitly keeps the order deterministic.
+  depends_on = [helm_release.hccm]
 
   gitops_resources = {
     instance_yaml = file("${path.root}/../../k8s/clusters/tools-staging/flux-instance.yaml")
@@ -76,4 +70,27 @@ resource "kubernetes_secret_v1" "hcloud" {
     token   = data.sops_file.secrets.data["hcloud_token"]
   }
   type = "Opaque"
+}
+
+# Hetzner CCM has to come up before anything else can schedule on the
+# node (kubelet sets the cloud-provider=external uninitialized taint
+# until CCM removes it). The bootstrap module's prerequisites.charts
+# input only supports OCI registries; Hetzner publishes via plain HTTP.
+# So we install it directly here. Staging's Flux infrastructure path
+# excludes this HelmRelease via a kustomize $patch:delete.
+resource "helm_release" "hccm" {
+  name             = "hccm"
+  repository       = "https://charts.hetzner.cloud"
+  chart            = "hcloud-cloud-controller-manager"
+  namespace        = "kube-system"
+  create_namespace = false
+  wait             = true
+  timeout          = 300
+
+  set = [{
+    name  = "networking.enabled"
+    value = "true"
+  }]
+
+  depends_on = [kubernetes_secret_v1.hcloud]
 }
