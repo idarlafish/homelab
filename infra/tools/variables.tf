@@ -14,3 +14,21 @@ variable "hcloud_location" {
   type        = string
   default     = "hel1"
 }
+
+variable "github_token" {
+  description = "GitHub PAT with repo:read on idarlafish/tools (used by Flux source-controller for GitRepository sync)"
+  type        = string
+  sensitive   = true
+}
+
+variable "sops_age_key" {
+  description = "Age private key for SOPS decryption inside the cluster"
+  type        = string
+  sensitive   = true
+}
+
+variable "bootstrap_revision" {
+  description = "Bump to force the flux-operator bootstrap Job to re-run"
+  type        = number
+  default     = 1
+}
