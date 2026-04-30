@@ -52,17 +52,17 @@ provider "cloudflare" {
 }
 
 provider "kubernetes" {
-  host                   = module.server.kube_endpoint
-  cluster_ca_certificate = base64decode(module.server.kube_ca_certificate)
-  client_certificate     = base64decode(module.server.kube_client_certificate)
-  client_key             = base64decode(module.server.kube_client_key)
+  host                   = module.cluster.kube_endpoint
+  cluster_ca_certificate = base64decode(module.cluster.kube_ca_certificate)
+  client_certificate     = base64decode(module.cluster.kube_client_certificate)
+  client_key             = base64decode(module.cluster.kube_client_key)
 }
 
 provider "helm" {
   kubernetes = {
-    host                   = module.server.kube_endpoint
-    cluster_ca_certificate = base64decode(module.server.kube_ca_certificate)
-    client_certificate     = base64decode(module.server.kube_client_certificate)
-    client_key             = base64decode(module.server.kube_client_key)
+    host                   = module.cluster.kube_endpoint
+    cluster_ca_certificate = base64decode(module.cluster.kube_ca_certificate)
+    client_certificate     = base64decode(module.cluster.kube_client_certificate)
+    client_key             = base64decode(module.cluster.kube_client_key)
   }
 }

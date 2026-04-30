@@ -1,5 +1,5 @@
 resource "hcloud_firewall" "k8s" {
-  name = "tools-staging-k8s-firewall"
+  name = "${var.name}-k8s-firewall"
 
   rule {
     direction   = "in"
@@ -19,7 +19,7 @@ resource "hcloud_firewall" "k8s" {
 }
 
 resource "hcloud_firewall" "web" {
-  name = "tools-staging-web-firewall"
+  name = "${var.name}-web-firewall"
 
   rule {
     direction   = "in"
@@ -70,7 +70,7 @@ resource "hcloud_firewall" "web" {
 }
 
 resource "hcloud_firewall" "vpn" {
-  name = "tools-staging-vpn-firewall"
+  name = "${var.name}-vpn-firewall"
 
   rule {
     direction   = "in"
