@@ -1,30 +1,17 @@
-resource "null_resource" "wait_for_kubeconfig" {
-  triggers = {
-    server_id = hcloud_server.this.id
-  }
+resource "ssh_sensitive_resource" "kubeconfig" {
+  when        = "create"
+  host        = hcloud_server.this.ipv4_address
+  user        = "root"
+  private_key = var.ssh_private_key
+  timeout     = "10m"
+  retry_delay = "10s"
 
-  provisioner "remote-exec" {
-    inline = [
-      "until test -s /root/.kube/config; do sleep 3; done",
-    ]
-    connection {
-      type    = "ssh"
-      user    = "root"
-      host    = hcloud_server.this.ipv4_address
-      agent   = true
-      timeout = "5m"
-    }
-  }
-}
-
-data "external" "kubeconfig" {
-  depends_on = [null_resource.wait_for_kubeconfig]
-  program    = ["bash", "${path.module}/fetch-kubeconfig.sh"]
-  query = {
-    host = hcloud_server.this.ipv4_address
-  }
+  commands = [
+    "until test -s /root/.kube/config; do sleep 3; done",
+    "cat /root/.kube/config",
+  ]
 }
 
 locals {
-  kubeconfig = yamldecode(base64decode(data.external.kubeconfig.result.kubeconfig_b64))
+  kubeconfig = yamldecode(ssh_sensitive_resource.kubeconfig.result)
 }

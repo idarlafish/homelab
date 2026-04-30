@@ -3,13 +3,9 @@ terraform {
     hcloud = {
       source = "hetznercloud/hcloud"
     }
-    external = {
-      source  = "hashicorp/external"
-      version = "~> 2.3"
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = "~> 3.2"
+    ssh = {
+      source  = "loafoe/ssh"
+      version = "~> 2.7"
     }
   }
 }

@@ -1,11 +1,11 @@
 variable "hcloud_location" {
-  description = "Hetzner location (e.g. fsn1, nbg1, hel1)"
+  description = "Hetzner location"
   type        = string
   default     = "hel1"
 }
 
 variable "sops_age_key" {
-  description = "Age private key for SOPS decryption inside the cluster (bootstrap-only secret; everything else lives in infra/secrets.sops.yaml)"
+  description = "Age private key for SOPS decryption inside the cluster (bootstrap-only secret)"
   type        = string
   sensitive   = true
 }
