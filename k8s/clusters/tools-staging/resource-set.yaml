@@ -7,19 +7,17 @@ metadata:
 spec:
   inputs:
     - name: infrastructure
-      path: ./k8s/infrastructure/tools
+      path: ./k8s/infrastructure/tools-staging
       wait: true
       dependsOn: []
     - name: cloudflared
-      path: ./k8s/apps/cloudflared
+      path: ./k8s/apps/cloudflared-staging
       wait: true
       dependsOn:
         - name: infrastructure
-    - name: content
-      path: ./k8s/apps/content
-      wait: true
-      dependsOn:
-        - name: infrastructure
+    # content/booklore is omitted for now: it pins a static PV
+    # (pv-booklore-books) that only exists on the tools cluster.
+    # Follow-up: per-cluster Tofu-provisioned Hetzner Volume.
     - name: monitoring-stack
       path: ./k8s/apps/monitoring/stack
       wait: true
@@ -63,10 +61,10 @@ spec:
             name: sops-age
         postBuild:
           substitute:
-            CLUSTER_NAME: tools
-            HOSTNAME_AUTH: auth.la.fish
-            HOSTNAME_BOOKLORE: booklore.la.fish
-            HOSTNAME_GRAFANA: grafana.la.fish
-            HOSTNAME_PROMETHEUS: prometheus.la.fish
-            HOSTNAME_WG: wg.la.fish
-            HOSTNAME_WG_ADMIN: wg-admin.la.fish
+            CLUSTER_NAME: tools-staging
+            HOSTNAME_AUTH: auth-staging.la.fish
+            HOSTNAME_BOOKLORE: booklore-staging.la.fish
+            HOSTNAME_GRAFANA: grafana-staging.la.fish
+            HOSTNAME_PROMETHEUS: prometheus-staging.la.fish
+            HOSTNAME_WG: wg-staging.la.fish
+            HOSTNAME_WG_ADMIN: wg-admin-staging.la.fish

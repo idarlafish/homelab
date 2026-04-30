@@ -14,6 +14,10 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 3.0"
     }
+    sops = {
+      source  = "carlpett/sops"
+      version = "~> 1.4"
+    }
   }
   backend "s3" {
     bucket = "fabler"
@@ -32,7 +36,7 @@ terraform {
 }
 
 provider "hcloud" {
-  token = var.hcloud_token
+  token = data.sops_file.secrets.data["hcloud_token"]
 }
 
 provider "kubernetes" {

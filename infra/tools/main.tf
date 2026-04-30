@@ -1,12 +1,13 @@
 module "server" {
   source = "../modules/hcloud-server"
 
-  name        = "tools"
-  server_type = "cax11"
-  location    = var.hcloud_location
-  ssh_key_id  = data.hcloud_ssh_key.main.id
-  private_ip  = "10.0.1.1"
-  cloud_init  = file("${path.module}/cloud-init.yaml")
+  name            = "tools"
+  server_type     = "cax11"
+  location        = var.hcloud_location
+  ssh_key_id      = data.hcloud_ssh_key.main.id
+  ssh_private_key = data.sops_file.secrets.data["clusters.tools.ssh_private_key"]
+  private_ip      = "10.0.1.1"
+  cloud_init      = file("${path.module}/cloud-init.yaml")
 
   extra_firewall_ids = [
     hcloud_firewall.k8s.id,
@@ -36,7 +37,7 @@ module "flux_bootstrap" {
       type: Opaque
       stringData:
         username: git
-        password: ${var.github_token}
+        password: ${data.sops_file.secrets.data["flux_github_pat"]}
       ---
       apiVersion: v1
       kind: Secret

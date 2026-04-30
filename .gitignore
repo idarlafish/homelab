@@ -4,6 +4,7 @@ node_modules
 .DS_Store
 .kube
 .terraform
+tfplan
 .claude
 docs/superpowers/
 tfplan

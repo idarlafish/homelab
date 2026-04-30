@@ -14,7 +14,7 @@ output "server_id" {
 }
 
 output "kube_endpoint" {
-  value       = local.kubeconfig.clusters[0].cluster.server
+  value       = nonsensitive(local.kubeconfig.clusters[0].cluster.server)
   description = "API server endpoint URL parsed from the in-cluster kubeconfig"
 }
 
