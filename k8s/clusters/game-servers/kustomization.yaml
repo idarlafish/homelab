@@ -4,5 +4,3 @@ kind: Kustomization
 resources:
   - flux-instance.yaml
   - resource-set.yaml
-  - infrastructure.yaml
-  - game-servers.yaml
