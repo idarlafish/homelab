@@ -4,7 +4,6 @@ kind: Kustomization
 resources:
   - alertmanager-telegram-secret.yaml
   - grafana-admin-secret.yaml
-  - kube-prometheus-stack.yaml
   - blackbox-exporter.yaml
   - telegram-notify-probe.yaml
   - telegram-notify-rules.yaml
