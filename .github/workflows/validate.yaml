@@ -98,7 +98,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: opentofu/setup-opentofu@v1
+      - uses: opentofu/setup-opentofu@v2
 
       - name: tofu fmt -check
         run: tofu fmt -check -recursive ${{ matrix.dir }}
