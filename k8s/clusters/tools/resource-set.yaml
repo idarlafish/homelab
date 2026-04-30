@@ -1,0 +1,58 @@
+---
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: cluster-kustomizations
+  namespace: flux-system
+spec:
+  inputs:
+    - name: infrastructure
+      path: ./k8s/infrastructure/tools
+      wait: true
+      dependsOn: []
+    - name: cloudflared
+      path: ./k8s/apps/tools/cloudflared
+      wait: true
+      dependsOn:
+        - name: infrastructure
+    - name: content
+      path: ./k8s/apps/tools/content
+      wait: true
+      dependsOn:
+        - name: infrastructure
+    - name: identity
+      path: ./k8s/apps/tools/identity
+      wait: true
+      dependsOn:
+        - name: infrastructure
+    - name: monitoring
+      path: ./k8s/apps/tools/monitoring
+      wait: true
+      dependsOn:
+        - name: infrastructure
+    # vpn: wait:false because wg-easy is intentionally at replicas:0
+    - name: vpn
+      path: ./k8s/apps/tools/vpn
+      wait: false
+      dependsOn:
+        - name: infrastructure
+  resources:
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: << inputs.name >>
+        namespace: flux-system
+      spec:
+        interval: 10m
+        sourceRef:
+          kind: GitRepository
+          name: flux-system
+        path: << inputs.path >>
+        prune: true
+        wait: << inputs.wait >>
+        timeout: 5m
+        dependsOn: << inputs.dependsOn | toYaml | nindent 10 >>
+        decryption:
+          provider: sops
+          secretRef:
+            name: sops-age
