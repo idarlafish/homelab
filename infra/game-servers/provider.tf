@@ -40,17 +40,17 @@ provider "hcloud" {
 }
 
 provider "kubernetes" {
-  host                   = module.server.kube_endpoint
-  cluster_ca_certificate = base64decode(module.server.kube_ca_certificate)
-  client_certificate     = base64decode(module.server.kube_client_certificate)
-  client_key             = base64decode(module.server.kube_client_key)
+  host                   = try(module.server[0].kube_endpoint, "")
+  cluster_ca_certificate = try(base64decode(module.server[0].kube_ca_certificate), "")
+  client_certificate     = try(base64decode(module.server[0].kube_client_certificate), "")
+  client_key             = try(base64decode(module.server[0].kube_client_key), "")
 }
 
 provider "helm" {
   kubernetes = {
-    host                   = module.server.kube_endpoint
-    cluster_ca_certificate = base64decode(module.server.kube_ca_certificate)
-    client_certificate     = base64decode(module.server.kube_client_certificate)
-    client_key             = base64decode(module.server.kube_client_key)
+    host                   = try(module.server[0].kube_endpoint, "")
+    cluster_ca_certificate = try(base64decode(module.server[0].kube_ca_certificate), "")
+    client_certificate     = try(base64decode(module.server[0].kube_client_certificate), "")
+    client_key             = try(base64decode(module.server[0].kube_client_key), "")
   }
 }
