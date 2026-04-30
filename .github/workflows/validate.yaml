@@ -17,7 +17,7 @@ jobs:
     name: K8s manifests + secrets
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Install kustomize
         run: |
@@ -78,7 +78,7 @@ jobs:
     name: Renovate config
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -96,7 +96,7 @@ jobs:
           - infra/game-servers
           - infra/modules/hcloud-server
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: opentofu/setup-opentofu@v1
 
