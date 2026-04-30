@@ -4,5 +4,18 @@ kind: Kustomization
 resources:
   - ../base
   - helm-repos.yaml
-  - hcloud-secret.yaml
   - monitoring-namespace.yaml
+patches:
+  - target:
+      group: helm.toolkit.fluxcd.io
+      version: v2
+      kind: HelmRelease
+      name: hccm
+      namespace: kube-system
+    patch: |-
+      $patch: delete
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: hccm
+        namespace: kube-system
