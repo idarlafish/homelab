@@ -20,16 +20,21 @@ spec:
       wait: true
       dependsOn:
         - name: infrastructure
-    - name: identity
-      path: ./k8s/apps/identity
+    - name: monitoring-stack
+      path: ./k8s/apps/monitoring/stack
       wait: true
       dependsOn:
         - name: infrastructure
     - name: monitoring
-      path: ./k8s/apps/monitoring
+      path: ./k8s/apps/monitoring/extras
       wait: true
       dependsOn:
-        - name: infrastructure
+        - name: monitoring-stack
+    - name: identity
+      path: ./k8s/apps/identity
+      wait: true
+      dependsOn:
+        - name: monitoring-stack
     # vpn: wait:false because wg-easy is intentionally at replicas:0
     - name: vpn
       path: ./k8s/apps/vpn
