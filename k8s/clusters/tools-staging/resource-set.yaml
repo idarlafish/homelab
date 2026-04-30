@@ -62,9 +62,9 @@ spec:
         postBuild:
           substitute:
             CLUSTER_NAME: tools-staging
-            HOSTNAME_AUTH: auth.staging.la.fish
-            HOSTNAME_BOOKLORE: booklore.staging.la.fish
-            HOSTNAME_GRAFANA: grafana.staging.la.fish
-            HOSTNAME_PROMETHEUS: prometheus.staging.la.fish
-            HOSTNAME_WG: wg.staging.la.fish
-            HOSTNAME_WG_ADMIN: wg-admin.staging.la.fish
+            HOSTNAME_AUTH: auth-staging.la.fish
+            HOSTNAME_BOOKLORE: booklore-staging.la.fish
+            HOSTNAME_GRAFANA: grafana-staging.la.fish
+            HOSTNAME_PROMETHEUS: prometheus-staging.la.fish
+            HOSTNAME_WG: wg-staging.la.fish
+            HOSTNAME_WG_ADMIN: wg-admin-staging.la.fish
