@@ -18,10 +18,18 @@ terraform {
       source  = "carlpett/sops"
       version = "~> 1.4"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 5"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
   }
   backend "s3" {
     bucket = "fabler"
-    key    = "tools/terraform.tfstate"
+    key    = "tools-staging/terraform.tfstate"
     region = "auto"
     endpoints = {
       s3 = "https://95c5c6e1c01ea2d0c9fab69ee9e28462.r2.cloudflarestorage.com"
@@ -37,6 +45,10 @@ terraform {
 
 provider "hcloud" {
   token = data.sops_file.secrets.data["hcloud_token"]
+}
+
+provider "cloudflare" {
+  api_token = data.sops_file.secrets.data["cloudflare_api_token"]
 }
 
 provider "kubernetes" {

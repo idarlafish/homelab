@@ -26,7 +26,7 @@ spec:
               memory: 512Mi
           env:
             - name: WG_HOST
-              value: wg.la.fish
+              value: ${HOSTNAME_WG}
             - name: WG_CONFIG_PORT
               value: "30000"
             - name: PASSWORD_HASH
