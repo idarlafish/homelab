@@ -4,7 +4,6 @@ kind: Kustomization
 resources:
   - configmap.yaml
   - pocket-id-secret.yaml
-  - pv.yaml
   - pvc.yaml
   - service.yaml
   - deployment.yaml
