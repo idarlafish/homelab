@@ -87,7 +87,9 @@ jobs:
         with:
           node-version: "20"
       - name: Validate renovate.json5
-        run: npx --yes --package renovate -- renovate-config-validator --strict
+        # Without --strict: warnings (like manager-scope managerFilePatterns deprecation
+        # in Renovate 43.x) don't fail the build. Real errors still do.
+        run: npx --yes --package renovate -- renovate-config-validator
 
   tofu:
     name: OpenTofu (${{ matrix.dir }})
