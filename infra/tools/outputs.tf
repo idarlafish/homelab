@@ -1,19 +1,15 @@
 output "server_ip" {
-  value       = module.server.server_ip
-  description = "Public IPv4 address of the tools server"
+  value = module.cluster.server_ip
 }
 
 output "network_id" {
-  value       = module.server.network_id
-  description = "ID of the private network"
+  value = module.cluster.network_id
 }
 
 output "booklore_volume_id" {
-  value       = hcloud_volume.booklore_books.id
-  description = "Hetzner Volume ID backing booklore's PV (referenced from k8s PV's csi.volumeHandle)"
+  value = hcloud_volume.booklore_books.id
 }
 
 output "pocket_id_volume_id" {
-  value       = hcloud_volume.pocket_id_data.id
-  description = "Hetzner Volume ID backing Pocket-ID's PV"
+  value = hcloud_volume.pocket_id_data.id
 }
