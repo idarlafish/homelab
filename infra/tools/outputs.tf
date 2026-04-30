@@ -7,9 +7,9 @@ output "network_id" {
 }
 
 output "booklore_volume_id" {
-  value = hcloud_volume.booklore_books.id
+  value = module.cluster.booklore_volume_id
 }
 
 output "pocket_id_volume_id" {
-  value = hcloud_volume.pocket_id_data.id
+  value = module.cluster.pocket_id_volume_id
 }

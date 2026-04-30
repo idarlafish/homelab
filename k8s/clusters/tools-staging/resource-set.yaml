@@ -15,9 +15,11 @@ spec:
       wait: true
       dependsOn:
         - name: infrastructure
-    # content/booklore is omitted for now: it pins a static PV
-    # (pv-booklore-books) that only exists on the tools cluster.
-    # Follow-up: per-cluster Tofu-provisioned Hetzner Volume.
+    - name: content
+      path: ./k8s/apps/content
+      wait: true
+      dependsOn:
+        - name: infrastructure
     - name: monitoring-stack
       path: ./k8s/apps/monitoring/stack
       wait: true

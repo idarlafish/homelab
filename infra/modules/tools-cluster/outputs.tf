@@ -28,3 +28,11 @@ output "kube_client_key" {
 output "tunnel_id" {
   value = cloudflare_zero_trust_tunnel_cloudflared.this.id
 }
+
+output "booklore_volume_id" {
+  value = hcloud_volume.booklore_books.id
+}
+
+output "pocket_id_volume_id" {
+  value = hcloud_volume.pocket_id_data.id
+}
