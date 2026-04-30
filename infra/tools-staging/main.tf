@@ -24,7 +24,36 @@ module "flux_bootstrap" {
 
   revision = var.bootstrap_revision
 
+  # Tolerate the external-cloud-provider uninitialized taint so the
+  # bootstrap Job can schedule before CCM removes it.
+  job = {
+    tolerations = [{
+      key      = "node.cloudprovider.kubernetes.io/uninitialized"
+      operator = "Exists"
+      effect   = "NoSchedule"
+    }]
+  }
+
   gitops_resources = {
+    # Hetzner CCM installed before the FluxInstance — its pod spec
+    # already tolerates the uninitialized taint, so it schedules and
+    # then untaints the node, unblocking everything else.
+    prerequisites = {
+      charts = [{
+        name       = "hccm"
+        repository = "https://charts.hetzner.cloud"
+        namespace  = "kube-system"
+        values_yaml = yamlencode({
+          networking = { enabled = true }
+        })
+        flux_adoption_check = {
+          resource  = "deployments"
+          api_group = "apps"
+          name      = "hccm-hcloud-cloud-controller-manager"
+          namespace = "kube-system"
+        }
+      }]
+    }
     instance_yaml = file("${path.root}/../../k8s/clusters/tools-staging/flux-instance.yaml")
   }
 
@@ -49,16 +78,21 @@ module "flux_bootstrap" {
       type: Opaque
       stringData:
         age.agekey: ${var.sops_age_key}
-      ---
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: hcloud
-        namespace: kube-system
-      type: Opaque
-      stringData:
-        network: "${module.server.network_id}"
-        token: ${data.sops_file.secrets.data["hcloud_token"]}
     YAML
   }
+}
+
+# hcloud Secret stays out of the bootstrap module: its `network` field is
+# known-after-apply (server module output), which would force the
+# bootstrap module's count predicate to be apply-time-only.
+resource "kubernetes_secret_v1" "hcloud" {
+  metadata {
+    name      = "hcloud"
+    namespace = "kube-system"
+  }
+  data = {
+    network = module.server.network_id
+    token   = data.sops_file.secrets.data["hcloud_token"]
+  }
+  type = "Opaque"
 }
