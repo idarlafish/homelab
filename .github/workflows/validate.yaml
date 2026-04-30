@@ -1,0 +1,112 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  k8s:
+    name: K8s manifests + secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install kustomize
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh | bash
+          sudo mv kustomize /usr/local/bin/
+          kustomize version
+
+      - name: Install kubeconform
+        run: |
+          curl -fsSL "https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin/ kubeconform
+          kubeconform -v
+
+      - name: Build all Kustomize roots
+        run: |
+          set -e
+          fail=0
+          while IFS= read -r dir; do
+            if ! kustomize build "$dir" > /dev/null 2>/tmp/err; then
+              echo "::error file=$dir/kustomization.yaml::kustomize build failed"
+              cat /tmp/err
+              fail=1
+            fi
+          done < <(find k8s -name kustomization.yaml -exec dirname {} \; | sort -u)
+          exit "$fail"
+
+      - name: Validate built manifests against K8s schemas (kubeconform)
+        run: |
+          set -e
+          fail=0
+          while IFS= read -r dir; do
+            output=$(kustomize build "$dir" 2>/dev/null)
+            if ! echo "$output" | kubeconform \
+                -strict \
+                -ignore-missing-schemas \
+                -schema-location default \
+                -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+                -summary; then
+              echo "::error file=$dir/kustomization.yaml::kubeconform validation failed"
+              fail=1
+            fi
+          done < <(find k8s -name kustomization.yaml -exec dirname {} \; | sort -u)
+          exit "$fail"
+
+      - name: Verify all Secrets are SOPS-encrypted
+        run: |
+          set -e
+          fail=0
+          while IFS= read -r f; do
+            if grep -qE '^kind: Secret$' "$f" && ! grep -qE 'ENC\[AES256_GCM' "$f"; then
+              echo "::error file=$f::file contains 'kind: Secret' but no SOPS encryption markers"
+              fail=1
+            fi
+          done < <(find k8s -name '*.yaml' -not -path '*/.terraform/*')
+          exit "$fail"
+
+  renovate:
+    name: Renovate config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Validate renovate.json5
+        run: npx --yes --package renovate -- renovate-config-validator --strict
+
+  tofu:
+    name: OpenTofu (${{ matrix.dir }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+          - infra/tools
+          - infra/game-servers
+          - infra/modules/hcloud-server
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: opentofu/setup-opentofu@v1
+
+      - name: tofu fmt -check
+        run: tofu fmt -check -recursive ${{ matrix.dir }}
+
+      - name: tofu init (no backend)
+        working-directory: ${{ matrix.dir }}
+        run: tofu init -backend=false -input=false
+
+      - name: tofu validate
+        working-directory: ${{ matrix.dir }}
+        run: tofu validate -no-color
