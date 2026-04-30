@@ -1,0 +1,130 @@
+name: Deploy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Which cluster to provision (tools or game-servers)"
+        required: true
+        type: choice
+        options:
+          - tools
+          - game-servers
+
+permissions:
+  contents: read
+
+jobs:
+  tofu:
+    runs-on: ubuntu-latest
+    outputs:
+      server_ip: ${{ steps.tofu_output.outputs.SERVER_IP }}
+      network_id: ${{ steps.tofu_output.outputs.NETWORK_ID }}
+    env:
+      TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
+      TF_VAR_ssh_key_name: ${{ inputs.target == 'tools' && secrets.HCLOUD_SSH_KEY_NAME || secrets.GAME_SERVERS_HCLOUD_SSH_KEY_NAME }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_KEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@v2
+
+      - name: Tofu Init
+        working-directory: infra/${{ inputs.target }}
+        run: |
+          tofu init \
+            -backend-config="access_key=${{ secrets.S3_ACCESS_KEY }}" \
+            -backend-config="secret_key=${{ secrets.S3_SECRET_KEY }}"
+
+      - name: Tofu Plan
+        id: plan
+        working-directory: infra/${{ inputs.target }}
+        run: |
+          set +e
+          tofu plan -detailed-exitcode -input=false -out=tfplan
+          exit_code=$?
+          set -e
+          if [ $exit_code -eq 2 ]; then
+            echo "Pending changes detected."
+            exit 0
+          elif [ $exit_code -eq 0 ]; then
+            echo "No changes."
+            exit 0
+          else
+            echo "Tofu plan failed."
+            exit 1
+          fi
+
+      - name: Tofu Apply
+        working-directory: infra/${{ inputs.target }}
+        if: steps.plan.outcome == 'success'
+        run: tofu apply -auto-approve tfplan
+
+      - name: Capture Tofu Outputs
+        working-directory: infra/${{ inputs.target }}
+        id: tofu_output
+        run: |
+          echo "SERVER_IP=$(tofu output -raw server_ip)" >> "$GITHUB_OUTPUT"
+          if tofu output -raw network_id 2>/dev/null > /tmp/nid; then
+            echo "NETWORK_ID=$(cat /tmp/nid)" >> "$GITHUB_OUTPUT"
+          fi
+
+  bootstrap-flux:
+    runs-on: ubuntu-latest
+    needs: tofu
+    env:
+      KUBECONFIG: /tmp/kubeconfig
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ inputs.target == 'tools' && secrets.HCLOUD_SSH_KEY || secrets.GAME_SERVERS_HCLOUD_SSH_KEY }}
+
+      - name: Fetch kubeconfig
+        env:
+          SERVER_IP: ${{ needs.tofu.outputs.server_ip }}
+        uses: nick-fields/retry@v4
+        with:
+          timeout_seconds: 30
+          max_attempts: 6
+          command: scp -o StrictHostKeyChecking=no root@$SERVER_IP:/root/.kube/config $KUBECONFIG
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v5
+
+      - name: Wait for cluster ready
+        run: kubectl wait --for=condition=Ready nodes --all --timeout=90s
+
+      - name: Install Flux CLI
+        uses: fluxcd/flux2/action@main
+
+      - name: Create SOPS age secret
+        env:
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: |
+          kubectl create namespace flux-system --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic sops-age \
+            --namespace=flux-system \
+            --from-literal=age.agekey="$SOPS_AGE_KEY" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Bootstrap FluxCD
+        env:
+          GITHUB_TOKEN: ${{ secrets.FLUX_GITHUB_PAT }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          flux bootstrap github \
+            --owner=idarlafish \
+            --repository=tools \
+            --branch=main \
+            --path=k8s/clusters/$TARGET \
+            --personal \
+            --token-auth
