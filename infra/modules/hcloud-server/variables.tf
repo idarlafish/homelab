@@ -47,3 +47,9 @@ variable "subnet_ip_range" {
   type        = string
   default     = "10.0.1.0/24"
 }
+
+variable "ssh_private_key" {
+  description = "SSH private key matching ssh_key_id; used by the in-graph SSH resource that fetches kubeconfig from the new server"
+  type        = string
+  sensitive   = true
+}

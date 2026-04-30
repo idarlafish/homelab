@@ -6,7 +6,7 @@ metadata:
   namespace: identity
 data:
   # --- Required core ---
-  APP_URL: "https://auth.la.fish"
+  APP_URL: "https://${HOSTNAME_AUTH}"
   TRUST_PROXY: "true"
   TRUSTED_PLATFORM: "CF-Connecting-IP"   # HTTP header name, not platform name
   PORT: "1411"

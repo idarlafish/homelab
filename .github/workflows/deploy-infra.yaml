@@ -18,30 +18,31 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      TF_VAR_hcloud_token:       ${{ secrets.HCLOUD_TOKEN }}
-      TF_VAR_ssh_key_name:       ${{ inputs.target == 'tools' && secrets.HCLOUD_SSH_KEY_NAME || secrets.GAME_SERVERS_HCLOUD_SSH_KEY_NAME }}
-      TF_VAR_github_token:       ${{ secrets.FLUX_GITHUB_PAT }}
-      TF_VAR_sops_age_key:       ${{ secrets.SOPS_AGE_KEY }}
-      AWS_ACCESS_KEY_ID:         ${{ secrets.S3_ACCESS_KEY }}
-      AWS_SECRET_ACCESS_KEY:     ${{ secrets.S3_SECRET_KEY }}
+      SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+      TF_VAR_sops_age_key: ${{ secrets.SOPS_AGE_KEY }}
 
     steps:
       - uses: actions/checkout@v6
 
       - uses: opentofu/setup-opentofu@v2
 
-      - name: Load SSH key into agent
-        env:
-          SSH_KEY: ${{ inputs.target == 'tools' && secrets.HCLOUD_SSH_KEY || secrets.GAME_SERVERS_HCLOUD_SSH_KEY }}
+      - name: Install sops (for backend creds only)
         run: |
-          eval "$(ssh-agent -s)"
-          ssh-add - <<< "$SSH_KEY"
-          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
-          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+          curl -fsSL https://github.com/getsops/sops/releases/download/v3.12.2/sops-v3.12.2.linux.amd64 -o /tmp/sops
+          chmod +x /tmp/sops && sudo mv /tmp/sops /usr/local/bin/sops
 
-      - name: Tofu init / plan / apply
+      - name: Tofu apply
         working-directory: infra/${{ inputs.target }}
         run: |
-          tofu init -backend-config="access_key=$AWS_ACCESS_KEY_ID" -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY"
+          set -e
+          # The S3 backend initialises before any provider, so we must read R2 creds
+          # outside Tofu. Everything else is decrypted in-graph by carlpett/sops.
+          AWS_ACCESS_KEY_ID=$(sops decrypt --extract '["s3_access_key"]' ../secrets.sops.yaml)
+          AWS_SECRET_ACCESS_KEY=$(sops decrypt --extract '["s3_secret_key"]' ../secrets.sops.yaml)
+          export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+
+          tofu init -input=false \
+            -backend-config="access_key=$AWS_ACCESS_KEY_ID" \
+            -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY"
           tofu plan -input=false -out=tfplan
           tofu apply -input=false tfplan
