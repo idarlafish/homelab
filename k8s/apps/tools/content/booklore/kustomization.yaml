@@ -7,6 +7,7 @@ resources:
   - booklore-r2-credentials-secret.yaml
   - deployment.yaml
   - service.yaml
+  - pv.yaml
   - pvc.yaml
   - mariadb
   - backup-cronjob.yaml

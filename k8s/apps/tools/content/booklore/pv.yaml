@@ -1,0 +1,23 @@
+---
+# Static PV pinned to a Tofu-owned Hetzner Volume (id 105564686, named
+# `tools-booklore-books`). Volume lifecycle lives in infra/tools/volumes.tf;
+# this manifest just exposes it to k8s. Reclaim:Retain so a stray PVC delete
+# doesn't bin the underlying Hetzner Volume.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-booklore-books
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: hcloud-volumes
+  csi:
+    driver: csi.hetzner.cloud
+    volumeHandle: "105564686"
+    fsType: ext4
+  claimRef:
+    namespace: booklore
+    name: booklore-books
