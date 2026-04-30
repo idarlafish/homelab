@@ -6,6 +6,7 @@ node_modules
 .terraform
 .claude
 docs/superpowers/
+tfplan
 
 # Game server data (saves, blueprints, maps)
 *.gzip
