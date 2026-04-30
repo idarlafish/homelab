@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv-booklore-books
+  name: pv-pocket-id-data
 spec:
   capacity:
     storage: 10Gi
@@ -12,8 +12,8 @@ spec:
   storageClassName: hcloud-volumes
   csi:
     driver: csi.hetzner.cloud
-    volumeHandle: "105564686"
+    volumeHandle: "105555376"
     fsType: ext4
   claimRef:
-    namespace: booklore
-    name: booklore-books
+    namespace: identity
+    name: pocket-id-data
