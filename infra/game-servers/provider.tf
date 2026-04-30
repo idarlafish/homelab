@@ -1,8 +1,18 @@
 terraform {
+  required_version = ">= 1.11.0"
+
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
       version = "1.52.0"
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 3.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 3.0"
     }
   }
   backend "s3" {
@@ -23,4 +33,20 @@ terraform {
 
 provider "hcloud" {
   token = var.hcloud_token
+}
+
+provider "kubernetes" {
+  host                   = module.server.kube_endpoint
+  cluster_ca_certificate = base64decode(module.server.kube_ca_certificate)
+  client_certificate     = base64decode(module.server.kube_client_certificate)
+  client_key             = base64decode(module.server.kube_client_key)
+}
+
+provider "helm" {
+  kubernetes = {
+    host                   = module.server.kube_endpoint
+    cluster_ca_certificate = base64decode(module.server.kube_ca_certificate)
+    client_certificate     = base64decode(module.server.kube_client_certificate)
+    client_key             = base64decode(module.server.kube_client_key)
+  }
 }
