@@ -11,12 +11,15 @@ on:
           - tools
           - game-servers
 
+permissions:
+  contents: read
+
 jobs:
   cleanup:
     runs-on: ubuntu-latest
     env:
       TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
-      TF_VAR_ssh_key_name: ${{ secrets.HCLOUD_SSH_KEY_NAME }}
+      TF_VAR_ssh_key_name: ${{ inputs.target == 'tools' && secrets.HCLOUD_SSH_KEY_NAME || secrets.GAME_SERVERS_HCLOUD_SSH_KEY_NAME }}
       AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_KEY }}
 
@@ -24,16 +27,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v4
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@v2
 
-      - name: Terraform Init
+      - name: Tofu Init
         working-directory: infra/${{ inputs.target }}
         run: |
-          terraform init \
+          tofu init \
             -backend-config="access_key=${{ secrets.S3_ACCESS_KEY }}" \
             -backend-config="secret_key=${{ secrets.S3_SECRET_KEY }}"
 
-      - name: Terraform Destroy
+      - name: Tofu Destroy
         working-directory: infra/${{ inputs.target }}
-        run: terraform destroy -auto-approve
+        run: tofu destroy -auto-approve
