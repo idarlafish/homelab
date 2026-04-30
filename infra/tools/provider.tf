@@ -6,9 +6,9 @@ terraform {
     }
   }
   backend "s3" {
-    bucket                      = "fabler"
-    key                         = "tools/terraform.tfstate"
-    region                      = "auto"
+    bucket = "fabler"
+    key    = "tools/terraform.tfstate"
+    region = "auto"
     endpoints = {
       s3 = "https://95c5c6e1c01ea2d0c9fab69ee9e28462.r2.cloudflarestorage.com"
     }
