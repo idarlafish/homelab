@@ -1,4 +1,5 @@
 module "server" {
+  count  = var.enable_cluster ? 1 : 0
   source = "../modules/hcloud-server"
 
   name            = "game-servers"
@@ -15,6 +16,7 @@ module "server" {
 }
 
 module "flux_bootstrap" {
+  count   = var.enable_cluster ? 1 : 0
   source  = "controlplaneio-fluxcd/flux-operator-bootstrap/kubernetes"
   version = "0.5.0"
 
