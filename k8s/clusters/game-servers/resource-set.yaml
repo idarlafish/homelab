@@ -61,6 +61,15 @@ spec:
       wait: true
       dependsOn:
         - name: infrastructure
+    - name: shared-secrets
+      path: ./k8s/infrastructure/game-servers/shared-secrets
+      wait: true
+      dependsOn:
+        - name: minecraft
+        - name: vrising
+        - name: core-keeper
+        - name: foundry
+        - name: soulmask
   resources:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
