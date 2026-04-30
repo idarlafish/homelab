@@ -18,6 +18,14 @@ terraform {
       source  = "carlpett/sops"
       version = "~> 1.4"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 5"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
   }
   backend "s3" {
     bucket = "fabler"
@@ -37,6 +45,10 @@ terraform {
 
 provider "hcloud" {
   token = data.sops_file.secrets.data["hcloud_token"]
+}
+
+provider "cloudflare" {
+  api_token = data.sops_file.secrets.data["cloudflare_api_token"]
 }
 
 provider "kubernetes" {
