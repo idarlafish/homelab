@@ -32,8 +32,9 @@ variable "extra_firewall_ids" {
 }
 
 variable "cloud_init" {
-  description = "Cloud-init user_data string"
+  description = "Cloud-init user_data string. Defaults to the shared k3s install template in this module."
   type        = string
+  default     = null
 }
 
 variable "network_ip_range" {

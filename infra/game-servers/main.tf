@@ -7,7 +7,6 @@ module "server" {
   ssh_key_id      = data.hcloud_ssh_key.main.id
   ssh_private_key = data.sops_file.secrets.data["clusters.game-servers.ssh_private_key"]
   private_ip      = "10.0.1.1"
-  cloud_init      = file("${path.module}/cloud-init.yaml")
 
   extra_firewall_ids = [
     hcloud_firewall.k8s.id,

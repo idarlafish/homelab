@@ -29,7 +29,7 @@ resource "hcloud_server" "this" {
     var.extra_firewall_ids
   )
 
-  user_data = var.cloud_init
+  user_data = coalesce(var.cloud_init, file("${path.module}/cloud-init.yaml"))
 
   depends_on = [
     hcloud_network_subnet.this,

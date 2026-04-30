@@ -9,7 +9,6 @@ module "server" {
   private_ip       = var.private_ip
   network_ip_range = var.network_ip_range
   subnet_ip_range  = var.subnet_ip_range
-  cloud_init       = file("${path.module}/cloud-init.yaml")
 
   extra_firewall_ids = [
     hcloud_firewall.k8s.id,
