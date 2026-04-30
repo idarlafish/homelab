@@ -22,6 +22,8 @@ module "flux_bootstrap" {
 
   revision = var.bootstrap_revision
 
+  depends_on = [helm_release.hccm]
+
   gitops_resources = {
     instance_yaml = file("${path.root}/../../k8s/clusters/tools/flux-instance.yaml")
   }
@@ -49,4 +51,28 @@ module "flux_bootstrap" {
         age.agekey: ${var.sops_age_key}
     YAML
   }
+}
+
+resource "kubernetes_secret_v1" "hcloud" {
+  metadata {
+    name      = "hcloud"
+    namespace = "kube-system"
+  }
+  data = {
+    network = module.server.network_id
+    token   = data.sops_file.secrets.data["hcloud_token"]
+  }
+  type = "Opaque"
+}
+
+resource "helm_release" "hccm" {
+  name             = "hccm"
+  repository       = "https://charts.hetzner.cloud"
+  chart            = "hcloud-cloud-controller-manager"
+  namespace        = "kube-system"
+  create_namespace = false
+  wait             = true
+  timeout          = 300
+
+  depends_on = [kubernetes_secret_v1.hcloud]
 }
