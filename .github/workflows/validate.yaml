@@ -50,9 +50,13 @@ jobs:
           fail=0
           while IFS= read -r dir; do
             output=$(kustomize build "$dir" 2>/dev/null)
+            # Skip Secret kind: SOPS-encrypted Secrets carry a top-level `sops:`
+            # field which fails kubeconform -strict ("additional properties").
+            # Their encryption is verified separately by the next step.
             if ! echo "$output" | kubeconform \
                 -strict \
                 -ignore-missing-schemas \
+                -skip Secret \
                 -schema-location default \
                 -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
                 -summary; then
