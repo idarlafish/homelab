@@ -1,0 +1,83 @@
+---
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: cluster-kustomizations
+  namespace: flux-system
+spec:
+  inputs:
+    - name: infrastructure
+      path: ./k8s/infrastructure/game-servers
+      wait: true
+      dependsOn: []
+    - name: core-keeper
+      path: ./k8s/apps/game-servers/core-keeper
+      wait: true
+      dependsOn:
+        - name: infrastructure
+    - name: enshrouded
+      path: ./k8s/apps/game-servers/enshrouded
+      wait: true
+      dependsOn:
+        - name: infrastructure
+    - name: foundry
+      path: ./k8s/apps/game-servers/foundry
+      wait: true
+      dependsOn:
+        - name: infrastructure
+    - name: metrics
+      path: ./k8s/apps/game-servers/metrics
+      wait: true
+      dependsOn:
+        - name: infrastructure
+    - name: minecraft
+      path: ./k8s/apps/game-servers/minecraft
+      wait: true
+      dependsOn:
+        - name: infrastructure
+    # palworld: wait:false because PVC stays Pending under WaitForFirstConsumer + replicas:0
+    - name: palworld
+      path: ./k8s/apps/game-servers/palworld
+      wait: false
+      dependsOn:
+        - name: infrastructure
+    - name: satisfactory
+      path: ./k8s/apps/game-servers/satisfactory
+      wait: true
+      dependsOn:
+        - name: infrastructure
+    - name: soulmask
+      path: ./k8s/apps/game-servers/soulmask
+      wait: true
+      dependsOn:
+        - name: infrastructure
+    - name: valheim
+      path: ./k8s/apps/game-servers/valheim
+      wait: true
+      dependsOn:
+        - name: infrastructure
+    - name: vrising
+      path: ./k8s/apps/game-servers/vrising
+      wait: true
+      dependsOn:
+        - name: infrastructure
+  resources:
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: << inputs.name >>
+        namespace: flux-system
+      spec:
+        interval: 10m
+        sourceRef:
+          kind: GitRepository
+          name: flux-system
+        path: << inputs.path >>
+        prune: true
+        wait: << inputs.wait >>
+        timeout: 5m
+        dependsOn: << inputs.dependsOn | toYaml | nindent 10 >>
+        decryption:
+          provider: sops
+          secretRef:
+            name: sops-age
