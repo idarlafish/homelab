@@ -11,7 +11,7 @@ spec:
       wait: true
       dependsOn: []
     - name: cloudflared
-      path: ./k8s/apps/tools/cloudflared
+      path: ./k8s/apps/cloudflared
       wait: true
       dependsOn:
         - name: infrastructure

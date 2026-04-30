@@ -35,25 +35,6 @@ module "flux_bootstrap" {
   }
 
   gitops_resources = {
-    # Hetzner CCM installed before the FluxInstance — its pod spec
-    # already tolerates the uninitialized taint, so it schedules and
-    # then untaints the node, unblocking everything else.
-    prerequisites = {
-      charts = [{
-        name       = "hccm"
-        repository = "https://charts.hetzner.cloud"
-        namespace  = "kube-system"
-        values_yaml = yamlencode({
-          networking = { enabled = true }
-        })
-        flux_adoption_check = {
-          resource  = "deployments"
-          api_group = "apps"
-          name      = "hccm-hcloud-cloud-controller-manager"
-          namespace = "kube-system"
-        }
-      }]
-    }
     instance_yaml = file("${path.root}/../../k8s/clusters/tools-staging/flux-instance.yaml")
   }
 
