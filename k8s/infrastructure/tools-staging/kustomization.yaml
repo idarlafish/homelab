@@ -1,9 +1,24 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-# hcloud-secret is created by Tofu via the flux-bootstrap module's
-# managed_resources (network ID is only known after server is provisioned).
+# hcloud Secret + the hccm HelmRelease are installed by Tofu (the bootstrap
+# chicken-and-egg with the cloud-provider=external taint requires CCM up
+# before Flux can schedule). The base HelmRelease is dropped here.
 resources:
   - ../base
   - helm-repos.yaml
   - monitoring-namespace.yaml
+patches:
+  - target:
+      group: helm.toolkit.fluxcd.io
+      version: v2
+      kind: HelmRelease
+      name: hccm
+      namespace: kube-system
+    patch: |-
+      $patch: delete
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: hccm
+        namespace: kube-system
