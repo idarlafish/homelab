@@ -6,25 +6,18 @@ metadata:
   namespace: flux-system
 spec:
   inputs:
-    - name: infrastructure
-      path: ./k8s/infrastructure/tools
-      wait: true
-      dependsOn: []
     - name: cloudflared
       path: ./k8s/apps/cloudflared
       wait: true
-      dependsOn:
-        - name: infrastructure
+      dependsOn: []
     - name: content
       path: ./k8s/apps/content
       wait: true
-      dependsOn:
-        - name: infrastructure
+      dependsOn: []
     - name: monitoring-stack
       path: ./k8s/apps/monitoring/stack
       wait: true
-      dependsOn:
-        - name: infrastructure
+      dependsOn: []
     - name: monitoring
       path: ./k8s/apps/monitoring/extras
       wait: true
@@ -39,8 +32,7 @@ spec:
     - name: vpn
       path: ./k8s/apps/vpn
       wait: false
-      dependsOn:
-        - name: infrastructure
+      dependsOn: []
   resources:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
