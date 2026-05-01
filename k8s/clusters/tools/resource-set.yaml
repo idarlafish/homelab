@@ -34,11 +34,9 @@ spec:
       wait: false
       dependsOn: []
     - name: shared-secrets
-      path: ./k8s/apps/shared-secrets
+      path: ./k8s/apps/shared/secrets
       wait: true
-      dependsOn:
-        - name: content
-        - name: identity
+      dependsOn: []
   resources:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
