@@ -33,9 +33,11 @@ k8s/                               # GitOps tree, both clusters managed by Flux
 
 infra/
   modules/
-    hcloud-server/                 # Reusable Hetzner server Terraform module
-  tools/                           # tools server (k3s bootstrap)
-  game-servers/                    # game-servers server (k3s bootstrap)
+    tools-cluster/                 # tools + tools-staging shared module (Talos via hcloud-k8s)
+  tools/                           # tools cluster (Talos)
+  tools-staging/                   # tools-staging cluster (Talos)
+  game-servers/                    # game-servers cluster (Talos, calls hcloud-k8s directly)
+  r2/                              # account-scoped R2 backup buckets
 ```
 
 See [CLAUDE.md](CLAUDE.md) for the operating model: how to start/stop a game, add a SOPS secret, run a backup, and avoid the Flux prune cascade.
