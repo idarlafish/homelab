@@ -4,7 +4,6 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - booklore-db-secret.yaml
-  - booklore-r2-credentials-secret.yaml
   - deployment.yaml
   - service.yaml
   - pvc.yaml

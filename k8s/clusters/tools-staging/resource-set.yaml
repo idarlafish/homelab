@@ -33,6 +33,12 @@ spec:
       path: ./k8s/apps/vpn
       wait: false
       dependsOn: []
+    - name: shared-secrets
+      path: ./k8s/apps/shared-secrets
+      wait: true
+      dependsOn:
+        - name: content
+        - name: identity
   resources:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
