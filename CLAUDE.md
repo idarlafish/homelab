@@ -4,16 +4,14 @@ Operational rules and gotchas for this monorepo. See [README.md](README.md) for 
 
 ## Hard rules
 
-- **Use `tofu`** (OpenTofu), not `terraform`. Both Hetzner servers share `infra/modules/hcloud-server/`; read it before editing either caller.
-- **Two clusters, two kubeconfigs — never mix them:**
-  - `tools` (ARM64) → `KUBECONFIG=.kube/config`
-  - `game-servers` (amd64) → `KUBECONFIG=.kube/game-servers`
-- **No Traefik / no Ingress on tools** — Cloudflare Tunnel is the only ingress. New services on tools cluster need a Tunnel route, not an Ingress.
-- **Both clusters are Flux-managed.** Manifests in git are the source of truth. Edit manifest → commit → push → Flux reconciles within 10 min. Never use `kubectl scale` / `kubectl edit` on Flux-managed resources — they're reverted at the next reconcile.
-- **No new `kubectl create secret`.** SOPS-encrypted secrets are **co-located with their app** under `k8s/apps/<cluster>/.../<app>/<name>-secret.yaml`; cluster-shared secrets (Hetzner CCM/CSI auth, R2 credentials) live under `k8s/infrastructure/<cluster>/`. Each child Flux Kustomization that contains encrypted resources has its own `decryption: { provider: sops, secretRef: { name: sops-age } }`. To rotate: `sops <path-to-file>`. To create new: see [docs/sops.md](docs/sops.md).
-- **`infrastructure/base/` is shared by both clusters.** Cluster-specific addons go in `infrastructure/<cluster>/`. Anything in `base/` must be valid for both.
+- **Use `tofu`** (OpenTofu), not `terraform`. tools + tools-staging share `infra/modules/tools-cluster/` (Talos via `hcloud-k8s/kubernetes/hcloud`). game-servers is a separate stack on `infra/modules/hcloud-server/` (k3s).
+- **tools clusters are Talos** — no SSH, no `kubectl exec` debugging from outside. Use `talosctl` against the talosconfig in `infra/<env>/talosconfig`. Kubeconfigs are written to `infra/<env>/kubeconfig` by the module.
+- **No Traefik / no Ingress on tools** — Cloudflare Tunnel is the only ingress. New services on tools cluster need a Tunnel route in `infra/<env>/main.tf`, not an Ingress.
+- **Both Hetzner-running clusters are Flux-managed.** Manifests in git are the source of truth. Edit manifest → commit → push → Flux reconciles within 10 min. Never `kubectl scale` / `kubectl edit` Flux-managed resources — they're reverted at the next reconcile.
+- **No new `kubectl create secret`.** SOPS-encrypted secrets live with their app under `k8s/apps/.../<name>-secret.yaml`; cluster-shared secrets under `k8s/infrastructure/<cluster>/`. To rotate: `sops <path>`. To create new: see [docs/sops.md](docs/sops.md).
+- **`infrastructure/base/` is for game-servers (k3s)** — Hetzner CCM/CSI HelmReleases. tools clusters skip `../base` entirely (the Talos module installs CCM/CSI directly via inline manifests).
+- **PodSecurity baseline is enforced cluster-wide** on Talos. Namespaces hosting privileged workloads (`monitoring` for node-exporter, `vpn` for wg-easy NET_ADMIN) carry `pod-security.kubernetes.io/enforce: privileged` labels.
 - **Commits:** never add `Co-Authored-By`.
-- **New env vars** are documented in both the image's `README.md` and the k8s game's `README.md`. Inline `# comment` in the configmap if applicable.
 
 ## Environment
 
@@ -21,12 +19,23 @@ Operational rules and gotchas for this monorepo. See [README.md](README.md) for 
 
 **OpenTofu env var remap (`tofu` doesn't pick these up automatically):**
 - `S3_ACCESS_KEY` / `S3_SECRET_KEY` → `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`
-- `HCLOUD_TOKEN` → `TF_VAR_hcloud_token`
-- `HCLOUD_SSH_KEY_NAME` (or `GAME_SERVERS_HCLOUD_SSH_KEY_NAME`) → `TF_VAR_ssh_key_name`
+- `SOPS_AGE_KEY` → `TF_VAR_sops_age_key`
+- For game-servers only: `HCLOUD_TOKEN` → `TF_VAR_hcloud_token`, `GAME_SERVERS_HCLOUD_SSH_KEY_NAME` → `TF_VAR_ssh_key_name`
 
-**Flux bootstrap:** export `GITHUB_TOKEN="$FLUX_TOKEN_PAT"` from `.env`.
+**Tools clusters need `packer`, `talosctl`, `jq` locally** (Talos module dependencies). On macOS: `brew install packer siderolabs/tap/talosctl jq`.
 
-Terraform state lives in Cloudflare R2 bucket `fabler` (`tools/terraform.tfstate`, `game-servers/terraform.tfstate`).
+**First-time apply** on a fresh state file requires two phases (the kubernetes/helm providers can't configure against a non-existent cluster):
+1. `tofu apply -target='module.cluster.module.talos'` — provisions Talos
+2. `tofu apply` — everything else
+
+**Destroying a Talos cluster** requires removing lifecycle-protected state first:
+```
+tofu state rm 'module.cluster.module.talos.talos_machine_secrets.this'
+tofu state rm 'module.cluster.module.talos.talos_machine_configuration_apply.control_plane["<name>"]'
+```
+Plus the in-cluster k8s resources (cloudflared ns/secret, PVs, flux_bootstrap) so the destroy doesn't try to call a dying API. See module README.
+
+Terraform state lives in Cloudflare R2 bucket `fabler`.
 
 ## SOPS
 
@@ -34,10 +43,12 @@ Terraform state lives in Cloudflare R2 bucket `fabler` (`tools/terraform.tfstate
 
 ## Footguns (incident lessons)
 
-- **Flux prune cascade**: a root Kustomization with `prune: true` reconciling at a commit where the per-concern manifests don't exist at its bootstrap path will garbage-collect everything previously managed → cascading deletes through every child Kustomization. **When relocating a Flux bootstrap path, stage all manifests in one commit before running `flux bootstrap`**, OR temporarily patch root to `prune: false`. (Hit us once during a multi-cluster restructure — Redis data on a former bot deployment was lost.)
-- **Edit + git rm in the same commit:** `git commit` only takes staged changes. If you `Edit` a `kustomization.yaml` to drop a reference *and* `git rm` the referenced file in the same step, only the `git rm` is auto-staged — the kustomization edit needs `git add` first. Forgetting this leaves the kustomization referencing a deleted file, breaking the Kustomization build (and blocking everything that depends on it via `dependsOn`). Always `git status --short` before commit.
-- **CSI uninstall mid-cascade can reformat volumes.** Even with `Retain` reclaim, volumes yanked off the node uncleanly may be reformatted by the CSI driver on next attach. Static PVs with explicit `volumeName` in the PVC give the most deterministic recovery.
-- **Game PVs are on `Retain`** (patched during Phase 3 recovery work). Don't change to `Delete`.
+- **Flux prune cascade**: a Kustomization with `prune: true` whose source no longer references a previously-managed resource will delete it. Two failure modes hit:
+  1. Bootstrap path relocations — stage all child manifests in one commit before `flux bootstrap`.
+  2. Cross-Kustomization moves — first commit adds resource to the new Kustomization (Flux re-labels the live object on next reconcile); second commit removes it from the old. See `feedback_flux_prune_cascade_risk.md` memory.
+- **Talos in-place server resize requires reboot** to surface new capacity to kubelet. Either reboot manually after the apply, or destroy + apply for true clean install. The reboot also leaves stale `Unknown`/`Error` pods that need force-deleting (kubelet GCs them eventually).
+- **Talos firewall locks Kube + Talos API to current public IP** (default `firewall_use_current_ipv4 = true`). When IP changes (DHCP, VPN, traveling), `tofu apply` re-reads and updates. Operations from a different IP fail with TLS handshake timeout.
+- **CSI uninstall mid-cascade can reformat volumes.** Even with `Retain` reclaim, volumes yanked off the node uncleanly may be reformatted by the CSI driver on next attach. Static PVs (Tofu-owned `kubernetes_persistent_volume_v1` with explicit `volumeHandle`) give the most deterministic recovery.
 - **`kubectl scale` on Flux-managed StatefulSets** is reverted within 10 min. Edit the manifest.
 
 ## Quick reference
