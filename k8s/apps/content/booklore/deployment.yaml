@@ -39,6 +39,10 @@ spec:
         - containerPort: 6060
           name: http
           protocol: TCP
+        lifecycle:
+          preStop:
+            sleep:
+              seconds: 10
         startupProbe:
           httpGet:
             path: /actuator/health/liveness

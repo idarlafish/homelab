@@ -24,6 +24,10 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 10
           env:
             - name: TELEGRAM_BOT_TOKEN
               valueFrom:

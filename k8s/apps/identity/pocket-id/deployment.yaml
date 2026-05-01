@@ -30,6 +30,10 @@ spec:
               name: http
             - containerPort: 9464
               name: metrics
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 10
           # Pocket-ID does not expose an HTTP /healthz endpoint as of v2.6.2.
           # Probes use the documented CLI subcommand (matches upstream docker-compose.yml).
           readinessProbe:
