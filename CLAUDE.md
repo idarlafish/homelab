@@ -4,7 +4,7 @@ Operational rules and gotchas for this monorepo. See [README.md](README.md) for 
 
 ## Hard rules
 
-- **Use `tofu`** (OpenTofu), not `terraform`. tools + tools-staging share `infra/modules/tools-cluster/` (Talos via `hcloud-k8s/kubernetes/hcloud`). game-servers is a separate stack on `infra/modules/hcloud-server/` (k3s).
+- **Use `tofu`** (OpenTofu), not `terraform`. tools + tools-staging share `infra/modules/tools-cluster/`. game-servers calls `hcloud-k8s/kubernetes/hcloud` directly. All three clusters run Talos. `infra/r2/` is a separate root for account-scoped R2 buckets (durable, isolated state).
 - **tools clusters are Talos** — no SSH, no `kubectl exec` debugging from outside. Use `talosctl` against the talosconfig in `infra/<env>/talosconfig`. Kubeconfigs are written to `infra/<env>/kubeconfig` by the module.
 - **No Traefik / no Ingress on tools** — Cloudflare Tunnel is the only ingress. New services on tools cluster need a Tunnel route in `infra/<env>/main.tf`, not an Ingress.
 - **Both Hetzner-running clusters are Flux-managed.** Manifests in git are the source of truth. Edit manifest → commit → push → Flux reconciles within 10 min. Never `kubectl scale` / `kubectl edit` Flux-managed resources — they're reverted at the next reconcile.

@@ -102,7 +102,6 @@ jobs:
           - infra/game-servers
           - infra/tools-staging
           - infra/r2
-          - infra/modules/hcloud-server
     steps:
       - uses: actions/checkout@v6
 
