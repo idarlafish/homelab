@@ -22,7 +22,7 @@ spec:
     - name: telegram
       telegramConfigs:
         - botToken:
-            name: alertmanager-telegram
+            name: telegram-credentials
             key: bot_token
           chatID: 671615920
           parseMode: HTML

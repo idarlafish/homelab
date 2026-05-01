@@ -37,6 +37,11 @@ spec:
       path: ./k8s/apps/shared/secrets
       wait: true
       dependsOn: []
+    - name: uptime
+      path: ./k8s/apps/uptime
+      wait: true
+      dependsOn:
+        - name: shared-secrets
   resources:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization

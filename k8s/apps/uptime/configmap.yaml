@@ -1,0 +1,69 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gatus-config
+  namespace: uptime
+data:
+  config.yaml: |
+    storage:
+      type: memory
+
+    ui:
+      title: la.fish status
+      header: la.fish
+
+    endpoints:
+      - name: booklore
+        group: tools
+        url: https://booklore.la.fish/
+        interval: 60s
+        conditions:
+          - "[STATUS] == 200"
+          - "[RESPONSE_TIME] < 5000"
+        alerts:
+          - type: telegram
+            send-on-resolved: true
+            failure-threshold: 3
+            success-threshold: 2
+
+      - name: pocket-id
+        group: tools
+        url: https://auth.la.fish/healthz
+        interval: 60s
+        conditions:
+          - "[STATUS] == 200"
+        alerts:
+          - type: telegram
+            send-on-resolved: true
+            failure-threshold: 3
+            success-threshold: 2
+
+      - name: grafana
+        group: tools
+        url: https://grafana.la.fish/api/health
+        interval: 60s
+        conditions:
+          - "[STATUS] == 200"
+        alerts:
+          - type: telegram
+            send-on-resolved: true
+            failure-threshold: 3
+            success-threshold: 2
+
+      - name: prometheus
+        group: tools
+        url: https://prometheus.la.fish/-/healthy
+        interval: 60s
+        conditions:
+          - "[STATUS] == 200"
+        alerts:
+          - type: telegram
+            send-on-resolved: true
+            failure-threshold: 3
+            success-threshold: 2
+
+    alerting:
+      telegram:
+        token: ${TELEGRAM_BOT_TOKEN}
+        id: ${TELEGRAM_CHAT_ID}
