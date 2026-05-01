@@ -1,26 +1,60 @@
-module "server" {
-  count  = var.enable_cluster ? 1 : 0
-  source = "../modules/hcloud-server"
+module "talos" {
+  source  = "hcloud-k8s/kubernetes/hcloud"
+  version = "~> 3.30"
 
-  name            = "game-servers"
-  server_type     = "cx43"
-  location        = var.hcloud_location
-  ssh_key_id      = data.hcloud_ssh_key.main.id
-  ssh_private_key = data.sops_file.secrets.data["clusters.game-servers.ssh_private_key"]
-  private_ip      = "10.0.1.1"
+  hcloud_token = data.sops_file.secrets.data["hcloud_token"]
+  cluster_name = "game-servers"
 
-  extra_firewall_ids = [
-    hcloud_firewall.k8s.id,
-    hcloud_firewall.servers.id,
+  cluster_kubeconfig_path  = "${path.root}/kubeconfig"
+  cluster_talosconfig_path = "${path.root}/talosconfig"
+
+  control_plane_nodepools = [
+    {
+      name     = "cp"
+      type     = "cx43"
+      location = var.hcloud_location
+      count    = 1
+    }
+  ]
+
+  worker_nodepools = []
+
+  cluster_delete_protection      = false
+  cert_manager_enabled           = false
+  ingress_nginx_enabled          = false
+  longhorn_enabled               = false
+  kube_api_load_balancer_enabled = false
+
+  firewall_extra_rules = [
+    # Satisfactory
+    { description = "Satisfactory game", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "tcp", port = "7777" },
+    { description = "Satisfactory game UDP", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "7777" },
+    { description = "Satisfactory messaging", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "tcp", port = "18888" },
+    # NodePorts (UDP unless noted)
+    { description = "Minecraft TCP NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "tcp", port = "30565" },
+    { description = "Minecraft UDP NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30565" },
+    { description = "Palworld game NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30821" },
+    { description = "Palworld query NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30921" },
+    { description = "Enshrouded NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30637" },
+    { description = "Valheim game NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30456" },
+    { description = "Valheim query NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30457" },
+    { description = "Valheim 2nd NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30458" },
+    { description = "Foundry NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30724" },
+    { description = "Core Keeper NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30668" },
+    { description = "V Rising game NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30876" },
+    { description = "V Rising query NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30877" },
+    { description = "Soulmask game NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30750" },
+    { description = "Soulmask query NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30751" },
   ]
 }
 
 module "flux_bootstrap" {
-  count   = var.enable_cluster ? 1 : 0
   source  = "controlplaneio-fluxcd/flux-operator-bootstrap/kubernetes"
   version = "0.5.0"
 
   revision = var.bootstrap_revision
+
+  depends_on = [module.talos]
 
   gitops_resources = {
     instance_yaml = file("${path.root}/../../k8s/clusters/game-servers/flux-instance.yaml")

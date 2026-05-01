@@ -4,7 +4,11 @@ terraform {
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "1.52.0"
+      version = ">= 1.60.1"
+    }
+    talos = {
+      source  = "siderolabs/talos"
+      version = "~> 0.7"
     }
     helm = {
       source  = "hashicorp/helm"
@@ -40,17 +44,17 @@ provider "hcloud" {
 }
 
 provider "kubernetes" {
-  host                   = try(module.server[0].kube_endpoint, "")
-  cluster_ca_certificate = try(base64decode(module.server[0].kube_ca_certificate), "")
-  client_certificate     = try(base64decode(module.server[0].kube_client_certificate), "")
-  client_key             = try(base64decode(module.server[0].kube_client_key), "")
+  host                   = module.talos.kubeconfig_data.server
+  cluster_ca_certificate = module.talos.kubeconfig_data.ca
+  client_certificate     = module.talos.kubeconfig_data.cert
+  client_key             = module.talos.kubeconfig_data.key
 }
 
 provider "helm" {
   kubernetes = {
-    host                   = try(module.server[0].kube_endpoint, "")
-    cluster_ca_certificate = try(base64decode(module.server[0].kube_ca_certificate), "")
-    client_certificate     = try(base64decode(module.server[0].kube_client_certificate), "")
-    client_key             = try(base64decode(module.server[0].kube_client_key), "")
+    host                   = module.talos.kubeconfig_data.server
+    cluster_ca_certificate = module.talos.kubeconfig_data.ca
+    client_certificate     = module.talos.kubeconfig_data.cert
+    client_key             = module.talos.kubeconfig_data.key
   }
 }

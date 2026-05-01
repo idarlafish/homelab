@@ -1,6 +1,9 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources:
-  - ../base
-  - hcloud-secret.yaml
+# Game-servers cluster runs on Talos via the hcloud-k8s/kubernetes/hcloud module,
+# which installs HCCM/CSI/Cilium directly via inline manifests at bootstrap.
+# Nothing for Flux to manage at the infra layer; this kustomization is left
+# empty so the resource-set's `infrastructure` Kustomization (which other apps
+# dependsOn) still resolves to a healthy no-op.
+resources: []
