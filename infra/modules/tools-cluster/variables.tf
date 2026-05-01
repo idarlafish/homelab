@@ -13,28 +13,6 @@ variable "location" {
   default = "hel1"
 }
 
-variable "private_ip" {
-  type = string
-}
-
-variable "network_ip_range" {
-  type = string
-}
-
-variable "subnet_ip_range" {
-  type = string
-}
-
-variable "ssh_key_id" {
-  description = "Hetzner SSH key resource id"
-  type        = string
-}
-
-variable "ssh_private_key" {
-  type      = string
-  sensitive = true
-}
-
 variable "hcloud_token" {
   type      = string
   sensitive = true
@@ -56,8 +34,8 @@ variable "bootstrap_revision" {
   default = 1
 }
 
-variable "manage_flux_bootstrap" {
-  description = "Install flux-operator via flux-operator-bootstrap chart. Set to false on clusters where flux-operator was installed by other means."
+variable "cluster_delete_protection" {
+  description = "Enable Hetzner delete protection on cluster resources. Flip to false (and apply) right before running tofu destroy."
   type        = bool
   default     = true
 }
@@ -69,11 +47,6 @@ variable "flux_instance_yaml" {
 
 variable "cloudflare_account_id" {
   type = string
-}
-
-variable "cloudflare_api_token" {
-  type      = string
-  sensitive = true
 }
 
 variable "cloudflare_zone_name" {

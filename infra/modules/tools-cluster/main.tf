@@ -1,59 +1,48 @@
-module "server" {
-  source = "../hcloud-server"
+module "talos" {
+  source  = "hcloud-k8s/kubernetes/hcloud"
+  version = "~> 3.30"
 
-  name             = var.name
-  server_type      = var.server_type
-  location         = var.location
-  ssh_key_id       = var.ssh_key_id
-  ssh_private_key  = var.ssh_private_key
-  private_ip       = var.private_ip
-  network_ip_range = var.network_ip_range
-  subnet_ip_range  = var.subnet_ip_range
+  hcloud_token = var.hcloud_token
+  cluster_name = var.name
 
-  extra_firewall_ids = [
-    hcloud_firewall.k8s.id,
-    hcloud_firewall.web.id,
-    hcloud_firewall.vpn.id,
+  cluster_kubeconfig_path  = "${path.root}/kubeconfig"
+  cluster_talosconfig_path = "${path.root}/talosconfig"
+
+  control_plane_nodepools = [
+    {
+      name     = "cp"
+      type     = var.server_type
+      location = var.location
+      count    = 1
+    }
+  ]
+
+  worker_nodepools = []
+
+  cluster_delete_protection      = var.cluster_delete_protection
+  cert_manager_enabled           = false
+  ingress_nginx_enabled          = false
+  longhorn_enabled               = false
+  kube_api_load_balancer_enabled = false
+
+  firewall_extra_rules = [
+    {
+      description = "wg-easy WireGuard"
+      direction   = "in"
+      source_ips  = ["0.0.0.0/0", "::/0"]
+      protocol    = "udp"
+      port        = "51820"
+    }
   ]
 }
 
-resource "kubernetes_secret_v1" "hcloud" {
-  metadata {
-    name      = "hcloud"
-    namespace = "kube-system"
-  }
-  data = {
-    network = module.server.network_id
-    token   = var.hcloud_token
-  }
-  type = "Opaque"
-}
-
-resource "helm_release" "hccm" {
-  name             = "hccm"
-  repository       = "https://charts.hetzner.cloud"
-  chart            = "hcloud-cloud-controller-manager"
-  namespace        = "kube-system"
-  create_namespace = false
-  wait             = true
-  timeout          = 300
-
-  set = [{
-    name  = "networking.enabled"
-    value = "true"
-  }]
-
-  depends_on = [kubernetes_secret_v1.hcloud]
-}
-
 module "flux_bootstrap" {
-  count   = var.manage_flux_bootstrap ? 1 : 0
   source  = "controlplaneio-fluxcd/flux-operator-bootstrap/kubernetes"
   version = "0.5.0"
 
   revision = var.bootstrap_revision
 
-  depends_on = [helm_release.hccm]
+  depends_on = [module.talos]
 
   gitops_resources = {
     instance_yaml = var.flux_instance_yaml
@@ -127,6 +116,7 @@ resource "kubernetes_namespace_v1" "cloudflared" {
   metadata {
     name = "cloudflared"
   }
+  depends_on = [module.talos]
 }
 
 resource "kubernetes_secret_v1" "cloudflared_token" {

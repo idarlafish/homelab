@@ -4,7 +4,11 @@ terraform {
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "1.52.0"
+      version = ">= 1.60.1"
+    }
+    talos = {
+      source  = "siderolabs/talos"
+      version = "~> 0.7"
     }
     helm = {
       source  = "hashicorp/helm"
