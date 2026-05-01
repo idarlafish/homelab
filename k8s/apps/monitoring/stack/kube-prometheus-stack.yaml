@@ -42,6 +42,9 @@ spec:
       grafana.ini:
         feature_toggles:
           enable: kubernetesDashboards
+      persistence:
+        enabled: true
+        size: 10Gi
       resources:
         requests:
           cpu: 1m

@@ -1,0 +1,92 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: grafana-git-sync-bootstrap
+  namespace: monitoring
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: bootstrap
+          image: curlimages/curl:8.10.1
+          env:
+            - name: GRAFANA_URL
+              value: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local
+            - name: GRAFANA_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: admin-user
+            - name: GRAFANA_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: admin-password
+            - name: GITHUB_PAT
+              valueFrom:
+                secretKeyRef:
+                  name: git-sync-pat
+                  key: token
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              REPO_NAME="tools-dashboards"
+              API="$GRAFANA_URL/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories"
+
+              echo "Waiting for Grafana to be ready..."
+              for i in $(seq 1 30); do
+                if curl -sf -o /dev/null -u "$GRAFANA_USER:$GRAFANA_PASS" "$GRAFANA_URL/api/health"; then
+                  echo "Grafana ready"
+                  break
+                fi
+                sleep 5
+              done
+
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+                -u "$GRAFANA_USER:$GRAFANA_PASS" "$API/$REPO_NAME")
+
+              if [ "$STATUS" = "200" ]; then
+                echo "Repository '$REPO_NAME' already exists, nothing to do"
+                exit 0
+              fi
+
+              echo "Creating repository '$REPO_NAME'..."
+              cat > /tmp/repo.json <<JSON
+              {
+                "apiVersion": "provisioning.grafana.app/v0alpha1",
+                "kind": "Repository",
+                "metadata": {"name": "$REPO_NAME", "namespace": "default"},
+                "spec": {
+                  "title": "Homelab",
+                  "type": "github",
+                  "sync": {"enabled": true, "intervalSeconds": 60, "target": "folder"},
+                  "workflows": ["write", "branch"],
+                  "github": {
+                    "url": "https://github.com/idarlafish/tools",
+                    "branch": "main",
+                    "path": "grafana/"
+                  }
+                },
+                "secure": {"token": {"create": "$GITHUB_PAT"}}
+              }
+              JSON
+
+              RESP=$(curl -s -w "\n%{http_code}" -X POST \
+                -u "$GRAFANA_USER:$GRAFANA_PASS" \
+                -H "Content-Type: application/json" \
+                "$API" -d @/tmp/repo.json)
+
+              CODE=$(echo "$RESP" | tail -n1)
+              BODY=$(echo "$RESP" | sed '$d')
+              echo "HTTP $CODE: $BODY"
+
+              case "$CODE" in
+                200|201) echo "Repository created"; exit 0 ;;
+                *) echo "Failed: HTTP $CODE"; exit 1 ;;
+              esac
