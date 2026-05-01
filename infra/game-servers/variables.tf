@@ -15,9 +15,3 @@ variable "bootstrap_revision" {
   type        = number
   default     = 1
 }
-
-variable "enable_cluster" {
-  description = "Whether to provision the K3s server + Flux. Set false to scale to zero compute (only firewalls remain in state)."
-  type        = bool
-  default     = false
-}
