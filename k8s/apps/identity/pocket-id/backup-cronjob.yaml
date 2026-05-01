@@ -29,11 +29,11 @@ spec:
                   tar czf /tmp/backup.tar.gz -C /pvc .
                   du -h /tmp/backup.tar.gz
                   aws s3 cp /tmp/backup.tar.gz \
-                    "s3://fabler/backups/${CLUSTER_NAME}/pocket-id/daily/${TS}.tar.gz" \
+                    "s3://${BUCKET_NAME}/pocket-id/daily/${TS}.tar.gz" \
                     --endpoint-url "$AWS_ENDPOINT_URL"
                   if [ "$DOW" = "7" ]; then
                     aws s3 cp /tmp/backup.tar.gz \
-                      "s3://fabler/backups/${CLUSTER_NAME}/pocket-id/weekly/${TS}.tar.gz" \
+                      "s3://${BUCKET_NAME}/pocket-id/weekly/${TS}.tar.gz" \
                       --endpoint-url "$AWS_ENDPOINT_URL"
                   fi
               env:

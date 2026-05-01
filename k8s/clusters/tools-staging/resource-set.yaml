@@ -60,6 +60,7 @@ spec:
         postBuild:
           substitute:
             CLUSTER_NAME: tools-staging
+            BUCKET_NAME: tools-staging-backups
             HOSTNAME_AUTH: auth-staging.la.fish
             HOSTNAME_BOOKLORE: booklore-staging.la.fish
             HOSTNAME_GRAFANA: grafana-staging.la.fish

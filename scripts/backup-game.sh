@@ -9,11 +9,8 @@ set -euo pipefail
 #
 # Prerequisites:
 # - kubectl configured with game-servers cluster access
-# - r2-credentials secret in the game's namespace
-#   (create once per namespace):
-#   source .env && KUBECONFIG=.kube/game-servers kubectl create secret generic r2-credentials \
-#     -n <game> --from-literal=access-key-id="$S3_ACCESS_KEY" \
-#     --from-literal=secret-access-key="$S3_SECRET_KEY"
+# - r2-credentials secret reflected into the game's namespace by emberstack/reflector
+#   from k8s/apps/shared/secrets/r2-credentials.yaml (automatic; no manual setup)
 # - backup-job.yaml in k8s/apps/game-servers/<game>/
 
 GAME="${1:?Usage: $0 <game>}"
