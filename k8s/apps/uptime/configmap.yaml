@@ -29,7 +29,7 @@ data:
 
       - name: pocket-id
         group: tools
-        url: https://auth.la.fish/healthz
+        url: https://auth.la.fish/health
         interval: 60s
         conditions:
           - "[STATUS] == 200"
