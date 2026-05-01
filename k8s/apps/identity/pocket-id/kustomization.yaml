@@ -4,7 +4,9 @@ kind: Kustomization
 resources:
   - configmap.yaml
   - pocket-id-secret.yaml
+  - r2-credentials-secret.yaml
   - pvc.yaml
   - service.yaml
   - deployment.yaml
   - servicemonitor.yaml
+  - backup-cronjob.yaml
