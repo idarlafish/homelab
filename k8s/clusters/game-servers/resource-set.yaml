@@ -6,61 +6,47 @@ metadata:
   namespace: flux-system
 spec:
   inputs:
-    - name: infrastructure
-      path: ./k8s/infrastructure/game-servers
-      wait: true
-      dependsOn: []
     - name: core-keeper
       path: ./k8s/apps/game-servers/core-keeper
       wait: true
-      dependsOn:
-        - name: infrastructure
+      dependsOn: []
     - name: enshrouded
       path: ./k8s/apps/game-servers/enshrouded
       wait: true
-      dependsOn:
-        - name: infrastructure
+      dependsOn: []
     - name: foundry
       path: ./k8s/apps/game-servers/foundry
       wait: true
-      dependsOn:
-        - name: infrastructure
+      dependsOn: []
     - name: metrics
       path: ./k8s/apps/game-servers/metrics
       wait: true
-      dependsOn:
-        - name: infrastructure
+      dependsOn: []
     - name: minecraft
       path: ./k8s/apps/game-servers/minecraft
       wait: true
-      dependsOn:
-        - name: infrastructure
+      dependsOn: []
     # palworld: wait:false because PVC stays Pending under WaitForFirstConsumer + replicas:0
     - name: palworld
       path: ./k8s/apps/game-servers/palworld
       wait: false
-      dependsOn:
-        - name: infrastructure
+      dependsOn: []
     - name: satisfactory
       path: ./k8s/apps/game-servers/satisfactory
       wait: true
-      dependsOn:
-        - name: infrastructure
+      dependsOn: []
     - name: soulmask
       path: ./k8s/apps/game-servers/soulmask
       wait: true
-      dependsOn:
-        - name: infrastructure
+      dependsOn: []
     - name: valheim
       path: ./k8s/apps/game-servers/valheim
       wait: true
-      dependsOn:
-        - name: infrastructure
+      dependsOn: []
     - name: vrising
       path: ./k8s/apps/game-servers/vrising
       wait: true
-      dependsOn:
-        - name: infrastructure
+      dependsOn: []
     - name: shared-secrets
       path: ./k8s/infrastructure/game-servers/shared-secrets
       wait: true
