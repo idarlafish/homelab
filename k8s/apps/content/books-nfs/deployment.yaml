@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: books-nfs
+  namespace: booklore
+  labels:
+    app: books-nfs
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: books-nfs
+  template:
+    metadata:
+      labels:
+        app: books-nfs
+    spec:
+      # Run as root so we can read/write the books PVC, which is owned by root
+      # (booklore writes as UID 0).
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+      containers:
+        - name: rclone
+          image: rclone/rclone:1.74.0
+          args:
+            - serve
+            - nfs
+            - /srv/books
+            - --addr=:2049
+            - --vfs-cache-mode=full
+            - --cache-dir=/cache
+          ports:
+            - name: nfs
+              containerPort: 2049
+              protocol: TCP
+          volumeMounts:
+            - name: books
+              mountPath: /srv/books
+              subPath: books
+            - name: cache
+              mountPath: /cache
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+      volumes:
+        - name: books
+          persistentVolumeClaim:
+            claimName: booklore-books
+        - name: cache
+          emptyDir: {}

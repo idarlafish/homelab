@@ -42,6 +42,16 @@ spec:
       wait: true
       dependsOn:
         - name: shared-secrets
+    - name: csi-nfs
+      path: ./k8s/apps/csi-nfs
+      wait: true
+      dependsOn: []
+    - name: files
+      path: ./k8s/apps/files
+      wait: true
+      dependsOn:
+        - name: content
+        - name: csi-nfs
   resources:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization

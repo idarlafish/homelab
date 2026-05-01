@@ -23,6 +23,7 @@ module "cluster" {
     { hostname = "grafana.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80" },
     { hostname = "prometheus.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090" },
     { hostname = "status.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://gatus.uptime.svc.cluster.local:8080" },
+    { hostname = "files.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://filebrowser.files.svc.cluster.local:80" },
   ]
-  tunnel_dns_subdomains = ["auth", "booklore", "wg-admin", "grafana", "prometheus", "status"]
+  tunnel_dns_subdomains = ["auth", "booklore", "wg-admin", "grafana", "prometheus", "status", "files"]
 }
