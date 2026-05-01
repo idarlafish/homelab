@@ -18,13 +18,13 @@ spec:
             - |
               apk add --no-cache aws-cli tar
               TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-              BACKUP_KEY="backups/game-servers/minecraft/minecraft-${TIMESTAMP}.tar.gz"
-              echo "Backing up minecraft world to s3://fabler/${BACKUP_KEY}"
+              BACKUP_KEY="minecraft/minecraft-${TIMESTAMP}.tar.gz"
+              echo "Backing up minecraft world to s3://game-servers-backups/${BACKUP_KEY}"
               cd /data
               tar czf /tmp/backup.tar.gz --exclude='*.jar' --exclude='libraries' --exclude='mods' --exclude='versions' .
               FILESIZE=$(du -h /tmp/backup.tar.gz | cut -f1)
               echo "Archive size: ${FILESIZE}"
-              aws s3 cp /tmp/backup.tar.gz "s3://fabler/${BACKUP_KEY}"
+              aws s3 cp /tmp/backup.tar.gz "s3://game-servers-backups/${BACKUP_KEY}" --endpoint-url "$AWS_ENDPOINT_URL"
               echo "Backup complete: ${BACKUP_KEY}"
           env:
             - name: AWS_ACCESS_KEY_ID

@@ -52,13 +52,13 @@ spec:
 
                   echo "==> upload daily"
                   aws s3 cp /tmp/backup.tar.gz \
-                    "s3://fabler/backups/${CLUSTER_NAME}/booklore/daily/${TIMESTAMP}.tar.gz" \
+                    "s3://${BUCKET_NAME}/booklore/daily/${TIMESTAMP}.tar.gz" \
                     --endpoint-url "$AWS_ENDPOINT_URL"
 
                   if [ "$DOW" = "7" ]; then
                     echo "==> Sunday: also upload weekly"
                     aws s3 cp /tmp/backup.tar.gz \
-                      "s3://fabler/backups/${CLUSTER_NAME}/booklore/weekly/${TIMESTAMP}.tar.gz" \
+                      "s3://${BUCKET_NAME}/booklore/weekly/${TIMESTAMP}.tar.gz" \
                       --endpoint-url "$AWS_ENDPOINT_URL"
                   fi
                   echo "==> done"

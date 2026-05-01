@@ -71,3 +71,6 @@ spec:
           provider: sops
           secretRef:
             name: sops-age
+        postBuild:
+          substitute:
+            BUCKET_NAME: game-servers-backups
