@@ -28,3 +28,12 @@ spec:
     path: "k8s/clusters/tools"
     pullSecret: flux-system
     interval: 1m
+  kustomize:
+    patches:
+      - target:
+          kind: Deployment
+          name: "(source-controller|kustomize-controller|helm-controller|notification-controller)"
+        patch: |
+          - op: replace
+            path: /spec/template/spec/containers/0/resources/requests/cpu
+            value: 25m
