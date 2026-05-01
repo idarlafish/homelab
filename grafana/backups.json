@@ -8,42 +8,89 @@
   "timezone": "browser",
   "schemaVersion": 39,
   "version": 1,
-  "refresh": "1m",
+  "refresh": "30s",
   "time": {
-    "from": "now-7d",
+    "from": "now-6h",
     "to": "now"
   },
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "label": "Prometheus",
+        "type": "datasource",
+        "query": "prometheus",
+        "regex": "",
+        "current": {
+          "selected": true,
+          "text": "Prometheus",
+          "value": "prometheus"
+        },
+        "hide": 2,
+        "refresh": 1
+      }
+    ]
   },
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "name": "Annotations & Alerts",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "type": "dashboard",
+        "builtIn": 1,
+        "hide": true
+      }
+    ]
   },
   "panels": [
+    {
+      "id": 100,
+      "type": "row",
+      "title": "Status",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
     {
       "id": 1,
       "type": "stat",
       "title": "Booklore \u2014 Hours Since Last Success",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "x": 0,
-        "y": 0,
+        "y": 1,
         "w": 12,
         "h": 5
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "(time() - kube_cronjob_status_last_successful_time{cronjob=\"booklore-backup\"}) / 3600"
+          "expr": "(time() - kube_cronjob_status_last_successful_time{cronjob=\"booklore-backup\"}) / 3600",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "h",
-          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -57,10 +104,12 @@
               },
               {
                 "color": "red",
-                "value": 25
+                "value": 48
               }
             ]
-          }
+          },
+          "decimals": 1,
+          "noValue": "Never run yet"
         },
         "overrides": []
       },
@@ -68,12 +117,17 @@
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "values": false
         },
         "colorMode": "background",
         "graphMode": "area",
-        "textMode": "auto"
-      }
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "pluginVersion": "13.0.1"
     },
     {
       "id": 2,
@@ -81,24 +135,30 @@
       "title": "Pocket-ID \u2014 Hours Since Last Success",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "x": 12,
-        "y": 0,
+        "y": 1,
         "w": 12,
         "h": 5
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "(time() - kube_cronjob_status_last_successful_time{cronjob=\"pocket-id-backup\"}) / 3600"
+          "expr": "(time() - kube_cronjob_status_last_successful_time{cronjob=\"pocket-id-backup\"}) / 3600",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "h",
-          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -112,10 +172,12 @@
               },
               {
                 "color": "red",
-                "value": 25
+                "value": 48
               }
             ]
-          }
+          },
+          "decimals": 1,
+          "noValue": "Never run yet"
         },
         "overrides": []
       },
@@ -123,166 +185,209 @@
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "values": false
         },
         "colorMode": "background",
         "graphMode": "area",
-        "textMode": "auto"
-      }
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "pluginVersion": "13.0.1"
     },
     {
-      "id": 3,
+      "id": 110,
+      "type": "row",
+      "title": "Schedule",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 11,
       "type": "table",
-      "title": "Last Successful Run (timestamp)",
+      "title": "CronJobs",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "x": 0,
-        "y": 5,
+        "y": 7,
         "w": 24,
-        "h": 5
+        "h": 6
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "kube_cronjob_status_last_successful_time{cronjob=~\"booklore-backup|pocket-id-backup\"} * 1000",
+          "expr": "kube_cronjob_info{cronjob=~\"booklore-backup|pocket-id-backup|talos-backup\"}",
           "format": "table",
-          "instant": true
+          "instant": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "kube_cronjob_status_last_successful_time{cronjob=~\"booklore-backup|pocket-id-backup|talos-backup\"} * 1000",
+          "format": "table",
+          "instant": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        },
+        {
+          "refId": "C",
+          "expr": "kube_cronjob_next_schedule_time{cronjob=~\"booklore-backup|pocket-id-backup|talos-backup\"} * 1000",
+          "format": "table",
+          "instant": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "dateTimeAsLocal"
+          "unit": "short",
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          },
+          "noValue": "Never"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "Value"
+              "options": "Last Success"
             },
             "properties": [
               {
-                "id": "displayName",
-                "value": "Last Success"
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Next Run"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
               }
             ]
           }
         ]
       },
       "options": {
-        "showHeader": true
-      }
+        "showHeader": true,
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "pluginVersion": "13.0.1",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true,
+              "endpoint": true,
+              "service": true,
+              "concurrency_policy": true,
+              "Value #A": true,
+              "container": true,
+              "pod": true,
+              "uid": true
+            },
+            "renameByName": {
+              "namespace": "Namespace",
+              "cronjob": "CronJob",
+              "schedule": "Schedule",
+              "Value #B": "Last Success",
+              "Value #C": "Next Run"
+            }
+          }
+        }
+      ]
     },
     {
-      "id": 4,
-      "type": "timeseries",
-      "title": "Failed Job Count (rolling 7d)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "id": 120,
+      "type": "row",
+      "title": "7-day totals",
+      "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 10,
-        "w": 12,
-        "h": 8
+        "y": 13,
+        "w": 24,
+        "h": 1
       },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum by (namespace, job_name) (kube_job_status_failed{namespace=~\"booklore|identity\", job_name=~\"(booklore|pocket-id)-backup-.+\"})",
-          "legendFormat": "{{namespace}}/{{job_name}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "custom": {
-            "drawStyle": "bars",
-            "lineWidth": 1,
-            "fillOpacity": 60
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
-      }
+      "panels": []
     },
     {
-      "id": 5,
-      "type": "timeseries",
-      "title": "Job Duration (seconds)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 10,
-        "w": 12,
-        "h": 8
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "kube_job_status_completion_time{job_name=~\"(booklore|pocket-id)-backup-.+\"} - kube_job_status_start_time{job_name=~\"(booklore|pocket-id)-backup-.+\"}",
-          "legendFormat": "{{namespace}}/{{job_name}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "custom": {
-            "drawStyle": "points",
-            "pointSize": 6
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
-      }
-    },
-    {
-      "id": 6,
+      "id": 21,
       "type": "stat",
-      "title": "CronJobs Defined",
+      "title": "Successful Jobs (7d)",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "x": 0,
-        "y": 18,
-        "w": 8,
+        "y": 14,
+        "w": 12,
         "h": 4
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "count(kube_cronjob_info{cronjob=~\"booklore-backup|pocket-id-backup\"})"
+          "expr": "sum(increase(kube_job_status_succeeded{namespace=~\"booklore|identity\", job_name=~\"(booklore|pocket-id)-backup-.+\"}[7d])) or vector(0)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -290,36 +395,48 @@
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "values": false
         },
-        "colorMode": "value",
+        "colorMode": "background",
         "graphMode": "none",
-        "textMode": "auto"
-      }
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "pluginVersion": "13.0.1"
     },
     {
-      "id": 7,
+      "id": 22,
       "type": "stat",
-      "title": "Failed Jobs (last 7d total)",
+      "title": "Failed Jobs (7d)",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
-        "x": 8,
-        "y": 18,
-        "w": 8,
+        "x": 12,
+        "y": 14,
+        "w": 12,
         "h": 4
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(kube_job_status_failed{namespace=~\"booklore|identity\", job_name=~\"(booklore|pocket-id)-backup-.+\"}[7d])) or vector(0)"
+          "expr": "sum(increase(kube_job_status_failed{namespace=~\"booklore|identity\", job_name=~\"(booklore|pocket-id)-backup-.+\"}[7d])) or vector(0)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -336,7 +453,8 @@
                 "value": 3
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -344,49 +462,59 @@
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "values": false
         },
-        "colorMode": "value",
+        "colorMode": "background",
         "graphMode": "none",
-        "textMode": "auto"
-      }
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "pluginVersion": "13.0.1"
+    }
+  ],
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "liveNow": false,
+  "weekStart": "",
+  "links": [
+    {
+      "title": "Homelab Overview",
+      "type": "link",
+      "url": "/d/homelab-overview",
+      "targetBlank": false,
+      "tags": [],
+      "icon": "dashboard"
     },
     {
-      "id": 8,
-      "type": "stat",
-      "title": "Successful Jobs (last 7d)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 16,
-        "y": 18,
-        "w": 8,
-        "h": 4
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(increase(kube_job_status_succeeded{namespace=~\"booklore|identity\", job_name=~\"(booklore|pocket-id)-backup-.+\"}[7d])) or vector(0)"
-        }
+      "title": "Backups",
+      "type": "link",
+      "url": "/d/homelab-backups",
+      "targetBlank": false,
+      "tags": [],
+      "icon": "dashboard"
+    },
+    {
+      "title": "Game Servers",
+      "type": "link",
+      "url": "/d/homelab-game-servers",
+      "targetBlank": false,
+      "tags": [],
+      "icon": "dashboard"
+    },
+    {
+      "title": "K8s Views",
+      "type": "dashboards",
+      "tags": [
+        "kubernetes"
       ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "colorMode": "value",
-        "graphMode": "none",
-        "textMode": "auto"
-      }
+      "icon": "external link",
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true
     }
   ]
 }
