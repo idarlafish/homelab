@@ -47,7 +47,7 @@ Terraform state lives in Cloudflare R2 bucket `fabler`.
   1. Bootstrap path relocations — stage all child manifests in one commit before `flux bootstrap`.
   2. Cross-Kustomization moves — first commit adds resource to the new Kustomization (Flux re-labels the live object on next reconcile); second commit removes it from the old. See `feedback_flux_prune_cascade_risk.md` memory.
 - **Talos in-place server resize requires reboot** to surface new capacity to kubelet. Either reboot manually after the apply, or destroy + apply for true clean install. The reboot also leaves stale `Unknown`/`Error` pods that need force-deleting (kubelet GCs them eventually).
-- **Talos firewall locks Kube + Talos API to current public IP** (default `firewall_use_current_ipv4 = true`). When IP changes (DHCP, VPN, traveling), `tofu apply` re-reads and updates. Operations from a different IP fail with TLS handshake timeout.
+- **Talos/Kube API exposed; mTLS is the only barrier.** We set `firewall_use_current_ipv4 = false` — kube-api (6443) and talos-api (50000) accept connections from any IP, gated by client cert (kubeconfig/talosconfig). Standard managed-K8s posture (GKE/EKS/AKS default). Trade-off: lost the IP-allowlist defense-in-depth, gained no `tofu apply` churn on VPN rotation.
 - **CSI uninstall mid-cascade can reformat volumes.** Even with `Retain` reclaim, volumes yanked off the node uncleanly may be reformatted by the CSI driver on next attach. Static PVs (Tofu-owned `kubernetes_persistent_volume_v1` with explicit `volumeHandle`) give the most deterministic recovery.
 - **`kubectl scale` on Flux-managed StatefulSets** is reverted within 10 min. Edit the manifest.
 
