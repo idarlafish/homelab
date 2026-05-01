@@ -39,6 +39,9 @@ spec:
         existingSecret: grafana-admin
         userKey: admin-user
         passwordKey: admin-password
+      grafana.ini:
+        feature_toggles:
+          enable: kubernetesDashboards
       resources:
         requests:
           cpu: 1m

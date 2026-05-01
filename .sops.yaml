@@ -3,6 +3,6 @@ creation_rules:
     age: >-
       age14a000yfg3226nakz8gycgtw4c7zugyply4jv29p6fmuy8ak05cqsu5cdx3
   - path_regex: ^k8s/.*\.yaml$
-    encrypted_regex: ^(data|stringData)$
+    encrypted_regex: ^(data|stringData|secure)$
     age: >-
       age14a000yfg3226nakz8gycgtw4c7zugyply4jv29p6fmuy8ak05cqsu5cdx3

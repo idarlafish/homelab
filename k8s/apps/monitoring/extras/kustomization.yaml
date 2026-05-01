@@ -8,4 +8,4 @@ resources:
   - alertmanager-config.yaml
   - pocket-id-alerts.yaml
   - backup-alerts.yaml
-  - dashboards
+  - git-sync-repository.yaml
