@@ -10,5 +10,5 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: hcloud-volumes
+  storageClassName: hcloud-volumes-encrypted
   volumeName: pv-pocket-id-data
