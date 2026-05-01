@@ -1,27 +1,9 @@
 output "server_ip" {
-  value = module.server.server_ip
+  value = module.talos.control_plane_public_ipv4_list[0]
 }
 
-output "network_id" {
-  value = module.server.network_id
-}
-
-output "kube_endpoint" {
-  value = module.server.kube_endpoint
-}
-
-output "kube_ca_certificate" {
-  value     = module.server.kube_ca_certificate
-  sensitive = true
-}
-
-output "kube_client_certificate" {
-  value     = module.server.kube_client_certificate
-  sensitive = true
-}
-
-output "kube_client_key" {
-  value     = module.server.kube_client_key
+output "kubeconfig_data" {
+  value     = module.talos.kubeconfig_data
   sensitive = true
 }
 

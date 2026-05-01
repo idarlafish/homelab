@@ -4,7 +4,7 @@ terraform {
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "1.52.0"
+      version = ">= 1.60.1"
     }
     helm = {
       source  = "hashicorp/helm"
@@ -52,17 +52,17 @@ provider "cloudflare" {
 }
 
 provider "kubernetes" {
-  host                   = module.cluster.kube_endpoint
-  cluster_ca_certificate = base64decode(module.cluster.kube_ca_certificate)
-  client_certificate     = base64decode(module.cluster.kube_client_certificate)
-  client_key             = base64decode(module.cluster.kube_client_key)
+  host                   = module.cluster.kubeconfig_data.server
+  cluster_ca_certificate = module.cluster.kubeconfig_data.ca
+  client_certificate     = module.cluster.kubeconfig_data.cert
+  client_key             = module.cluster.kubeconfig_data.key
 }
 
 provider "helm" {
   kubernetes = {
-    host                   = module.cluster.kube_endpoint
-    cluster_ca_certificate = base64decode(module.cluster.kube_ca_certificate)
-    client_certificate     = base64decode(module.cluster.kube_client_certificate)
-    client_key             = base64decode(module.cluster.kube_client_key)
+    host                   = module.cluster.kubeconfig_data.server
+    cluster_ca_certificate = module.cluster.kubeconfig_data.ca
+    client_certificate     = module.cluster.kubeconfig_data.cert
+    client_key             = module.cluster.kubeconfig_data.key
   }
 }

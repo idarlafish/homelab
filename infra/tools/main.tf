@@ -1,15 +1,9 @@
 module "cluster" {
   source = "../modules/tools-cluster"
 
-  name             = "tools"
-  server_type      = "cax11"
-  location         = var.hcloud_location
-  private_ip       = "10.0.1.1"
-  network_ip_range = "10.0.0.0/16"
-  subnet_ip_range  = "10.0.1.0/24"
-
-  ssh_key_id      = data.hcloud_ssh_key.main.id
-  ssh_private_key = data.sops_file.secrets.data["clusters.tools.ssh_private_key"]
+  name        = "tools"
+  server_type = "cax11"
+  location    = var.hcloud_location
 
   hcloud_token       = data.sops_file.secrets.data["hcloud_token"]
   github_token       = data.sops_file.secrets.data["flux_github_pat"]
@@ -17,7 +11,6 @@ module "cluster" {
   bootstrap_revision = var.bootstrap_revision
 
   cloudflare_account_id = data.sops_file.secrets.data["cloudflare_account_id"]
-  cloudflare_api_token  = data.sops_file.secrets.data["cloudflare_api_token"]
   cloudflare_zone_name  = data.sops_file.secrets.data["cloudflare_zone_name"]
   cloudflare_zone_id    = data.cloudflare_zone.main.zone_id
 
