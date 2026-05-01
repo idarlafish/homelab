@@ -1,0 +1,25 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebrowser-config
+  namespace: files
+data:
+  config.yaml: |
+    server:
+      port: 80
+      baseURL: "/"
+      sources:
+        - path: /srv/books
+          name: books
+    auth:
+      methods:
+        password:
+          enabled: false
+        oidc:
+          enabled: true
+          issuerUrl: "https://auth.la.fish"
+          scopes: "openid email profile groups"
+          userIdentifier: "preferred_username"
+          adminGroup: "admin"
+          groupsClaim: "groups"
