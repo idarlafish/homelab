@@ -18,4 +18,6 @@ tfplan
 *.db
 # Tofu-rendered cluster credentials (per-env)
 infra/*/kubeconfig
+infra/*/kubeconfig.bak
 infra/*/talosconfig
+infra/*/talosconfig.bak
