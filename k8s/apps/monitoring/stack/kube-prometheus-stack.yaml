@@ -36,6 +36,8 @@ spec:
           cluster: tools
         storageSpec:
           volumeClaimTemplate:
+            metadata:
+              name: db
             spec:
               accessModes: [ReadWriteOnce]
               storageClassName: hcloud-volumes-encrypted
