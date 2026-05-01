@@ -1,68 +1,75 @@
 # tools
 
-Personal infrastructure monorepo. Manages Hetzner Cloud servers using OpenTofu + k3s.
+[![Validate](https://github.com/idarlafish/tools/actions/workflows/validate.yaml/badge.svg)](https://github.com/idarlafish/tools/actions/workflows/validate.yaml)
+[![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen?logo=renovatebot)](https://renovatebot.com)
+[![Status](https://img.shields.io/badge/status-status.la.fish-blue?logo=cloudflare)](https://status.la.fish)
 
-## Machines
+Personal Kubernetes homelab on Hetzner. GitOps-managed, no public ingress except Cloudflare Tunnel.
 
-| Machine | Type | Runtime | Purpose |
-|---|---|---|---|
-| `tools` | cax11 (ARM64) | k3s | VPN, content services, monitoring, Cloudflared tunnel |
-| `game-servers` | cx43 (Intel) | k3s | Game server cluster |
+## Architecture
 
-## Structure
+```mermaid
+flowchart TD
+    Browser --> CF[Cloudflare Tunnel · DNS · R2]
 
-```
-apps/                              # source code (NOT k8s manifests — see k8s/ for those)
-  vpn/                             # VPN configuration
+    subgraph TOOLS[tools cluster · Talos · cax21]
+        CFD[cloudflared] --> PID[pocket-id]
+        CFD --> BL[booklore + MariaDB]
+        CFD --> GTS[gatus]
+        CFD --> GRF[grafana]
+        CFD --> PRM[prometheus + alertmanager]
+    end
 
-k8s/                               # GitOps tree, both clusters managed by Flux
-  clusters/
-    tools/                         # tools cluster Flux bootstrap (--path=k8s/clusters/tools)
-    game-servers/                  # game-servers cluster Flux bootstrap
-  apps/
-    tools/                         # cloudflared, content/booklore, monitoring stack, telegram, vpn
-    game-servers/                  # 9 games (default replicas: 0) + Grafana Alloy metrics agent
-  infrastructure/
-    base/                          # shared by both clusters: hcloud HelmRepository, hetzner-csi, hetzner-ccm, coredns-patch
-    tools/                         # tools-only: prometheus-community, monitoring namespace
-    game-servers/                  # overlay (just inherits ../base for now)
-  secrets/
-    .sops.yaml                     # SOPS config — recipient + encrypted_regex
-    tools/                         # SOPS-encrypted secrets for tools workloads
-    game-servers/                  # SOPS-encrypted secrets for game workloads
+    subgraph GAMES[game-servers cluster · Talos · cx43]
+        MC[minecraft]
+        VH[valheim]
+        OTH[+ 7 others]
+    end
 
-infra/
-  modules/
-    tools-cluster/                 # tools + tools-staging shared module (Talos via hcloud-k8s)
-  tools/                           # tools cluster (Talos)
-  tools-staging/                   # tools-staging cluster (Talos)
-  game-servers/                    # game-servers cluster (Talos, calls hcloud-k8s directly)
-  r2/                              # account-scoped R2 backup buckets
+    CF -->|*.la.fish| CFD
+    GAMES -. metrics .-> PRM
+    BL -. backups .-> CF
+    PID -. backups .-> CF
+    GAMES -. backups .-> CF
 ```
 
-See [CLAUDE.md](CLAUDE.md) for the operating model: how to start/stop a game, add a SOPS secret, run a backup, and avoid the Flux prune cascade.
+## Stack
 
-## Services
+OpenTofu · Talos Linux · Hetzner Cloud · Cloudflare (Tunnel + DNS + R2) · FluxCD · SOPS+age · Renovate
 
-- `booklore.la.fish` — Booklore e-book manager
-- `prometheus.la.fish` — tools-cluster Prometheus (game-servers metrics-collector ships here)
-- `grafana.la.fish` — Grafana dashboards
-- ~~`wg-admin.la.fish`~~ — WireGuard parked: PVC was on `local-path` SC and lost during the multi-cluster Flux refactor; configs need to be regenerated before re-enabling. See `k8s/apps/tools/vpn/wg-easy/`.
+## Clusters
 
-> The Telegram reminder bot (formerly `sleepy-notify`, deployed here) was extracted to its own repo and now runs as a Cloudflare Worker — see [idarlafish/telegram-notify](https://github.com/idarlafish/telegram-notify).
+| Cluster | Server | State |
+|---|---|---|
+| `tools` | cax21 ARM | running |
+| `tools-staging` | cax21 ARM | sandbox; destroyed when idle |
+| `game-servers` | cx43 x86 | destroyed between play sessions |
 
-## CI/CD
+## Apps
 
-| Workflow | Trigger |
-|---|---|
-| `deploy-tools-infra` | manual (re-runs `flux bootstrap` against `k8s/clusters/tools`) |
-| `deploy-game-servers-infra` | manual (re-runs `flux bootstrap` against `k8s/clusters/game-servers`) |
-| `cleanup` | manual (choose `tools` or `game-servers`) |
+**tools cluster**
 
-**Most app/manifest changes don't need CI** — Flux watches `main` and reconciles directly. Only Tofu / cluster-bootstrap changes go through GitHub Actions.
+- pocket-id — OIDC SSO
+- booklore — e-book manager
+- grafana + prometheus + alertmanager
+- blackbox-exporter
+- gatus — status page
+- wg-easy — VPN admin (parked)
+- cloudflared — Cloudflare Tunnel
+
+**game-servers cluster**
+
+- minecraft, valheim, vrising, core-keeper, foundry, soulmask, enshrouded, palworld, satisfactory
+- grafana-alloy — ships metrics to tools' Prometheus
 
 ## Infrastructure
 
-Terraform state stored in Cloudflare R2 bucket `fabler`:
-- `tools/terraform.tfstate`
-- `game-servers/terraform.tfstate`
+OpenTofu state in R2 bucket `fabler`. Per-cluster backup buckets (`<cluster>-backups`) managed in `infra/r2/`.
+
+| Root | Manages |
+|---|---|
+| `infra/tools/` | tools cluster (Talos), Cloudflare Tunnel, durable Hetzner Volumes |
+| `infra/tools-staging/` | tools-staging cluster |
+| `infra/game-servers/` | game-servers cluster |
+| `infra/r2/` | backup buckets + lifecycle rules (account-scoped, separate state) |
+| `infra/modules/tools-cluster/` | shared module for tools + tools-staging |
