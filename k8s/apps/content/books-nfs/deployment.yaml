@@ -37,6 +37,12 @@ spec:
             - name: nfs
               containerPort: 2049
               protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: nfs
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           volumeMounts:
             - name: books
               mountPath: /srv/books
