@@ -25,6 +25,12 @@ module "talos" {
   longhorn_enabled               = false
   kube_api_load_balancer_enabled = false
 
+  # Don't pin Hetzner firewall to operator's current IP — mTLS is the actual
+  # auth, and the IP allowlist forced a re-apply on every VPN exit rotation.
+  firewall_use_current_ipv4 = false
+  firewall_kube_api_source  = ["0.0.0.0/0", "::/0"]
+  firewall_talos_api_source = ["0.0.0.0/0", "::/0"]
+
   firewall_extra_rules = [
     # Satisfactory
     { description = "Satisfactory game", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "tcp", port = "7777" },
