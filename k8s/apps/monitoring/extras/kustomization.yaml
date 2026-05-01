@@ -8,3 +8,4 @@ resources:
   - telegram-notify-rules.yaml
   - alertmanager-config.yaml
   - pocket-id-alerts.yaml
+  - backup-alerts.yaml
