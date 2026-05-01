@@ -2,7 +2,7 @@ name: Validate
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
 
 permissions:
@@ -19,64 +19,27 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install kustomize
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh | bash
-          sudo mv kustomize /usr/local/bin/
-          kustomize version
+      - uses: int128/kustomize-action@v1
+        id: kustomize
+        with:
+          kustomization: "k8s/**/kustomization.yaml"
 
-      - name: Install kubeconform
-        run: |
-          curl -fsSL "https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz" \
-            | sudo tar -xz -C /usr/local/bin/ kubeconform
-          kubeconform -v
+      - name: Stage rendered manifests
+        run: cp -r "${{ steps.kustomize.outputs.directory }}/." ./_rendered
 
-      - name: Build all Kustomize roots
-        run: |
-          set -e
-          fail=0
-          while IFS= read -r dir; do
-            if ! kustomize build "$dir" > /dev/null 2>/tmp/err; then
-              echo "::error file=$dir/kustomization.yaml::kustomize build failed"
-              cat /tmp/err
-              fail=1
-            fi
-          done < <(find k8s -name kustomization.yaml -exec dirname {} \; | sort -u)
-          exit "$fail"
+      - name: Validate manifests against K8s schemas
+        uses: docker://ghcr.io/yannh/kubeconform:v0.7.0
+        with:
+          args: >-
+            -strict -ignore-missing-schemas -skip Secret
+            -schema-location default
+            -schema-location https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
+            -summary _rendered/
 
-      - name: Validate built manifests against K8s schemas (kubeconform)
+      - name: Verify Secrets are SOPS-encrypted
         run: |
-          set -e
-          fail=0
-          while IFS= read -r dir; do
-            output=$(kustomize build "$dir" 2>/dev/null)
-            # Skip Secret kind: SOPS-encrypted Secrets carry a top-level `sops:`
-            # field which fails kubeconform -strict ("additional properties").
-            # Their encryption is verified separately by the next step.
-            if ! echo "$output" | kubeconform \
-                -strict \
-                -ignore-missing-schemas \
-                -skip Secret \
-                -schema-location default \
-                -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
-                -summary; then
-              echo "::error file=$dir/kustomization.yaml::kubeconform validation failed"
-              fail=1
-            fi
-          done < <(find k8s -name kustomization.yaml -exec dirname {} \; | sort -u)
-          exit "$fail"
-
-      - name: Verify all Secrets are SOPS-encrypted
-        run: |
-          set -e
-          fail=0
-          while IFS= read -r f; do
-            if grep -qE '^kind: Secret$' "$f" && ! grep -qE 'ENC\[AES256_GCM' "$f"; then
-              echo "::error file=$f::file contains 'kind: Secret' but no SOPS encryption markers"
-              fail=1
-            fi
-          done < <(find k8s -name '*.yaml' -not -path '*/.terraform/*')
-          exit "$fail"
+          bad=$(grep -lrE '^kind: Secret$' k8s --include='*.yaml' | xargs grep -L 'ENC\[AES256_GCM' || true)
+          [ -z "$bad" ] || { echo "::error::Unencrypted Secret manifests:"; echo "$bad"; exit 1; }
 
   renovate:
     name: Renovate config
@@ -104,16 +67,10 @@ jobs:
           - infra/r2
     steps:
       - uses: actions/checkout@v6
-
       - uses: opentofu/setup-opentofu@v2
-
       - name: tofu fmt -check
         run: tofu fmt -check -recursive ${{ matrix.dir }}
-
       - name: tofu init (no backend)
-        working-directory: ${{ matrix.dir }}
-        run: tofu init -backend=false -input=false
-
+        run: tofu -chdir=${{ matrix.dir }} init -backend=false -input=false
       - name: tofu validate
-        working-directory: ${{ matrix.dir }}
-        run: tofu validate -no-color
+        run: tofu -chdir=${{ matrix.dir }} validate -no-color
