@@ -2,7 +2,7 @@ module "cluster" {
   source = "../modules/tools-cluster"
 
   name        = "tools-staging"
-  server_type = "cax11"
+  server_type = "cax21"
   location    = var.hcloud_location
 
   hcloud_token       = data.sops_file.secrets.data["hcloud_token"]

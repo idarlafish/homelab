@@ -2,14 +2,12 @@ resource "hcloud_volume" "booklore_books" {
   name     = "${var.name}-booklore-books"
   size     = 10
   location = var.location
-  format   = "ext4"
 }
 
 resource "hcloud_volume" "pocket_id_data" {
   name     = "${var.name}-pocket-id-data"
   size     = 10
   location = var.location
-  format   = "ext4"
 }
 
 resource "kubernetes_persistent_volume_v1" "booklore_books" {
@@ -20,7 +18,7 @@ resource "kubernetes_persistent_volume_v1" "booklore_books" {
     capacity                         = { storage = "${hcloud_volume.booklore_books.size}Gi" }
     access_modes                     = ["ReadWriteOnce"]
     persistent_volume_reclaim_policy = "Retain"
-    storage_class_name               = "hcloud-volumes"
+    storage_class_name               = "hcloud-volumes-encrypted"
 
     persistent_volume_source {
       csi {
@@ -45,7 +43,7 @@ resource "kubernetes_persistent_volume_v1" "pocket_id_data" {
     capacity                         = { storage = "${hcloud_volume.pocket_id_data.size}Gi" }
     access_modes                     = ["ReadWriteOnce"]
     persistent_volume_reclaim_policy = "Retain"
-    storage_class_name               = "hcloud-volumes"
+    storage_class_name               = "hcloud-volumes-encrypted"
 
     persistent_volume_source {
       csi {
