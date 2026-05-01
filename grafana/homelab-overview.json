@@ -714,7 +714,8 @@
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
-          }
+          },
+          "legendFormat": "{{target}}"
         }
       ],
       "fieldConfig": {
