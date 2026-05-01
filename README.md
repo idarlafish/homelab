@@ -15,9 +15,11 @@ flowchart TD
     subgraph TOOLS[tools cluster · Talos · cax21]
         CFD[cloudflared] --> PID[pocket-id]
         CFD --> BL[booklore + MariaDB]
+        CFD --> FB[filebrowser]
         CFD --> GTS[gatus]
         CFD --> GRF[grafana]
         CFD --> PRM[prometheus + alertmanager]
+        FB -. NFS .-> BL
     end
 
     subgraph GAMES[game-servers cluster · Talos · cx43]
@@ -51,6 +53,7 @@ OpenTofu · Talos Linux · Hetzner Cloud · Cloudflare (Tunnel + DNS + R2) · Fl
 
 - pocket-id — OIDC SSO
 - booklore — e-book manager
+- filebrowser — shared file browser; reads booklore's books PVC over an NFS bridge (rclone serve nfs + csi-driver-nfs)
 - grafana + prometheus + alertmanager
 - blackbox-exporter
 - gatus — status page
@@ -64,7 +67,7 @@ OpenTofu · Talos Linux · Hetzner Cloud · Cloudflare (Tunnel + DNS + R2) · Fl
 
 ## Infrastructure
 
-OpenTofu state in R2 bucket `fabler`. Per-cluster backup buckets (`<cluster>-backups`) managed in `infra/r2/`.
+OpenTofu state in Cloudflare R2. Per-cluster backup buckets (`<cluster>-backups`) managed in `infra/r2/`.
 
 | Root | Manages |
 |---|---|
