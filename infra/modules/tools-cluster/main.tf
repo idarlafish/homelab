@@ -125,6 +125,18 @@ resource "kubernetes_namespace_v1" "cloudflared" {
   depends_on = [module.talos]
 }
 
+# Surfaces cluster-derived values to Flux Kustomizations via postBuild substituteFrom.
+resource "kubernetes_config_map_v1" "cluster_vars" {
+  metadata {
+    name      = "cluster-vars"
+    namespace = "flux-system"
+  }
+  data = {
+    POD_CIDR = var.cluster_pod_cidr
+  }
+  depends_on = [module.flux_bootstrap]
+}
+
 resource "kubernetes_secret_v1" "cloudflared_token" {
   metadata {
     name      = "cloudflared-token"

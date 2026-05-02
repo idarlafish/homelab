@@ -40,6 +40,12 @@ variable "cluster_delete_protection" {
   default     = true
 }
 
+variable "cluster_pod_cidr" {
+  description = "Pod CIDR range. Default mirrors hcloud-k8s/kubernetes/hcloud module default; surfaced via cluster-vars ConfigMap for Flux postBuild substitution."
+  type        = string
+  default     = "10.0.128.0/17"
+}
+
 variable "flux_instance_yaml" {
   description = "Rendered FluxInstance YAML"
   type        = string

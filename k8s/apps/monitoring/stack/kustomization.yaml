@@ -5,4 +5,5 @@ resources:
   - namespace.yaml
   - helm-repos.yaml
   - grafana-admin-secret.yaml
+  - grafana-oidc-secret.yaml
   - kube-prometheus-stack.yaml

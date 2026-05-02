@@ -83,3 +83,7 @@ spec:
             HOSTNAME_WG: wg.la.fish
             HOSTNAME_WG_ADMIN: wg-admin.la.fish
             HOSTNAME_PAPERLESS: paperless.la.fish
+          substituteFrom:
+            - kind: ConfigMap
+              name: cluster-vars
+              optional: false
