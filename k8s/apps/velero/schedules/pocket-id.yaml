@@ -9,5 +9,5 @@ spec:
   template:
     includedNamespaces: [identity]
     storageLocation: r2
-    ttl: 720h0m0s
+    ttl: 336h0m0s
     defaultVolumesToFsBackup: true

@@ -28,7 +28,7 @@ spec:
       existingSecret: velero-credentials
     configuration:
       uploaderType: kopia
-      defaultBackupTTL: 720h0m0s
+      defaultBackupTTL: 336h0m0s
       defaultVolumesToFsBackup: true
       volumeSnapshotLocation: []
       backupStorageLocation:
