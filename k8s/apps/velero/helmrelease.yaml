@@ -30,6 +30,7 @@ spec:
       uploaderType: kopia
       defaultBackupTTL: 720h0m0s
       defaultVolumesToFsBackup: true
+      volumeSnapshotLocation: []
       backupStorageLocation:
         - name: r2
           provider: aws
