@@ -7,7 +7,8 @@ metadata:
 data:
   config.yaml: |
     storage:
-      type: memory
+      type: sqlite
+      path: /data/gatus.db
 
     ui:
       title: la.fish status
@@ -33,6 +34,19 @@ data:
         interval: 60s
         conditions:
           - "[STATUS] == 200"
+        alerts:
+          - type: telegram
+            send-on-resolved: true
+            failure-threshold: 3
+            success-threshold: 2
+
+      - name: paperless
+        group: tools
+        url: https://paperless.la.fish/
+        interval: 60s
+        conditions:
+          - "[STATUS] == 200"
+          - "[RESPONSE_TIME] < 5000"
         alerts:
           - type: telegram
             send-on-resolved: true
