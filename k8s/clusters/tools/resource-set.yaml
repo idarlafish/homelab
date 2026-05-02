@@ -52,6 +52,11 @@ spec:
       dependsOn:
         - name: content
         - name: csi-nfs
+    - name: velero
+      path: ./k8s/apps/velero
+      wait: true
+      dependsOn:
+        - name: monitoring-stack
   resources:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
