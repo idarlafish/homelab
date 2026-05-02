@@ -21,3 +21,6 @@ infra/*/kubeconfig
 infra/*/kubeconfig.bak
 infra/*/talosconfig
 infra/*/talosconfig.bak
+
+# VS Code workspace settings (not relevant to a K8s/Tofu/Rego repo)
+.vscode/
