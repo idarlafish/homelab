@@ -1,0 +1,38 @@
+---
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: minecraft
+  namespace: velero
+spec:
+  schedule: "0 3 * * *"
+  template:
+    includedNamespaces: [minecraft]
+    storageLocation: r2
+    ttl: 336h0m0s
+    defaultVolumesToFsBackup: true
+    hooks:
+      resources:
+        - name: minecraft-quiesce
+          includedNamespaces: [minecraft]
+          labelSelector:
+            matchLabels:
+              app: minecraft
+          pre:
+            - exec:
+                container: minecraft
+                command:
+                  - /bin/bash
+                  - -c
+                  - "rcon-cli save-off && rcon-cli save-all flush && sync"
+                onError: Fail
+                timeout: 5m
+          post:
+            - exec:
+                container: minecraft
+                command:
+                  - /bin/bash
+                  - -c
+                  - "rcon-cli save-on"
+                onError: Continue
+                timeout: 1m

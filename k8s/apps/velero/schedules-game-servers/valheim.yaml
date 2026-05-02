@@ -1,0 +1,13 @@
+---
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: valheim
+  namespace: velero
+spec:
+  schedule: "0 3 * * *"
+  template:
+    includedNamespaces: [valheim]
+    storageLocation: r2
+    ttl: 336h0m0s
+    defaultVolumesToFsBackup: true

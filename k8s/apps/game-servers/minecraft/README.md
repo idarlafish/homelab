@@ -32,10 +32,12 @@ KUBECONFIG=.kube/game-servers kubectl rollout restart statefulset/minecraft -n m
 
 ## Backup
 
-Backs up world data to Cloudflare R2. Scales the server down first (required for RWO volumes), runs the backup job, then scales back up:
+Velero captures the namespace + PVC contents to Cloudflare R2 (`game-servers-backups/velero/`). Daily Schedule fires at 03:00 UTC; the pre-hook runs RCON `save-off` + `save-all flush` while the pod is running and re-enables save with a post-hook. Volume data is only captured when `replicas: 1` (Velero file-system backup needs the pod mounted), so the practical pattern is to run a manual backup before scaling down:
 
 ```bash
-./scripts/backup-game.sh minecraft
+KUBECONFIG=infra/game-servers/kubeconfig \
+  velero backup create minecraft-$(date +%Y%m%d-%H%M%S) \
+    --from-schedule minecraft --wait
 ```
 
 ## Apply Config Changes

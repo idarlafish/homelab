@@ -51,6 +51,15 @@ spec:
       path: ./k8s/apps/shared/secrets
       wait: true
       dependsOn: []
+    - name: velero
+      path: ./k8s/apps/velero
+      wait: true
+      dependsOn: []
+    - name: velero-schedules
+      path: ./k8s/apps/velero/schedules-game-servers
+      wait: true
+      dependsOn:
+        - name: velero
   resources:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
@@ -74,3 +83,7 @@ spec:
         postBuild:
           substitute:
             BUCKET_NAME: game-servers-backups
+          substituteFrom:
+            - kind: ConfigMap
+              name: cluster-vars
+              optional: false

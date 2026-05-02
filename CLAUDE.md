@@ -54,6 +54,6 @@ Terraform state lives in Cloudflare R2 bucket `fabler`.
 ## Quick reference
 
 - Per-game runbook (start/stop, RCON, backup, config changes): `k8s/apps/game-servers/<game>/README.md` — minecraft and soulmask have detailed ones.
-- Game backup: `./scripts/backup-game.sh <game>` (the `backup-job.yaml` is deliberately excluded from minecraft's kustomization so Flux doesn't manage it).
+- Game backup: `KUBECONFIG=infra/game-servers/kubeconfig velero backup create <game>-$(date +%Y%m%d-%H%M%S) --from-schedule <game> --wait` (run while the game pod is up so Velero captures volume data — daily 03:00 UTC schedules also exist but only useful when the game is running).
 - Disaster recovery (Velero schedules, restore procedures, full-cluster rebuild): [docs/disaster-recovery.md](docs/disaster-recovery.md).
 - Conftest policies (env parity, SOPS, image tags, substitute vars, R2 endpoint): `policy/*.rego`. Run via `conftest test --policy policy/ --combine k8s/clusters/*/resource-set.yaml $(find k8s/apps -name '*.yaml')`.
