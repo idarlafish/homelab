@@ -2,7 +2,7 @@ name: Validate
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
 
 permissions:
@@ -13,8 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  k8s:
-    name: K8s manifests + secrets
+  manifests:
+    name: Manifests + policies
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -45,6 +45,27 @@ jobs:
             k8s/clusters/tools-staging/resource-set.yaml
             k8s/apps/
 
+  secrets-scan:
+    name: Secrets scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: trufflehog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
+
   renovate:
     name: Renovate config
     runs-on: ubuntu-latest
@@ -66,8 +87,8 @@ jobs:
       matrix:
         dir:
           - infra/tools
-          - infra/game-servers
           - infra/tools-staging
+          - infra/game-servers
           - infra/r2
     steps:
       - uses: actions/checkout@v6
