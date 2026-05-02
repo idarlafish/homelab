@@ -1,9 +1,5 @@
 ---
-# Three alerts cover the failure modes:
-#  - BackupJobFailed:        most recent Job failed (fast — fires in 1m)
-#  - BackupCronJobStale:     last successful run > 25h ago (normal staleness)
-#  - BackupCronJobNeverRan:  cronjob exists > 25h with no successful run ever
-#                            (brand-new-and-broken case; metric is absent)
+# Velero metric-based alerts. Label-agnostic — any new Schedule is auto-covered.
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -15,42 +11,42 @@ spec:
   groups:
     - name: backups
       rules:
-        - alert: BackupJobFailed
+        - alert: VeleroBackupFailing
           expr: |
-            kube_job_status_failed{
-              namespace=~"booklore|identity",
-              job_name=~"(booklore|pocket-id)-backup-.+"
-            } > 0
-          for: 1m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Backup Job {{ $labels.namespace }}/{{ $labels.job_name }} failed"
-            description: "Most recent run of this backup Job exited non-zero. Check pod logs."
-
-        - alert: BackupCronJobStale
-          expr: |
-            time() - kube_cronjob_status_last_successful_time{
-              namespace=~"booklore|identity",
-              cronjob=~"booklore-backup|pocket-id-backup"
-            } > 25 * 3600
+            increase(velero_backup_failure_total[1h]) > 0
           for: 5m
           labels:
             severity: warning
           annotations:
-            summary: "Backup CronJob {{ $labels.namespace }}/{{ $labels.cronjob }} has not completed successfully in 25h+"
-            description: "Last successful run: {{ $value | humanizeDuration }} ago. Daily 03:00 UTC schedule + 1h grace exhausted. Restore point is now stale."
+            summary: "Velero backup {{ $labels.schedule }} failed"
+            description: "Schedule {{ $labels.schedule }} has produced a failed backup in the last hour."
 
-        - alert: BackupCronJobNeverRan
+        - alert: VeleroBackupPartialFailure
           expr: |
-            (time() - kube_cronjob_created{
-              namespace=~"booklore|identity",
-              cronjob=~"booklore-backup|pocket-id-backup"
-            }) > 25 * 3600
-            unless on(namespace, cronjob) kube_cronjob_status_last_successful_time
+            increase(velero_backup_partial_failure_total[1h]) > 0
           for: 5m
           labels:
             severity: warning
           annotations:
-            summary: "Backup CronJob {{ $labels.namespace }}/{{ $labels.cronjob }} has never completed successfully"
-            description: "CronJob has existed for {{ $value | humanizeDuration }} with no successful runs. Likely broken from day one."
+            summary: "Velero backup {{ $labels.schedule }} partially failed"
+            description: "Schedule {{ $labels.schedule }} produced a backup with at least one item failure."
+
+        - alert: VeleroBackupStale
+          expr: |
+            time() - velero_backup_last_successful_timestamp{schedule!=""} > 25 * 3600
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Velero schedule {{ $labels.schedule }} has not completed successfully in 25h+"
+            description: "Last successful run: {{ $value | humanizeDuration }} ago."
+
+        - alert: VeleroStorageLocationUnavailable
+          expr: |
+            velero_backup_storage_location_status{phase!="Available"} > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Velero BackupStorageLocation {{ $labels.name }} is {{ $labels.phase }}"
+            description: "Velero cannot reach R2 — backups will fail until resolved."
