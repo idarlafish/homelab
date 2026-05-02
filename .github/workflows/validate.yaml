@@ -36,10 +36,14 @@ jobs:
             -schema-location https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
             -summary _rendered/
 
-      - name: Verify Secrets are SOPS-encrypted
-        run: |
-          bad=$(grep -lrE '^kind: Secret$' k8s --include='*.yaml' | xargs grep -L 'ENC\[AES256_GCM' || true)
-          [ -z "$bad" ] || { echo "::error::Unencrypted Secret manifests:"; echo "$bad"; exit 1; }
+      - name: Conftest policies
+        uses: docker://openpolicyagent/conftest:latest
+        with:
+          args: >-
+            test --policy policy/ --combine
+            k8s/clusters/tools/resource-set.yaml
+            k8s/clusters/tools-staging/resource-set.yaml
+            k8s/apps/
 
   renovate:
     name: Renovate config
