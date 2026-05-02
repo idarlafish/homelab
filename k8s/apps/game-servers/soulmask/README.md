@@ -1,6 +1,6 @@
 # Soulmask Server
 
-[Soulmask](https://store.steampowered.com/app/2646460/Soulmask/) dedicated server running on the `game-servers` k3s cluster, using the custom self-contained image built from `apps/soulmask-server/`.
+[Soulmask](https://store.steampowered.com/app/2646460/Soulmask/) dedicated server running on the `game-servers` k3s cluster, using the custom self-contained image built from [`idarlafish/soulmask-server`](https://github.com/idarlafish/soulmask-server).
 
 ## At a glance
 
@@ -15,11 +15,11 @@
 - **Liveness probe:** `pgrep -f WSServer-Linux-Shipping` every 30 s (k8s restarts the pod if the game process dies).
 - **Backups:** Soulmask's own in-game backup (`-backup=960`, roughly every 16 min) writes rollback snapshots into `WS/Saved/` on the PVC. **No off-node backup** — if the PVC is lost, saves are lost. Take manual R2 snapshots if you care.
 - **Map:** `GAME_WORLD=DLC_Level01_Main` (Shifting Sands DLC). Set to `Level01_Main` to switch back to the base game — saves are per-map under `WS/Saved/Worlds/Dedicated/<MapName>/`, so switching is non-destructive.
-- **Cross-server:** Set `CROSS_SERVER_MAIN_PORT` + `CROSS_SERVER_CONNECT` in configmap to link two map instances. See `apps/soulmask-server/README.md` for details.
+- **Cross-server:** Set `CROSS_SERVER_MAIN_PORT` + `CROSS_SERVER_CONNECT` in configmap to link two map instances. See the [`idarlafish/soulmask-server`](https://github.com/idarlafish/soulmask-server) README for details.
 
 ## Architecture
 
-The image is self-contained (see `apps/soulmask-server/README.md`). All operational logic — auto-reboot, auto-update-on-restart, signal handling — runs inside the container via `init.sh` + `start.sh` + `supercronic`. The namespace has **no k8s CronJobs, no RBAC, no external orchestration** — just Namespace + ConfigMap + Service + StatefulSet, applied by Flux from this directory. Secrets `soulmask-secrets` and `ghcr-secret` are SOPS-encrypted alongside this directory's manifests; `r2-credentials` (used by all game backups) is SOPS-encrypted under `k8s/infrastructure/game-servers/r2-credentials.yaml`. Each is reconciled by the same Flux Kustomization that owns its co-located manifests.
+The image is self-contained (see the [`idarlafish/soulmask-server`](https://github.com/idarlafish/soulmask-server) README). All operational logic — auto-reboot, auto-update-on-restart, signal handling — runs inside the container via `init.sh` + `start.sh` + `supercronic`. The namespace has **no k8s CronJobs, no RBAC, no external orchestration** — just Namespace + ConfigMap + Service + StatefulSet, applied by Flux from this directory. Secrets `soulmask-secrets` and `ghcr-secret` are SOPS-encrypted alongside this directory's manifests; `r2-credentials` (used by all game backups) is SOPS-encrypted under `k8s/infrastructure/game-servers/r2-credentials.yaml`. Each is reconciled by the same Flux Kustomization that owns its co-located manifests.
 
 All commands below assume `KUBECONFIG=.kube/game-servers` from the repo root.
 
@@ -37,7 +37,7 @@ source .env && cd infra/game-servers && tofu init && tofu plan && tofu apply
 
 ### 2. Build and push the image (first time only)
 
-See `apps/soulmask-server/README.md`. Only required on Dockerfile or script changes — Soulmask itself updates at runtime via SteamCMD.
+See the [`idarlafish/soulmask-server`](https://github.com/idarlafish/soulmask-server) README. Only required on Dockerfile or script changes — Soulmask itself updates at runtime via SteamCMD.
 
 ### 3. Secrets
 
