@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: gatus
-  namespace: uptime
+  namespace: monitoring
   labels:
     app: gatus
 spec:

@@ -24,7 +24,7 @@ module "cluster" {
     { hostname = "grafana-staging.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80" },
     { hostname = "prometheus-staging.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090" },
     { hostname = "paperless-staging.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://paperless.paperless.svc.cluster.local:8000" },
-    { hostname = "status-staging.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://gatus.uptime.svc.cluster.local:8080" },
+    { hostname = "status-staging.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://gatus.monitoring.svc.cluster.local:8080" },
     { hostname = "files-staging.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://filebrowser.files.svc.cluster.local:80" },
   ]
   tunnel_dns_subdomains = ["booklore-staging", "wg-admin-staging", "grafana-staging", "prometheus-staging", "paperless-staging", "status-staging", "files-staging"]

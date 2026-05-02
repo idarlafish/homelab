@@ -47,10 +47,6 @@ spec:
       path: ./k8s/apps/game-servers/vrising
       wait: true
       dependsOn: []
-    - name: shared-secrets
-      path: ./k8s/apps/shared/secrets
-      wait: true
-      dependsOn: []
     - name: velero
       path: ./k8s/apps/velero
       wait: true
