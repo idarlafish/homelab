@@ -12,7 +12,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: bootstrap
-          image: curlimages/curl:8.10.1
+          image: curlimages/curl:8.20.0
           env:
             - name: GRAFANA_URL
               value: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local
