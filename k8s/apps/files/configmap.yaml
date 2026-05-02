@@ -18,7 +18,7 @@ data:
           enabled: false
         oidc:
           enabled: true
-          issuerUrl: "https://auth.la.fish"
+          issuerUrl: "https://${HOSTNAME_AUTH}"
           scopes: "openid email profile groups"
           userIdentifier: "preferred_username"
           adminGroup: "admin"
