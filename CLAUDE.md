@@ -55,3 +55,4 @@ Terraform state lives in Cloudflare R2 bucket `fabler`.
 
 - Per-game runbook (start/stop, RCON, backup, config changes): `k8s/apps/game-servers/<game>/README.md` — minecraft and soulmask have detailed ones.
 - Game backup: `./scripts/backup-game.sh <game>` (the `backup-job.yaml` is deliberately excluded from minecraft's kustomization so Flux doesn't manage it).
+- Disaster recovery (Velero schedules, restore procedures, full-cluster rebuild): [docs/disaster-recovery.md](docs/disaster-recovery.md).
