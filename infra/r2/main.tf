@@ -5,7 +5,7 @@ locals {
   # Retention applies to tools + tools-staging only; game-servers backups
   # are precious world saves with no auto-expire.
   retention_clusters = ["tools", "tools-staging"]
-  retention_apps     = ["booklore", "pocket-id"]
+  retention_apps     = ["booklore", "pocket-id", "paperless"]
 }
 
 resource "cloudflare_r2_bucket" "backup" {

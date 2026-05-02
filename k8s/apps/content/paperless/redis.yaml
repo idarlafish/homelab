@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: paperless
+spec:
+  clusterIP: None
+  ports:
+    - port: 6379
+      targetPort: 6379
+  selector:
+    app: redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: paperless
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:8-alpine
+          args:
+            - --save
+            - ""
+            - --appendonly
+            - "no"
+          ports:
+            - containerPort: 6379
+              name: redis
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            periodSeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+      volumes:
+        - name: data
+          emptyDir: {}

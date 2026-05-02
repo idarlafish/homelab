@@ -59,3 +59,34 @@ resource "kubernetes_persistent_volume_v1" "pocket_id_data" {
     }
   }
 }
+
+resource "hcloud_volume" "paperless_storage" {
+  name     = "${var.name}-paperless-storage"
+  size     = 10
+  location = var.location
+}
+
+resource "kubernetes_persistent_volume_v1" "paperless_storage" {
+  metadata {
+    name = "pv-paperless-storage"
+  }
+  spec {
+    capacity                         = { storage = "${hcloud_volume.paperless_storage.size}Gi" }
+    access_modes                     = ["ReadWriteOnce"]
+    persistent_volume_reclaim_policy = "Retain"
+    storage_class_name               = "hcloud-volumes-encrypted"
+
+    persistent_volume_source {
+      csi {
+        driver        = "csi.hetzner.cloud"
+        volume_handle = hcloud_volume.paperless_storage.id
+        fs_type       = "ext4"
+      }
+    }
+
+    claim_ref {
+      namespace = "paperless"
+      name      = "paperless-storage"
+    }
+  }
+}

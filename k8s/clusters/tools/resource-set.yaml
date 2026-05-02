@@ -82,3 +82,4 @@ spec:
             HOSTNAME_PROMETHEUS: prometheus.la.fish
             HOSTNAME_WG: wg.la.fish
             HOSTNAME_WG_ADMIN: wg-admin.la.fish
+            HOSTNAME_PAPERLESS: paperless.la.fish
