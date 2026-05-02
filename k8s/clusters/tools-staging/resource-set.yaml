@@ -32,6 +32,11 @@ spec:
       path: ./k8s/apps/shared/secrets
       wait: true
       dependsOn: []
+    - name: uptime
+      path: ./k8s/apps/uptime
+      wait: true
+      dependsOn:
+        - name: shared-secrets
     - name: velero
       path: ./k8s/apps/velero
       wait: true

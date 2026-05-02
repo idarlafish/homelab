@@ -11,13 +11,13 @@ data:
       path: /data/gatus.db
 
     ui:
-      title: la.fish status
-      header: la.fish
+      title: ${CLUSTER_NAME} status
+      header: ${CLUSTER_NAME}
 
     endpoints:
       - name: booklore
-        group: tools
-        url: https://booklore.la.fish/
+        group: ${CLUSTER_NAME}
+        url: https://${HOSTNAME_BOOKLORE}/
         interval: 60s
         conditions:
           - "[STATUS] == 200"
@@ -29,8 +29,8 @@ data:
             success-threshold: 2
 
       - name: pocket-id
-        group: tools
-        url: https://auth.la.fish/health
+        group: ${CLUSTER_NAME}
+        url: https://${HOSTNAME_AUTH}/health
         interval: 60s
         conditions:
           - "[STATUS] == 200"
@@ -41,8 +41,8 @@ data:
             success-threshold: 2
 
       - name: paperless
-        group: tools
-        url: https://paperless.la.fish/
+        group: ${CLUSTER_NAME}
+        url: https://${HOSTNAME_PAPERLESS}/
         interval: 60s
         conditions:
           - "[STATUS] == 200"
@@ -54,8 +54,8 @@ data:
             success-threshold: 2
 
       - name: grafana
-        group: tools
-        url: https://grafana.la.fish/api/health
+        group: ${CLUSTER_NAME}
+        url: https://${HOSTNAME_GRAFANA}/api/health
         interval: 60s
         conditions:
           - "[STATUS] == 200"
@@ -66,8 +66,8 @@ data:
             success-threshold: 2
 
       - name: prometheus
-        group: tools
-        url: https://prometheus.la.fish/-/healthy
+        group: ${CLUSTER_NAME}
+        url: https://${HOSTNAME_PROMETHEUS}/-/healthy
         interval: 60s
         conditions:
           - "[STATUS] == 200"
