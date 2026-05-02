@@ -90,3 +90,34 @@ resource "kubernetes_persistent_volume_v1" "paperless_storage" {
     }
   }
 }
+
+resource "hcloud_volume" "gatus_data" {
+  name     = "${var.name}-gatus-data"
+  size     = 10
+  location = var.location
+}
+
+resource "kubernetes_persistent_volume_v1" "gatus_data" {
+  metadata {
+    name = "pv-gatus-data"
+  }
+  spec {
+    capacity                         = { storage = "${hcloud_volume.gatus_data.size}Gi" }
+    access_modes                     = ["ReadWriteOnce"]
+    persistent_volume_reclaim_policy = "Retain"
+    storage_class_name               = "hcloud-volumes-encrypted"
+
+    persistent_volume_source {
+      csi {
+        driver        = "csi.hetzner.cloud"
+        volume_handle = hcloud_volume.gatus_data.id
+        fs_type       = "ext4"
+      }
+    }
+
+    claim_ref {
+      namespace = "uptime"
+      name      = "gatus-data"
+    }
+  }
+}

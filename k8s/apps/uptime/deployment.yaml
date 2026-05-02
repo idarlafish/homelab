@@ -18,6 +18,8 @@ spec:
       labels:
         app: gatus
     spec:
+      securityContext:
+        fsGroup: 65532
       containers:
         - name: gatus
           image: ghcr.io/twin/gatus:v5.35.0
@@ -43,6 +45,8 @@ spec:
             - name: config
               mountPath: /config
               readOnly: true
+            - name: data
+              mountPath: /data
           readinessProbe:
             httpGet:
               path: /health
@@ -62,3 +66,6 @@ spec:
         - name: config
           configMap:
             name: gatus-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: gatus-data
