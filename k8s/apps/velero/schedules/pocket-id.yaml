@@ -1,0 +1,13 @@
+---
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: pocket-id
+  namespace: velero
+spec:
+  schedule: "0 3 * * *"
+  template:
+    includedNamespaces: [identity]
+    storageLocation: r2
+    ttl: 720h0m0s
+    defaultVolumesToFsBackup: true

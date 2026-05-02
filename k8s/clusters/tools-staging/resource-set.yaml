@@ -42,6 +42,11 @@ spec:
       wait: true
       dependsOn:
         - name: monitoring-stack
+    - name: velero-schedules
+      path: ./k8s/apps/velero/schedules
+      wait: true
+      dependsOn:
+        - name: velero
   resources:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
