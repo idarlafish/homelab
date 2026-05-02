@@ -1,0 +1,61 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: velero
+  namespace: velero
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: velero
+      version: "12.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: vmware-tanzu
+        namespace: flux-system
+  values:
+    initContainers:
+      - name: velero-plugin-for-aws
+        image: velero/velero-plugin-for-aws:v1.13.0
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - name: plugins
+            mountPath: /target
+    deployNodeAgent: true
+    credentials:
+      useSecret: true
+      existingSecret: velero-credentials
+    configuration:
+      uploaderType: kopia
+      defaultBackupTTL: 720h0m0s
+      defaultVolumesToFsBackup: true
+      backupStorageLocation:
+        - name: r2
+          provider: aws
+          bucket: ${BUCKET_NAME}
+          prefix: velero
+          default: true
+          config:
+            region: auto
+            s3ForcePathStyle: "true"
+            s3Url: ${S3_ENDPOINT_URL}
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          release: kube-prometheus-stack
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+    nodeAgent:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          memory: 512Mi
