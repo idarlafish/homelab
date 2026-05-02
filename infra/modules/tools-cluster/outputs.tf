@@ -14,7 +14,3 @@ output "tunnel_id" {
 output "booklore_volume_id" {
   value = hcloud_volume.booklore_books.id
 }
-
-output "pocket_id_volume_id" {
-  value = hcloud_volume.pocket_id_data.id
-}
