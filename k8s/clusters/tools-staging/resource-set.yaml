@@ -23,11 +23,6 @@ spec:
       wait: true
       dependsOn:
         - name: monitoring-stack
-    - name: identity
-      path: ./k8s/apps/identity
-      wait: true
-      dependsOn:
-        - name: monitoring-stack
     # vpn: wait:false because wg-easy is intentionally at replicas:0
     - name: vpn
       path: ./k8s/apps/vpn
@@ -71,7 +66,7 @@ spec:
           substitute:
             CLUSTER_NAME: tools-staging
             BUCKET_NAME: tools-staging-backups
-            HOSTNAME_AUTH: auth-staging.la.fish
+            HOSTNAME_AUTH: auth.la.fish
             HOSTNAME_BOOKLORE: booklore-staging.la.fish
             HOSTNAME_GRAFANA: grafana-staging.la.fish
             HOSTNAME_PROMETHEUS: prometheus-staging.la.fish

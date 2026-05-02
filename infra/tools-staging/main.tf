@@ -19,12 +19,11 @@ module "cluster" {
   cluster_delete_protection = false
 
   tunnel_routes = [
-    { hostname = "auth-staging.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://pocket-id.identity.svc.cluster.local:1411" },
     { hostname = "booklore-staging.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://booklore.booklore.svc.cluster.local:6060" },
     { hostname = "wg-admin-staging.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://wg-easy-http.vpn.svc.cluster.local:51821" },
     { hostname = "grafana-staging.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80" },
     { hostname = "prometheus-staging.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090" },
     { hostname = "paperless-staging.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://paperless.paperless.svc.cluster.local:8000" },
   ]
-  tunnel_dns_subdomains = ["auth-staging", "booklore-staging", "wg-admin-staging", "grafana-staging", "prometheus-staging", "paperless-staging"]
+  tunnel_dns_subdomains = ["booklore-staging", "wg-admin-staging", "grafana-staging", "prometheus-staging", "paperless-staging"]
 }
