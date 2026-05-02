@@ -7,5 +7,5 @@ output "booklore_volume_id" {
 }
 
 output "pocket_id_volume_id" {
-  value = module.cluster.pocket_id_volume_id
+  value = hcloud_volume.pocket_id_data.id
 }
