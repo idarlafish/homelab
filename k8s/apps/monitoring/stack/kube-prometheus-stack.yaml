@@ -49,9 +49,34 @@ spec:
         existingSecret: grafana-admin
         userKey: admin-user
         passwordKey: admin-password
+      envFromSecret: grafana-oidc
       grafana.ini:
         feature_toggles:
           enable: kubernetesDashboards
+        server:
+          root_url: https://${HOSTNAME_GRAFANA}/
+        security:
+          disable_initial_admin_creation: true
+        auth:
+          oauth_allow_insecure_email_lookup: true
+          disable_login_form: true
+          oauth_auto_login: false
+        auth.generic_oauth:
+          enabled: true
+          name: Pocket-ID
+          allow_sign_up: true
+          auto_login: false
+          allow_assign_grafana_admin: true
+          scopes: openid email profile groups
+          empty_scopes: false
+          email_attribute_path: "email"
+          login_attribute_path: "preferred_username"
+          name_attribute_path: "name"
+          role_attribute_path: "contains(groups[*], 'admin') && 'GrafanaAdmin' || 'Viewer'"
+          auth_url: https://${HOSTNAME_AUTH}/authorize
+          token_url: https://${HOSTNAME_AUTH}/api/oidc/token
+          api_url: https://${HOSTNAME_AUTH}/api/oidc/userinfo
+          use_pkce: true
       persistence:
         enabled: true
         size: 10Gi

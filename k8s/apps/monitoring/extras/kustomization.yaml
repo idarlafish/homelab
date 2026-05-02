@@ -10,3 +10,5 @@ resources:
   - backup-alerts.yaml
   - git-sync-pat-secret.yaml
   - git-sync-bootstrap.yaml
+  - oauth2-proxy-prometheus.yaml
+  - oauth2-proxy-prometheus-secret.yaml
