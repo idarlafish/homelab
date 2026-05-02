@@ -7,13 +7,8 @@ package main
 
 import rego.v1
 
-# Files allowed to hardcode the R2 endpoint until they're migrated.
-# TODO: drop minecraft entry when game-servers backups move to Velero.
-allowed_paths := {"k8s/apps/game-servers/minecraft/backup-job.yaml"}
-
 deny contains msg if {
 	some i
-	not input[i].path in allowed_paths
 	some path, value
 	walk(input[i].contents, [path, value])
 	is_string(value)

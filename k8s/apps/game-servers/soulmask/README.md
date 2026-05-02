@@ -19,7 +19,7 @@
 
 ## Architecture
 
-The image is self-contained (see the [`idarlafish/soulmask-server`](https://github.com/idarlafish/soulmask-server) README). All operational logic — auto-reboot, auto-update-on-restart, signal handling — runs inside the container via `init.sh` + `start.sh` + `supercronic`. The namespace has **no k8s CronJobs, no RBAC, no external orchestration** — just Namespace + ConfigMap + Service + StatefulSet, applied by Flux from this directory. Secrets `soulmask-secrets` and `ghcr-secret` are SOPS-encrypted alongside this directory's manifests; `r2-credentials` (used by all game backups) is SOPS-encrypted under `k8s/infrastructure/game-servers/r2-credentials.yaml`. Each is reconciled by the same Flux Kustomization that owns its co-located manifests.
+The image is self-contained (see the [`idarlafish/soulmask-server`](https://github.com/idarlafish/soulmask-server) README). All operational logic — auto-reboot, auto-update-on-restart, signal handling — runs inside the container via `init.sh` + `start.sh` + `supercronic`. The namespace has **no k8s CronJobs, no RBAC, no external orchestration** — just Namespace + ConfigMap + Service + StatefulSet, applied by Flux from this directory. Secrets `soulmask-secrets` and `ghcr-secret` are SOPS-encrypted alongside this directory's manifests. Backups are handled by Velero — see `k8s/apps/velero/schedules-game-servers/soulmask.yaml` and the manual backup ritual in `docs/disaster-recovery.md`.
 
 All commands below assume `KUBECONFIG=.kube/game-servers` from the repo root.
 
@@ -41,7 +41,7 @@ See the [`idarlafish/soulmask-server`](https://github.com/idarlafish/soulmask-se
 
 ### 3. Secrets
 
-Already in git as `k8s/apps/game-servers/soulmask/{soulmask-secret,ghcr-secret}.yaml` and `k8s/infrastructure/game-servers/r2-credentials.yaml` (all SOPS-encrypted). To rotate:
+Already in git as `k8s/apps/game-servers/soulmask/{soulmask-secret,ghcr-secret}.yaml` (SOPS-encrypted). To rotate:
 
 ```bash
 sops k8s/apps/game-servers/soulmask/soulmask-secret.yaml   # opens in $EDITOR, re-encrypts on save

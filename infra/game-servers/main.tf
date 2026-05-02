@@ -90,3 +90,19 @@ module "flux_bootstrap" {
     YAML
   }
 }
+
+locals {
+  r2_endpoint_url = "https://${data.sops_file.secrets.data["cloudflare_account_id"]}.r2.cloudflarestorage.com"
+}
+
+resource "kubernetes_config_map_v1" "cluster_vars" {
+  metadata {
+    name      = "cluster-vars"
+    namespace = "flux-system"
+  }
+  data = {
+    POD_CIDR        = "10.0.128.0/17"
+    S3_ENDPOINT_URL = local.r2_endpoint_url
+  }
+  depends_on = [module.flux_bootstrap]
+}

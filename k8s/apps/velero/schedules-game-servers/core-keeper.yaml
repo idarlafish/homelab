@@ -1,0 +1,13 @@
+---
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: core-keeper
+  namespace: velero
+spec:
+  schedule: "0 3 * * *"
+  template:
+    includedNamespaces: [core-keeper]
+    storageLocation: r2
+    ttl: 336h0m0s
+    defaultVolumesToFsBackup: true

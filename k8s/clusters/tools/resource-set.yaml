@@ -58,7 +58,7 @@ spec:
       dependsOn:
         - name: monitoring-stack
     - name: velero-schedules
-      path: ./k8s/apps/velero/schedules
+      path: ./k8s/apps/velero/schedules-tools
       wait: true
       dependsOn:
         - name: velero
