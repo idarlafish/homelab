@@ -8,4 +8,3 @@ resources:
   - service.yaml
   - deployment.yaml
   - servicemonitor.yaml
-  - backup-cronjob.yaml
