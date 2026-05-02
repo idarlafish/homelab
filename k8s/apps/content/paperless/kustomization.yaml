@@ -13,4 +13,3 @@ resources:
   - gotenberg.yaml
   - service.yaml
   - deployment.yaml
-  - backup-cronjob.yaml
