@@ -125,6 +125,10 @@ resource "kubernetes_namespace_v1" "cloudflared" {
   depends_on = [module.talos]
 }
 
+locals {
+  r2_endpoint_url = "https://${var.cloudflare_account_id}.r2.cloudflarestorage.com"
+}
+
 # Surfaces cluster-derived values to Flux Kustomizations via postBuild substituteFrom.
 resource "kubernetes_config_map_v1" "cluster_vars" {
   metadata {
@@ -132,7 +136,8 @@ resource "kubernetes_config_map_v1" "cluster_vars" {
     namespace = "flux-system"
   }
   data = {
-    POD_CIDR = var.cluster_pod_cidr
+    POD_CIDR        = var.cluster_pod_cidr
+    S3_ENDPOINT_URL = local.r2_endpoint_url
   }
   depends_on = [module.flux_bootstrap]
 }
