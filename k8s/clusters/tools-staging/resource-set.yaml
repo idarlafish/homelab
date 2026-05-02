@@ -18,25 +18,36 @@ spec:
       path: ./k8s/apps/monitoring/stack
       wait: true
       dependsOn: []
-    - name: monitoring
-      path: ./k8s/apps/monitoring/extras
+    - name: alerts
+      path: ./k8s/apps/monitoring/alerts
       wait: true
       dependsOn:
         - name: monitoring-stack
+    - name: probes
+      path: ./k8s/apps/monitoring/probes
+      wait: true
+      dependsOn:
+        - name: monitoring-stack
+    - name: prometheus-auth
+      path: ./k8s/apps/monitoring/prometheus-auth
+      wait: true
+      dependsOn:
+        - name: monitoring-stack
+    - name: grafana-git-sync
+      path: ./k8s/apps/monitoring/grafana-git-sync
+      wait: true
+      dependsOn:
+        - name: monitoring-stack
+    - name: uptime
+      path: ./k8s/apps/monitoring/uptime
+      wait: true
+      dependsOn:
+        - name: alerts
     # vpn: wait:false because wg-easy is intentionally at replicas:0
     - name: vpn
       path: ./k8s/apps/vpn
       wait: false
       dependsOn: []
-    - name: shared-secrets
-      path: ./k8s/apps/shared/secrets
-      wait: true
-      dependsOn: []
-    - name: uptime
-      path: ./k8s/apps/uptime
-      wait: true
-      dependsOn:
-        - name: shared-secrets
     - name: csi-nfs
       path: ./k8s/apps/csi-nfs
       wait: true
@@ -53,7 +64,7 @@ spec:
       dependsOn:
         - name: monitoring-stack
     - name: velero-schedules
-      path: ./k8s/apps/velero/schedules
+      path: ./k8s/apps/velero/schedules-tools
       wait: true
       dependsOn:
         - name: velero

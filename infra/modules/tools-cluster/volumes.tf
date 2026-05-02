@@ -85,7 +85,7 @@ resource "kubernetes_persistent_volume_v1" "gatus_data" {
     }
 
     claim_ref {
-      namespace = "uptime"
+      namespace = "monitoring"
       name      = "gatus-data"
     }
   }

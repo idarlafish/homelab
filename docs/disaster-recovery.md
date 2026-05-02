@@ -7,16 +7,18 @@ Velero handles application/data backups; Talos etcd snapshots and Tofu handle cl
 | Layer | Tool | Source of truth | Restore vector |
 |---|---|---|---|
 | Cluster control plane (etcd) | `talos-backup` CronJob | `kube-system/talos-backup` | `talosctl etcd recover` |
-| Workload manifests + state | Velero | `velero/` namespace, schedules in `k8s/apps/velero/schedules/` | `velero restore create` |
+| Workload manifests + state | Velero | `velero/` namespace, schedules in `k8s/apps/velero/schedules-tools/` (paperless, booklore, pocket-id) and `schedules-game-servers/` (9 games) | `velero restore create` |
 | Cluster config / infra | Tofu | `infra/tools/`, `infra/tools-staging/` | `tofu apply` |
 | Backup data store | R2 (Cloudflare) | bucket `<cluster>-backups` prefix `velero/` | independent of cluster |
 
 ## Routine: schedules + retention
 
-Per-app Velero Schedules at `k8s/apps/velero/schedules/{paperless,booklore,pocket-id}.yaml` run daily 03:00 UTC with 720h (30d) retention. Each Schedule:
+Per-app Velero Schedules at `k8s/apps/velero/schedules-tools/{paperless,booklore,pocket-id}.yaml` (tools cluster) and `schedules-game-servers/{minecraft,valheim,...}.yaml` (game-servers cluster) run daily 03:00 UTC with 336h (14d) retention. Each Schedule:
 - Captures every namespaced resource in the included namespace
-- Runs pre-hooks for app-consistent dumps (paperless: `document_exporter` + `pg_dump`; booklore: `mariadb-dump`; pocket-id: relies on SQLite WAL safety)
+- Runs pre-hooks for app-consistent dumps where applicable (paperless: `document_exporter` + `pg_dump`; booklore: `mariadb-dump`; minecraft: RCON `save-off` + `save-all flush`; pocket-id + most games: file-system backup, SQLite WAL or volume snapshot suffices)
 - File-system backs the PVC content via Kopia → R2
+
+**Game-server caveat:** Velero file-system backup only captures volume data when the pod is running. Game StatefulSets default to `replicas: 0`; the daily schedule fires but only captures K8s manifests. Run `velero backup create <game>-<timestamp> --from-schedule <game> --wait` manually before scaling down a game session to capture save state.
 
 Inspect from CLI:
 ```

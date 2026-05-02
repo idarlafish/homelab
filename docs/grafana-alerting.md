@@ -27,5 +27,5 @@ Wire Grafana to send alerts via a Telegram bot. One-time setup, ~3 minutes.
    the chat within a few seconds.
 
 That's it — the `TelegramNotifyCronStale` rule (in
-`k8s/apps/tools/monitoring/telegram-notify-rules.yaml`) routes through this
+`k8s/apps/monitoring/alerts/telegram-notify-rules.yaml`) routes through this
 default policy and fires when `/health/cron` is non-200 for 3+ minutes.
