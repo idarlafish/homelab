@@ -24,6 +24,7 @@ module "cluster" {
     { hostname = "prometheus.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090" },
     { hostname = "status.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://gatus.uptime.svc.cluster.local:8080" },
     { hostname = "files.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://filebrowser.files.svc.cluster.local:80" },
+    { hostname = "paperless.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://paperless.paperless.svc.cluster.local:8000" },
   ]
-  tunnel_dns_subdomains = ["auth", "booklore", "wg-admin", "grafana", "prometheus", "status", "files"]
+  tunnel_dns_subdomains = ["auth", "booklore", "wg-admin", "grafana", "prometheus", "status", "files", "paperless"]
 }
