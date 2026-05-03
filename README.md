@@ -7,7 +7,7 @@ _Personal Kubernetes homelab on Hetzner. GitOps-managed._
 [![Validate](https://img.shields.io/github/actions/workflow/status/idarlafish/homelab/validate.yaml?branch=main&style=flat-square&label=validate&logo=githubactions&logoColor=white)](https://github.com/idarlafish/homelab/actions/workflows/validate.yaml)&nbsp;&nbsp;
 [![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen?style=flat-square&logo=renovatebot&logoColor=white)](https://renovatebot.com)&nbsp;&nbsp;
 [![Status](https://img.shields.io/badge/status-status.la.fish-blue?style=flat-square&logo=cloudflare&logoColor=white)](https://status.la.fish)&nbsp;&nbsp;
-[![Repo size](https://img.shields.io/github/repo-size/idarlafish/homelab?style=flat-square&label=repo%20size&color=informational)](https://github.com/idarlafish/homelab)&nbsp;&nbsp;
+[![Size](https://img.shields.io/github/repo-size/idarlafish/homelab?style=flat-square&label=size&color=informational)](https://github.com/idarlafish/homelab)&nbsp;&nbsp;
 
 </div>
 
