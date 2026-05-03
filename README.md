@@ -1,10 +1,19 @@
+<div align="center">
+
 # homelab
 
-[![Validate](https://github.com/idarlafish/homelab/actions/workflows/validate.yaml/badge.svg)](https://github.com/idarlafish/homelab/actions/workflows/validate.yaml)
-[![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen?logo=renovatebot)](https://renovatebot.com)
-[![Status](https://img.shields.io/badge/status-status.la.fish-blue?logo=cloudflare)](https://status.la.fish)
+_Personal Kubernetes homelab on Hetzner. GitOps-managed._
 
-Personal Kubernetes homelab on Hetzner. GitOps-managed.
+[![Validate](https://img.shields.io/github/actions/workflow/status/idarlafish/homelab/validate.yaml?branch=main&style=flat-square&label=validate&logo=githubactions&logoColor=white)](https://github.com/idarlafish/homelab/actions/workflows/validate.yaml)&nbsp;&nbsp;
+[![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen?style=flat-square&logo=renovatebot&logoColor=white)](https://renovatebot.com)&nbsp;&nbsp;
+[![Status](https://img.shields.io/badge/status-status.la.fish-blue?style=flat-square&logo=cloudflare&logoColor=white)](https://status.la.fish)&nbsp;&nbsp;
+[![Repo size](https://img.shields.io/github/repo-size/idarlafish/homelab?style=flat-square&label=repo%20size&color=informational)](https://github.com/idarlafish/homelab)&nbsp;&nbsp;
+
+</div>
+
+> **Tools cluster** ~€15/mo Hetzner cax21 + volumes
+
+> **Games cluster** ~€0 idle; ~€15/mo cx43 when playing
 
 ## Architecture
 
@@ -43,13 +52,21 @@ flowchart TD
 
     CFTUN -->|*.la.fish| CFD
 
-    VLR -. velero .-> CFR2
-    VLG -. velero .-> CFR2
+    VLR .-> CFR2
+    VLG .-> CFR2
 ```
 
 ## Stack
 
-OpenTofu · Talos Linux · Hetzner Cloud · Cloudflare (Tunnel + DNS + R2) · FluxCD · SOPS · Renovate
+| Layer | Tools |
+|---|---|
+| **Compute & OS** | [![Talos](https://img.shields.io/badge/Talos_Linux-FF7300?style=flat-square&logoColor=white)](https://www.talos.dev/) [![Hetzner](https://img.shields.io/badge/Hetzner_Cloud-D50C2D?style=flat-square&logo=hetzner&logoColor=white)](https://www.hetzner.com/cloud) [![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=flat-square&logo=kubernetes&logoColor=white)](https://kubernetes.io/) |
+| **GitOps & IaC** | [![OpenTofu](https://img.shields.io/badge/OpenTofu-7B42BC?style=flat-square&logo=opentofu&logoColor=white)](https://opentofu.org/) [![Flux](https://img.shields.io/badge/FluxCD-5468FF?style=flat-square&logo=flux&logoColor=white)](https://fluxcd.io/) [![SOPS](https://img.shields.io/badge/SOPS_+_age-1E1E1E?style=flat-square&logoColor=white)](https://github.com/getsops/sops) [![Renovate](https://img.shields.io/badge/Renovate-1A1F6C?style=flat-square&logo=renovatebot&logoColor=white)](https://renovatebot.com/) |
+| **Edge & Networking** | [![Tunnel](https://img.shields.io/badge/Cloudflare_Tunnel-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) [![DNS](https://img.shields.io/badge/Cloudflare_DNS-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://www.cloudflare.com/dns/) [![R2](https://img.shields.io/badge/Cloudflare_R2-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://www.cloudflare.com/developer-platform/r2/) |
+| **Identity** | [![Pocket ID](https://img.shields.io/badge/Pocket_ID-1E1E1E?style=flat-square&logoColor=white)](https://pocket-id.org/) [![oauth2-proxy](https://img.shields.io/badge/oauth2--proxy-2088FF?style=flat-square&logoColor=white)](https://oauth2-proxy.github.io/oauth2-proxy/) |
+| **Observability** | [![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white)](https://prometheus.io/) [![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white)](https://grafana.com/) [![Alertmanager](https://img.shields.io/badge/Alertmanager-E6522C?style=flat-square&logo=prometheus&logoColor=white)](https://prometheus.io/docs/alerting/latest/alertmanager/) [![Gatus](https://img.shields.io/badge/Gatus-1A73E8?style=flat-square&logoColor=white)](https://gatus.io/) |
+| **Backup & Storage** | [![Velero](https://img.shields.io/badge/Velero-02A9EA?style=flat-square&logoColor=white)](https://velero.io/) [![Kopia](https://img.shields.io/badge/Kopia-3E5BA9?style=flat-square&logoColor=white)](https://kopia.io/) [![csi-driver-nfs](https://img.shields.io/badge/csi--driver--nfs-326CE5?style=flat-square&logo=kubernetes&logoColor=white)](https://github.com/kubernetes-csi/csi-driver-nfs) |
+| **Validation** | [![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)](https://github.com/features/actions) [![Kustomize](https://img.shields.io/badge/Kustomize-326CE5?style=flat-square&logo=kubernetes&logoColor=white)](https://kustomize.io/) [![kubeconform](https://img.shields.io/badge/kubeconform-326CE5?style=flat-square&logo=kubernetes&logoColor=white)](https://github.com/yannh/kubeconform) [![conftest](https://img.shields.io/badge/conftest-7B42BC?style=flat-square&logoColor=white)](https://www.conftest.dev/) |
 
 ## Clusters
 
@@ -61,43 +78,50 @@ OpenTofu · Talos Linux · Hetzner Cloud · Cloudflare (Tunnel + DNS + R2) · Fl
 
 ## Apps
 
-**tools cluster**
+<details>
+<summary><b>tools cluster</b></summary>
 
-- **pocket-id** — passkey-based OIDC SSO; the auth provider every other app talks to
-- **booklore** + MariaDB — e-book manager
-- **paperless-ngx** + Postgres — document archive
-- **vaultwarden** — Bitwarden-compatible password manager; SSO via Pocket ID; `/admin` gated by oauth2-proxy with `--allowed-group=admin`
-- **filebrowser** — shared file browser; reads booklore's books PVC over an NFS bridge (rclone serve nfs + csi-driver-nfs)
-- **grafana** + **prometheus** + **alertmanager** (kube-prometheus-stack); prometheus is fronted by **oauth2-proxy** (no public unauth surface)
-- **blackbox-exporter** — synthetic probes
-- **gatus** — public status page (`status.la.fish`); runs in monitoring namespace alongside alertmanager
-- **velero** + node-agent — daily Kopia file-system backups to R2
-- **wg-easy** — VPN admin (parked at replicas: 0)
-- **cloudflared** — Cloudflare Tunnel
+| | | Uptime |
+|---|---|---|
+| **pocket-id** | passkey OIDC SSO; auth provider for every other app | ![](https://status.la.fish/api/v1/endpoints/tools_pocket-id/uptimes/7d/badge.svg) |
+| **booklore** + MariaDB | e-book manager | ![](https://status.la.fish/api/v1/endpoints/tools_booklore/uptimes/7d/badge.svg) |
+| **paperless-ngx** + Postgres | document archive | ![](https://status.la.fish/api/v1/endpoints/tools_paperless/uptimes/7d/badge.svg) |
+| **vaultwarden** | password manager; SSO via Pocket ID; `/admin` gated by oauth2-proxy | ![](https://status.la.fish/api/v1/endpoints/tools_vault/uptimes/7d/badge.svg) |
+| **grafana** | dashboards (kube-prometheus-stack) | ![](https://status.la.fish/api/v1/endpoints/tools_grafana/uptimes/7d/badge.svg) |
+| **prometheus** | metrics; fronted by oauth2-proxy | ![](https://status.la.fish/api/v1/endpoints/tools_prometheus/uptimes/7d/badge.svg) |
+| **alertmanager** | alert routing to Telegram | |
+| **blackbox-exporter** | synthetic probes | |
+| **gatus** | public status page at `status.la.fish` | |
+| **filebrowser** | NFS bridge over booklore's PVC (rclone serve nfs + csi-driver-nfs) | |
+| **velero** + node-agent | daily Kopia backups to R2 | |
+| **cloudflared** | Cloudflare Tunnel | |
+| **wg-easy** | VPN admin (parked at `replicas: 0`) | |
 
-**game-servers cluster**
+</details>
 
-- **minecraft**, valheim, vrising, core-keeper, foundry, soulmask, enshrouded, palworld, satisfactory
-- **grafana-alloy** — ships metrics to tools' Prometheus
-- **velero** — schedules per game; Minecraft has an RCON quiesce hook (`save-off` / `save-all flush`)
+<details>
+<summary><b>game-servers cluster</b></summary>
+
+| | Notes |
+|---|---|
+| **minecraft, valheim, vrising, core-keeper, foundry, soulmask, enshrouded, palworld, satisfactory** | usually destroyed between play sessions |
+| **grafana-alloy** | ships metrics to tools' Prometheus |
+| **velero** | schedules per game |
+
+</details>
 
 ## Validation & policy
 
 Every push runs `.github/workflows/validate.yaml`:
 
 - **kustomize build** + **kubeconform** — schema check on rendered manifests
-- **conftest** with five Rego policies in `policy/`:
-  - `environment-parity` — tools vs tools-staging ResourceSet drift
-  - `secret-sops-encrypted` — every Secret in git must have a `sops:` field
-  - `no-hardcoded-r2-endpoint` — R2 URL must come from `${S3_ENDPOINT_URL}` cluster-vars
-  - `substitute-vars-defined` — every `${VAR}` ref must have a defined source
-  - `image-explicit-tag` — no `:latest` (allow-list for self-built auto-rolling images)
+- **conftest** with five Rego policies in `policy/`
 - **tofu fmt -check** + **tofu validate** per infra root
 - **renovate-config-validator** for `renovate.json5`
 
 ## Infrastructure
 
-OpenTofu state in Cloudflare R2. Per-cluster backup buckets (`<cluster>-backups`) managed in `infra/r2/`.
+OpenTofu state in Cloudflare R2.
 
 | Root | Manages |
 |---|---|
