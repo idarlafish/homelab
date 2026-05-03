@@ -53,6 +53,18 @@ data:
             failure-threshold: 3
             success-threshold: 2
 
+      - name: vault
+        group: ${CLUSTER_NAME}
+        url: https://${HOSTNAME_VAULT}/alive
+        interval: 60s
+        conditions:
+          - "[STATUS] == 200"
+        alerts:
+          - type: telegram
+            send-on-resolved: true
+            failure-threshold: 3
+            success-threshold: 2
+
       - name: grafana
         group: ${CLUSTER_NAME}
         url: https://${HOSTNAME_GRAFANA}/api/health
