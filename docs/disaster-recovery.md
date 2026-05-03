@@ -46,12 +46,12 @@ kubectl delete ns <ns>-restore
 Replaces the live namespace with the backup. Workload offline for the duration.
 
 ```
-flux suspend kustomization content    # or whichever owns the namespace
+flux suspend kustomization booklore   # or whichever owns the namespace (paperless, vault, identity, etc.)
 kubectl delete ns <ns>
 velero restore create incident-$(date +%s) \
   --from-backup <backup-name> \
   --wait
-flux resume kustomization content
+flux resume kustomization booklore
 ```
 
 The static PV (`pv-<app>-<role>`) survives the namespace delete (reclaim policy `Retain`); the restored PVC re-binds to it via `volumeName`. Flux resume reapplies any drift.
