@@ -4,13 +4,20 @@
 [![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen?logo=renovatebot)](https://renovatebot.com)
 [![Status](https://img.shields.io/badge/status-status.la.fish-blue?logo=cloudflare)](https://status.la.fish)
 
-Personal Kubernetes homelab on Hetzner. GitOps-managed, no public ingress except Cloudflare Tunnel.
+Personal Kubernetes homelab on Hetzner. GitOps-managed.
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-    Browser --> CF[Cloudflare Tunnel · DNS · R2]
+    Browser --> CFDNS
+
+    subgraph CF[Cloudflare]
+        CFDNS[DNS · *.la.fish]
+        CFTUN[Tunnel]
+        CFR2[(R2 buckets<br/>tools-backups<br/>game-servers-backups<br/>fabler — tofu state)]
+        CFDNS --> CFTUN
+    end
 
     subgraph TOOLS[tools cluster · Talos · cax21]
         CFD[cloudflared]
@@ -34,19 +41,15 @@ flowchart TD
         VLG[velero + node-agent]
     end
 
-    CF -->|*.la.fish| CFD
-    GAMES -. metrics .-> PRM
+    CFTUN -->|*.la.fish| CFD
 
-    VLR -. R2: tools-backups/velero/ .-> CF
-    VLG -. R2: game-servers-backups/velero/ .-> CF
-
-    classDef storage fill:#fef3c7,stroke:#d97706
-    class CF storage
+    VLR -. velero .-> CFR2
+    VLG -. velero .-> CFR2
 ```
 
 ## Stack
 
-OpenTofu · Talos Linux · Hetzner Cloud · Cloudflare (Tunnel + DNS + R2) · FluxCD · SOPS+age · Renovate
+OpenTofu · Talos Linux · Hetzner Cloud · Cloudflare (Tunnel + DNS + R2) · FluxCD · SOPS · Renovate
 
 ## Clusters
 
