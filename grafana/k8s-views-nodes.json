@@ -5188,7 +5188,7 @@
         "title": "Source (GitHub)",
         "tooltip": "View source file in repository",
         "type": "link",
-        "url": "https://github.com/idarlafish/tools/blob/main/grafana/k8s-views-nodes.json"
+        "url": "https://github.com/idarlafish/homelab/blob/main/grafana/k8s-views-nodes.json"
       }
     ],
     "liveNow": false,

@@ -1,6 +1,6 @@
-# tools
+# homelab
 
-[![Validate](https://github.com/idarlafish/tools/actions/workflows/validate.yaml/badge.svg)](https://github.com/idarlafish/tools/actions/workflows/validate.yaml)
+[![Validate](https://github.com/idarlafish/homelab/actions/workflows/validate.yaml/badge.svg)](https://github.com/idarlafish/homelab/actions/workflows/validate.yaml)
 [![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen?logo=renovatebot)](https://renovatebot.com)
 [![Status](https://img.shields.io/badge/status-status.la.fish-blue?logo=cloudflare)](https://status.la.fish)
 

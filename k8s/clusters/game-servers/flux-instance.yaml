@@ -23,7 +23,7 @@ spec:
     domain: cluster.local
   sync:
     kind: GitRepository
-    url: "https://github.com/idarlafish/tools.git"
+    url: "https://github.com/idarlafish/homelab.git"
     ref: "refs/heads/main"
     path: "k8s/clusters/game-servers"
     pullSecret: flux-system
