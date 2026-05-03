@@ -5,3 +5,4 @@ resources:
   - paperless.yaml
   - booklore.yaml
   - pocket-id.yaml
+  - vaultwarden.yaml

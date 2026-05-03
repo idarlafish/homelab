@@ -99,6 +99,7 @@ spec:
             HOSTNAME_WG: wg-staging.la.fish
             HOSTNAME_WG_ADMIN: wg-admin-staging.la.fish
             HOSTNAME_PAPERLESS: paperless-staging.la.fish
+            HOSTNAME_VAULT: vault.la.fish
           substituteFrom:
             - kind: ConfigMap
               name: cluster-vars

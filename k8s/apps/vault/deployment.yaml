@@ -1,0 +1,73 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vaultwarden
+  namespace: vault
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: vaultwarden
+  template:
+    metadata:
+      labels:
+        app: vaultwarden
+      annotations:
+        pre.hook.backup.velero.io/container: sqlite-backup
+        pre.hook.backup.velero.io/command: '["sh","-c","sqlite3 /data/db.sqlite3 \".backup /data/db-backup.sq3\""]'
+        pre.hook.backup.velero.io/timeout: 2m
+        post.hook.backup.velero.io/container: sqlite-backup
+        post.hook.backup.velero.io/command: '["rm","-f","/data/db-backup.sq3"]'
+        post.hook.backup.velero.io/timeout: 30s
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: vaultwarden
+          image: vaultwarden/server:1.35.1
+          envFrom:
+            - configMapRef:
+                name: vaultwarden-config
+            - secretRef:
+                name: vaultwarden-oidc
+          ports:
+            - containerPort: 80
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /alive
+              port: 80
+            periodSeconds: 30
+            failureThreshold: 4
+          readinessProbe:
+            httpGet:
+              path: /alive
+              port: 80
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 1m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+        - name: sqlite-backup
+          image: alpine:3.20
+          command: ["sh","-c","apk add --no-cache sqlite >/dev/null && exec sleep infinity"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 1m
+              memory: 16Mi
+            limits:
+              memory: 128Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: vaultwarden-data

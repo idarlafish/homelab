@@ -12,7 +12,7 @@ import rego.v1
 
 # Inputs that legitimately exist on one cluster only. Update when adding a new
 # asymmetric Flux Kustomization (e.g. a tools-only app or staging-only test).
-allowed_tools_only := {"identity"}
+allowed_tools_only := {"identity", "vault"}
 
 allowed_staging_only := set()
 

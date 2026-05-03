@@ -517,7 +517,7 @@
                       "group": "prometheus",
                       "kind": "DataQuery",
                       "spec": {
-                        "expr": "(time() - kube_cronjob_status_last_successful_time{cronjob=\"booklore-backup\"}) / 3600"
+                        "expr": "count((time() - velero_backup_last_successful_timestamp{schedule!=\"\"}) > 25 * 3600) or vector(0)"
                       },
                       "version": "v0"
                     },
@@ -532,7 +532,7 @@
           "description": "",
           "id": 21,
           "links": [],
-          "title": "Booklore — Hours Since Last Success",
+          "title": "Schedules Behind ≥25h",
           "vizConfig": {
             "group": "stat",
             "kind": "VizConfig",
@@ -542,8 +542,7 @@
                   "color": {
                     "mode": "thresholds"
                   },
-                  "decimals": 1,
-                  "noValue": "Never run yet",
+                  "decimals": 0,
                   "thresholds": {
                     "mode": "absolute",
                     "steps": [
@@ -553,21 +552,21 @@
                       },
                       {
                         "color": "yellow",
-                        "value": 24
+                        "value": 1
                       },
                       {
                         "color": "red",
-                        "value": 48
+                        "value": 2
                       }
                     ]
                   },
-                  "unit": "h"
+                  "unit": "short"
                 },
                 "overrides": []
               },
               "options": {
                 "colorMode": "background",
-                "graphMode": "area",
+                "graphMode": "none",
                 "justifyMode": "auto",
                 "orientation": "auto",
                 "percentChangeColorMode": "standard",
@@ -605,7 +604,7 @@
                       "group": "prometheus",
                       "kind": "DataQuery",
                       "spec": {
-                        "expr": "(time() - kube_cronjob_status_last_successful_time{cronjob=\"pocket-id-backup\"}) / 3600"
+                        "expr": "count(velero_backup_last_successful_timestamp{schedule!=\"\"}) or vector(0)"
                       },
                       "version": "v0"
                     },
@@ -620,7 +619,7 @@
           "description": "",
           "id": 22,
           "links": [],
-          "title": "Pocket-ID — Hours Since Last Success",
+          "title": "Backup Schedules (total)",
           "vizConfig": {
             "group": "stat",
             "kind": "VizConfig",
@@ -630,32 +629,23 @@
                   "color": {
                     "mode": "thresholds"
                   },
-                  "decimals": 1,
-                  "noValue": "Never run yet",
+                  "decimals": 0,
                   "thresholds": {
                     "mode": "absolute",
                     "steps": [
                       {
                         "color": "green",
                         "value": 0
-                      },
-                      {
-                        "color": "yellow",
-                        "value": 24
-                      },
-                      {
-                        "color": "red",
-                        "value": 48
                       }
                     ]
                   },
-                  "unit": "h"
+                  "unit": "short"
                 },
                 "overrides": []
               },
               "options": {
                 "colorMode": "background",
-                "graphMode": "area",
+                "graphMode": "none",
                 "justifyMode": "auto",
                 "orientation": "auto",
                 "percentChangeColorMode": "standard",

@@ -48,6 +48,12 @@ spec:
       wait: true
       dependsOn:
         - name: monitoring-stack
+    - name: vault
+      path: ./k8s/apps/vault
+      wait: true
+      dependsOn:
+        - name: monitoring-stack
+        - name: identity
     # vpn: wait:false because wg-easy is intentionally at replicas:0
     - name: vpn
       path: ./k8s/apps/vpn
@@ -104,6 +110,7 @@ spec:
             HOSTNAME_WG: wg.la.fish
             HOSTNAME_WG_ADMIN: wg-admin.la.fish
             HOSTNAME_PAPERLESS: paperless.la.fish
+            HOSTNAME_VAULT: vault.la.fish
           substituteFrom:
             - kind: ConfigMap
               name: cluster-vars

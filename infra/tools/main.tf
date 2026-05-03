@@ -25,6 +25,8 @@ module "cluster" {
     { hostname = "status.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://gatus.monitoring.svc.cluster.local:8080" },
     { hostname = "files.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://filebrowser.files.svc.cluster.local:80" },
     { hostname = "paperless.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://paperless.paperless.svc.cluster.local:8000" },
+    { hostname = "vault.${data.sops_file.secrets.data["cloudflare_zone_name"]}", path = "^/admin", service = "http://oauth2-proxy-vaultwarden.vault.svc.cluster.local:4180" },
+    { hostname = "vault.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://vaultwarden.vault.svc.cluster.local:80" },
   ]
-  tunnel_dns_subdomains = ["auth", "booklore", "wg-admin", "grafana", "prometheus", "status", "files", "paperless"]
+  tunnel_dns_subdomains = ["auth", "booklore", "wg-admin", "grafana", "prometheus", "status", "files", "paperless", "vault"]
 }

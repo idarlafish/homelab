@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vaultwarden-config
+  namespace: vault
+data:
+  DOMAIN: "https://${HOSTNAME_VAULT}"
+  ROCKET_PORT: "80"
+  WEB_VAULT_ENABLED: "true"
+  WEBSOCKET_ENABLED: "true"
+  SIGNUPS_ALLOWED: "false"
+  INVITATIONS_ALLOWED: "true"
+  SSO_ENABLED: "true"
+  SSO_ONLY: "true"
+  SSO_AUTHORITY: "https://${HOSTNAME_AUTH}"
+  SSO_SCOPES: "email profile"
+  SSO_SIGNUPS_MATCH_EMAIL: "true"
+  SSO_PKCE: "true"
+  DISABLE_ADMIN_TOKEN: "true"
