@@ -5,8 +5,6 @@ metadata:
   name: pocket-id
   namespace: identity
   labels:
-    # Required so kube-prometheus-stack's Prometheus picks this up
-    # (its serviceMonitorSelector is matchLabels: { release: kube-prometheus-stack })
     release: kube-prometheus-stack
 spec:
   selector:
