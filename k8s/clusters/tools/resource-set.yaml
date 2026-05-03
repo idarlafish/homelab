@@ -10,8 +10,12 @@ spec:
       path: ./k8s/apps/cloudflared
       wait: true
       dependsOn: []
-    - name: content
-      path: ./k8s/apps/content
+    - name: booklore
+      path: ./k8s/apps/booklore
+      wait: true
+      dependsOn: []
+    - name: paperless
+      path: ./k8s/apps/paperless
       wait: true
       dependsOn: []
     - name: monitoring-stack
@@ -67,7 +71,7 @@ spec:
       path: ./k8s/apps/files
       wait: true
       dependsOn:
-        - name: content
+        - name: booklore
         - name: csi-nfs
     - name: velero
       path: ./k8s/apps/velero
