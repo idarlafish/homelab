@@ -1,0 +1,75 @@
+name: Security scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checkov-terraform:
+    name: Checkov (${{ matrix.dir }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+          - infra/tools
+          - infra/tools-staging
+          - infra/game-servers
+          - infra/r2
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: ${{ matrix.dir }}
+          framework: terraform
+          soft_fail: true
+          download_external_modules: true
+          quiet: true
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: checkov-terraform-${{ matrix.dir }}
+
+  checkov-kubernetes:
+    name: Checkov (k8s manifests)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          framework: kubernetes
+          soft_fail: true
+          quiet: true
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: checkov-kubernetes
