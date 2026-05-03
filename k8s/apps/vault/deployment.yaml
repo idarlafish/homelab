@@ -26,7 +26,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: vaultwarden
-          image: vaultwarden/server:1.35.1
+          image: vaultwarden/server:1.36.0
           envFrom:
             - configMapRef:
                 name: vaultwarden-config
