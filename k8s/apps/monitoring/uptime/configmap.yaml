@@ -79,5 +79,5 @@ data:
 
     alerting:
       telegram:
-        token: ${TELEGRAM_BOT_TOKEN}
-        id: ${TELEGRAM_CHAT_ID}
+        token: $${TELEGRAM_BOT_TOKEN}
+        id: $${TELEGRAM_CHAT_ID}
