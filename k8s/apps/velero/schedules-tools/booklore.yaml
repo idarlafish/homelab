@@ -11,28 +11,3 @@ spec:
     storageLocation: r2
     ttl: 336h0m0s
     defaultVolumesToFsBackup: true
-    hooks:
-      resources:
-        - name: mariadb-dump
-          includedNamespaces: [booklore]
-          labelSelector:
-            matchLabels:
-              app: mariadb
-          pre:
-            - exec:
-                container: mariadb
-                command:
-                  - /bin/sh
-                  - -c
-                  - 'mariadb-dump -u root -p"$MYSQL_ROOT_PASSWORD" --all-databases --single-transaction --routines --triggers | gzip > /var/lib/mysql/dump.sql.gz'
-                onError: Fail
-                timeout: 10m
-          post:
-            - exec:
-                container: mariadb
-                command:
-                  - /bin/sh
-                  - -c
-                  - "rm -f /var/lib/mysql/dump.sql.gz"
-                onError: Continue
-                timeout: 1m

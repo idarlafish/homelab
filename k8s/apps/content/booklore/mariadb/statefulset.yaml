@@ -14,6 +14,14 @@ spec:
     metadata:
       labels:
         app: mariadb
+      annotations:
+        pre.hook.backup.velero.io/container: mariadb
+        pre.hook.backup.velero.io/command: '["/bin/sh","-c","mariadb-dump -u root -p\"$MYSQL_ROOT_PASSWORD\" --all-databases --single-transaction --routines --triggers | gzip > /var/lib/mysql/dump.sql.gz"]'
+        pre.hook.backup.velero.io/timeout: 10m
+        pre.hook.backup.velero.io/on-error: Fail
+        post.hook.backup.velero.io/container: mariadb
+        post.hook.backup.velero.io/command: '["/bin/sh","-c","rm -f /var/lib/mysql/dump.sql.gz"]'
+        post.hook.backup.velero.io/timeout: 1m
     spec:
       containers:
       - name: mariadb
