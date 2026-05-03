@@ -1,0 +1,78 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth2-proxy-vaultwarden
+  namespace: vault
+  labels:
+    app: oauth2-proxy-vaultwarden
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oauth2-proxy-vaultwarden
+  template:
+    metadata:
+      labels:
+        app: oauth2-proxy-vaultwarden
+    spec:
+      containers:
+        - name: oauth2-proxy
+          image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.2
+          args:
+            - --provider=oidc
+            - --oidc-issuer-url=https://${HOSTNAME_AUTH}
+            - --redirect-url=https://${HOSTNAME_VAULT}/admin/oauth2/callback
+            - --upstream=http://vaultwarden.vault.svc.cluster.local:80
+            - --proxy-prefix=/admin/oauth2
+            - --http-address=0.0.0.0:4180
+            - --reverse-proxy=true
+            - --real-client-ip-header=CF-Connecting-IP
+            - --trusted-proxy-ip=${POD_CIDR}
+            - --cookie-secure=true
+            - --cookie-domain=${HOSTNAME_VAULT}
+            - --whitelist-domain=${HOSTNAME_VAULT}
+            - --email-domain=*
+            - --skip-provider-button=true
+            - --pass-authorization-header=true
+            - --pass-access-token=false
+            - --silence-ping-logging=true
+            - --scope=openid email profile groups
+            - --code-challenge-method=S256
+            - --allowed-group=admin
+          envFrom:
+            - secretRef:
+                name: oauth2-proxy-vaultwarden
+          ports:
+            - containerPort: 4180
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+            periodSeconds: 30
+            initialDelaySeconds: 15
+          resources:
+            requests:
+              cpu: 5m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth2-proxy-vaultwarden
+  namespace: vault
+spec:
+  selector:
+    app: oauth2-proxy-vaultwarden
+  ports:
+    - name: http
+      port: 4180
+      targetPort: http

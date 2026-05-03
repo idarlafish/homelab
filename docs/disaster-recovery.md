@@ -7,15 +7,15 @@ Velero handles application/data backups; Talos etcd snapshots and Tofu handle cl
 | Layer | Tool | Source of truth | Restore vector |
 |---|---|---|---|
 | Cluster control plane (etcd) | `talos-backup` CronJob | `kube-system/talos-backup` | `talosctl etcd recover` |
-| Workload manifests + state | Velero | `velero/` namespace, schedules in `k8s/apps/velero/schedules-tools/` (paperless, booklore, pocket-id) and `schedules-game-servers/` (9 games) | `velero restore create` |
+| Workload manifests + state | Velero | `velero/` namespace, schedules in `k8s/apps/velero/schedules-tools/` (paperless, booklore, pocket-id, vaultwarden) and `schedules-game-servers/` (9 games) | `velero restore create` |
 | Cluster config / infra | Tofu | `infra/tools/`, `infra/tools-staging/` | `tofu apply` |
 | Backup data store | R2 (Cloudflare) | bucket `<cluster>-backups` prefix `velero/` | independent of cluster |
 
 ## Routine: schedules + retention
 
-Per-app Velero Schedules at `k8s/apps/velero/schedules-tools/{paperless,booklore,pocket-id}.yaml` (tools cluster) and `schedules-game-servers/{minecraft,valheim,...}.yaml` (game-servers cluster) run daily 03:00 UTC with 336h (14d) retention. Each Schedule:
+Per-app Velero Schedules at `k8s/apps/velero/schedules-tools/{paperless,booklore,pocket-id,vaultwarden}.yaml` (tools cluster) and `schedules-game-servers/{minecraft,valheim,...}.yaml` (game-servers cluster) run daily 03:00 UTC with 336h (14d) retention. Each Schedule:
 - Captures every namespaced resource in the included namespace
-- Runs pre-hooks for app-consistent dumps where applicable (paperless: `document_exporter` + `pg_dump`; booklore: `mariadb-dump`; minecraft: RCON `save-off` + `save-all flush`; pocket-id + most games: file-system backup, SQLite WAL or volume snapshot suffices)
+- Runs pre-hooks for app-consistent dumps where applicable (paperless: `document_exporter` + `pg_dump`; booklore: `mariadb-dump`; vaultwarden: `sqlite3 .backup` from a sidecar container using SQLite Online Backup API; minecraft: RCON `save-off` + `save-all flush`; pocket-id + most games: file-system backup, SQLite WAL or volume snapshot suffices)
 - File-system backs the PVC content via Kopia → R2
 
 **Game-server caveat:** Velero file-system backup only captures volume data when the pod is running. Game StatefulSets default to `replicas: 0`; the daily schedule fires but only captures K8s manifests. Run `velero backup create <game>-<timestamp> --from-schedule <game> --wait` manually before scaling down a game session to capture save state.
@@ -71,10 +71,11 @@ tofu apply                                          # phase 2
 KUBECONFIG=$PWD/kubeconfig flux get kustomizations -A
 
 # 3. Restore each namespace from the latest backup
-velero backup get   # find the most recent paperless/booklore/pocket-id backups
-velero restore create paperless-recover --from-backup <name> --wait
-velero restore create booklore-recover  --from-backup <name> --wait
-velero restore create pocket-id-recover --from-backup <name> --wait
+velero backup get   # find the most recent paperless/booklore/pocket-id/vaultwarden backups
+velero restore create paperless-recover  --from-backup <name> --wait
+velero restore create booklore-recover   --from-backup <name> --wait
+velero restore create pocket-id-recover  --from-backup <name> --wait
+velero restore create vaultwarden-recover --from-backup <name> --wait
 ```
 
 ## Sanity checks
@@ -85,6 +86,7 @@ After restore, before declaring success:
 - For paperless: log into UI, verify document count matches pre-incident
 - For booklore: book count + library accessible
 - For pocket-id: log in via OIDC from a dependent app (e.g., Grafana)
+- For vaultwarden: log in via SSO, unlock vault with master password, spot-check item count + decryptability of one entry. **NOTE:** the restored backup contains `db-backup.sq3` (SQLite snapshot) — on first start, Vaultwarden uses `db.sqlite3` directly, so the restore process should rename `db-backup.sq3` → `db.sqlite3` if `db.sqlite3` is missing/corrupted.
 
 ## What Velero does NOT cover
 

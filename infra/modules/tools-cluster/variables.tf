@@ -64,10 +64,11 @@ variable "cloudflare_zone_id" {
 }
 
 variable "tunnel_routes" {
-  description = "Cloudflare tunnel ingress routes (cluster-internal hostnames + service URLs)"
+  description = "Cloudflare tunnel ingress routes (cluster-internal hostnames + service URLs). Optional path is a regex; matches before the catch-all 404."
   type = list(object({
     hostname = string
     service  = string
+    path     = optional(string)
   }))
 }
 

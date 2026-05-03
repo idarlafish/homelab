@@ -17,6 +17,8 @@ flowchart TD
         CFD --> PID[pocket-id<br/>OIDC SSO]
         CFD --> BL[booklore + MariaDB]
         CFD --> PL[paperless-ngx + Postgres]
+        CFD --> VW[vaultwarden]
+        CFD -->|"/admin"| O2V[oauth2-proxy] --> VW
         CFD --> FB[filebrowser]
         CFD --> GRF[grafana]
         CFD --> O2P[oauth2-proxy] --> PRM[prometheus + alertmanager]
@@ -61,6 +63,7 @@ OpenTofu · Talos Linux · Hetzner Cloud · Cloudflare (Tunnel + DNS + R2) · Fl
 - **pocket-id** — passkey-based OIDC SSO; the auth provider every other app talks to
 - **booklore** + MariaDB — e-book manager
 - **paperless-ngx** + Postgres — document archive
+- **vaultwarden** — Bitwarden-compatible password manager; SSO via Pocket ID; `/admin` gated by oauth2-proxy with `--allowed-group=admin`
 - **filebrowser** — shared file browser; reads booklore's books PVC over an NFS bridge (rclone serve nfs + csi-driver-nfs)
 - **grafana** + **prometheus** + **alertmanager** (kube-prometheus-stack); prometheus is fronted by **oauth2-proxy** (no public unauth surface)
 - **blackbox-exporter** — synthetic probes

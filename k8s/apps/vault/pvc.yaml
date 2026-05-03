@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vaultwarden-data
+  namespace: vault
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: hcloud-volumes-encrypted
+  volumeName: pv-vaultwarden-data
+  resources:
+    requests:
+      storage: 10Gi
