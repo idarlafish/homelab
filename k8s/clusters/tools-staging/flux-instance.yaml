@@ -37,3 +37,10 @@ spec:
           - op: replace
             path: /spec/template/spec/containers/0/resources/requests/cpu
             value: 25m
+      - target:
+          kind: Deployment
+          name: kustomize-controller
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --feature-gates=StrictPostBuildSubstitutions=true
