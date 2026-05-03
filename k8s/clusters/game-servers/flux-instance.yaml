@@ -28,3 +28,12 @@ spec:
     path: "k8s/clusters/game-servers"
     pullSecret: flux-system
     interval: 1m
+  kustomize:
+    patches:
+      - target:
+          kind: Deployment
+          name: kustomize-controller
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --feature-gates=StrictPostBuildSubstitutions=true
