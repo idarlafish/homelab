@@ -1,0 +1,25 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-git-sync-manifests
+  namespace: monitoring
+data:
+  repository.json: |
+    {
+      "apiVersion": "provisioning.grafana.app/v1beta1",
+      "kind": "Repository",
+      "metadata": {"name": "tools-dashboards"},
+      "spec": {
+        "title": "Homelab",
+        "sync": {"enabled": true, "intervalSeconds": 60, "target": "folder"},
+        "workflows": ["write", "branch"],
+        "type": "github",
+        "github": {
+          "url": "https://github.com/idarlafish/tools",
+          "branch": "main",
+          "path": "grafana/"
+        }
+      },
+      "secure": {"token": {"create": "$${GIT_PAT}"}}
+    }

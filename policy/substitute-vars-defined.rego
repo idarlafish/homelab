@@ -16,17 +16,14 @@ import rego.v1
 configmap_vars := {"POD_CIDR", "S3_ENDPOINT_URL"}
 
 # Variables that look like Flux substitutes but are actually runtime env-var
-# expansion done by the workload (gatus reads ${TELEGRAM_BOT_TOKEN} from its
-# pod env at config-load time; minecraft backup-job uses bash variables in an
-# inline shell script). Flux leaves them untouched because they're not in the
-# substitute block, so they pass through to runtime as-is.
+# expansion done by the workload at startup. These MUST be escaped in source
+# manifests as $${VAR} so Flux passes them through as literal ${VAR}; the
+# workload then expands them from the pod env. Without escaping, Flux replaces
+# them with empty string at apply time.
 runtime_vars := {
 	"TELEGRAM_BOT_TOKEN",
 	"TELEGRAM_CHAT_ID",
-	# minecraft/backup-job.yaml inline shell vars (file is excluded from Flux):
-	"BACKUP_KEY",
-	"FILESIZE",
-	"TIMESTAMP",
+	"GIT_PAT",
 }
 
 cluster_resource_set[cluster] := rs if {

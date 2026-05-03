@@ -45,10 +45,6 @@ spec:
                 requests:
                   storage: 10Gi
     grafana:
-      admin:
-        existingSecret: grafana-admin
-        userKey: admin-user
-        passwordKey: admin-password
       envFromSecret: grafana-oidc
       grafana.ini:
         feature_toggles:
@@ -77,6 +73,18 @@ spec:
           token_url: https://${HOSTNAME_AUTH}/api/oidc/token
           api_url: https://${HOSTNAME_AUTH}/api/oidc/userinfo
           use_pkce: true
+        auth.jwt:
+          enabled: true
+          header_name: Authorization
+          expect_claims: '{"aud": ["grafana"]}'
+          username_claim: sub
+          email_claim: sub
+          auto_sign_up: true
+          role_attribute_strict: true
+          role_attribute_path: "contains(sub, 'system:serviceaccount:monitoring:grafana-git-sync') && 'GrafanaAdmin' || 'None'"
+          jwk_set_url: https://kubernetes.default.svc.cluster.local/openid/v1/jwks
+          jwk_set_bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+          tls_client_ca: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
       persistence:
         enabled: true
         size: 10Gi
