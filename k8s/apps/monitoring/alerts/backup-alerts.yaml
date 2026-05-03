@@ -50,3 +50,15 @@ spec:
           annotations:
             summary: "Velero BackupStorageLocation {{ $labels.name }} is {{ $labels.phase }}"
             description: "Velero cannot reach R2 — backups will fail until resolved."
+
+        - alert: VeleroDeleteBackupStuck
+          expr: |
+            (time() - kube_customresource_velero_deletebackuprequest_created)
+              * on(name, namespace) group_left
+              kube_customresource_velero_deletebackuprequest_phase{phase="InProgress"} > 7200
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Velero DeleteBackupRequest {{ $labels.name }} stuck in InProgress"
+            description: "Backup deletion for {{ $labels.backup_name }} stuck for {{ $value | humanizeDuration }} — recover via: kubectl -n velero delete deletebackuprequest {{ $labels.name }} && velero backup delete {{ $labels.backup_name }} --confirm"

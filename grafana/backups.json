@@ -1,33 +1,39 @@
 {
   "title": "Backups",
   "uid": "homelab-backups",
-  "tags": [
-    "homelab",
-    "backups"
-  ],
+  "tags": ["homelab", "backups", "velero"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "30s",
-  "time": {
-    "from": "now-6h",
-    "to": "now"
-  },
+  "time": {"from": "now-24h", "to": "now"},
+  "graphTooltip": 1,
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "weekStart": "",
   "templating": {
     "list": [
       {
-        "name": "DS_PROMETHEUS",
-        "label": "Prometheus",
+        "name": "datasource",
+        "label": "Datasource",
         "type": "datasource",
         "query": "prometheus",
-        "regex": "",
-        "current": {
-          "selected": true,
-          "text": "Prometheus",
-          "value": "prometheus"
-        },
-        "hide": 2,
+        "current": {"selected": true, "text": "Prometheus", "value": "prometheus"},
+        "hide": 0,
         "refresh": 1
+      },
+      {
+        "name": "schedule",
+        "label": "Schedule",
+        "type": "query",
+        "datasource": {"type": "prometheus", "uid": "${datasource}"},
+        "query": {"qryType": 1, "query": "label_values(velero_backup_last_successful_timestamp{schedule!=\"\"}, schedule)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".+",
+        "refresh": 2,
+        "sort": 1
       }
     ]
   },
@@ -35,10 +41,7 @@
     "list": [
       {
         "name": "Annotations & Alerts",
-        "datasource": {
-          "type": "datasource",
-          "uid": "grafana"
-        },
+        "datasource": {"type": "datasource", "uid": "grafana"},
         "enable": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "type": "dashboard",
@@ -51,285 +54,209 @@
     {
       "id": 100,
       "type": "row",
-      "title": "Status",
+      "title": "Health",
       "collapsed": false,
-      "gridPos": {
-        "x": 0,
-        "y": 0,
-        "w": 24,
-        "h": 1
-      },
+      "gridPos": {"x": 0, "y": 0, "w": 24, "h": 1},
       "panels": []
     },
     {
       "id": 1,
       "type": "stat",
-      "title": "Booklore \u2014 Hours Since Last Success",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 1,
-        "w": 12,
-        "h": 5
-      },
+      "title": "Storage Location",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 0, "y": 1, "w": 6, "h": 4},
       "targets": [
         {
           "refId": "A",
-          "expr": "(time() - kube_cronjob_status_last_successful_time{cronjob=\"booklore-backup\"}) / 3600",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "expr": "velero_backup_storage_location_status",
+          "legendFormat": "{{name}}",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"}
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "h",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 24
-              },
-              {
-                "color": "red",
-                "value": 48
-              }
-            ]
-          },
-          "decimals": 1,
-          "noValue": "Never run yet"
-        },
-        "overrides": []
+          "mappings": [
+            {"type": "value", "options": {"0": {"text": "Available", "color": "green"}, "1": {"text": "Unavailable", "color": "red"}}}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]},
+          "color": {"mode": "thresholds"}
+        }
       },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "values": false
-        },
+        "reduceOptions": {"calcs": ["lastNotNull"], "values": false},
         "colorMode": "background",
-        "graphMode": "area",
-        "textMode": "auto",
-        "justifyMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
       "pluginVersion": "13.0.1"
     },
     {
       "id": 2,
       "type": "stat",
-      "title": "Pocket-ID \u2014 Hours Since Last Success",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 1,
-        "w": 12,
-        "h": 5
-      },
+      "title": "Stuck DeleteBackupRequests (>2h)",
+      "description": "DeleteBackupRequest CRs stuck in InProgress phase. Caused by velero pod crash mid-deletion. Recover with: kubectl -n velero delete deletebackuprequest <name> && velero backup delete <backup> --confirm",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 6, "y": 1, "w": 6, "h": 4},
       "targets": [
         {
           "refId": "A",
-          "expr": "(time() - kube_cronjob_status_last_successful_time{cronjob=\"pocket-id-backup\"}) / 3600",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "expr": "count((time() - kube_customresource_velero_deletebackuprequest_created) * on(name, namespace) group_left kube_customresource_velero_deletebackuprequest_phase{phase=\"InProgress\"} > 7200) or vector(0)",
+          "legendFormat": "stuck",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"}
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "h",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 24
-              },
-              {
-                "color": "red",
-                "value": 48
-              }
-            ]
-          },
-          "decimals": 1,
-          "noValue": "Never run yet"
-        },
-        "overrides": []
+          "unit": "short",
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]},
+          "decimals": 0
+        }
       },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "values": false
-        },
+        "reduceOptions": {"calcs": ["lastNotNull"], "values": false},
         "colorMode": "background",
-        "graphMode": "area",
+        "graphMode": "none",
         "textMode": "auto",
-        "justifyMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.1"
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Schedules with Stale Last Success (>25h)",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 12, "y": 1, "w": 6, "h": 4},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count((time() - velero_backup_last_successful_timestamp{schedule=~\"$schedule\"}) > 25 * 3600) or vector(0)",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"}
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1}]},
+          "decimals": 0
+        }
+      },
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"], "values": false},
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.1"
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Schedules Total",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 18, "y": 1, "w": 6, "h": 4},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(velero_backup_last_successful_timestamp{schedule=~\"$schedule\"})",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"}
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "decimals": 0
+        }
+      },
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"], "values": false},
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "13.0.1"
     },
     {
       "id": 110,
       "type": "row",
-      "title": "Schedule",
+      "title": "Per-Schedule Status",
       "collapsed": false,
-      "gridPos": {
-        "x": 0,
-        "y": 6,
-        "w": 24,
-        "h": 1
-      },
+      "gridPos": {"x": 0, "y": 5, "w": 24, "h": 1},
       "panels": []
     },
     {
       "id": 11,
       "type": "table",
-      "title": "CronJobs",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 7,
-        "w": 24,
-        "h": 6
-      },
+      "title": "Schedules — Last Success / Last Run / Tarball Size",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 0, "y": 6, "w": 24, "h": 7},
       "targets": [
         {
           "refId": "A",
-          "expr": "kube_cronjob_info{cronjob=~\"booklore-backup|pocket-id-backup|talos-backup\"}",
+          "expr": "velero_backup_last_successful_timestamp{schedule=~\"$schedule\"} * 1000",
           "format": "table",
           "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "datasource": {"type": "prometheus", "uid": "${datasource}"}
         },
         {
           "refId": "B",
-          "expr": "kube_cronjob_status_last_successful_time{cronjob=~\"booklore-backup|pocket-id-backup|talos-backup\"} * 1000",
+          "expr": "max by (schedule) (velero_backup_last_status{schedule=~\"$schedule\"})",
           "format": "table",
           "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "datasource": {"type": "prometheus", "uid": "${datasource}"}
         },
         {
           "refId": "C",
-          "expr": "kube_cronjob_next_schedule_time{cronjob=~\"booklore-backup|pocket-id-backup|talos-backup\"} * 1000",
+          "expr": "max by (schedule) (velero_backup_tarball_size_bytes{schedule=~\"$schedule\"})",
           "format": "table",
           "instant": true,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "datasource": {"type": "prometheus", "uid": "${datasource}"}
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "custom": {
-            "align": "auto",
-            "filterable": true
-          },
-          "noValue": "Never"
+          "custom": {"align": "auto", "filterable": true},
+          "noValue": "—"
         },
         "overrides": [
+          {"matcher": {"id": "byName", "options": "Last Success"}, "properties": [{"id": "unit", "value": "dateTimeAsLocal"}]},
           {
-            "matcher": {
-              "id": "byName",
-              "options": "Last Success"
-            },
+            "matcher": {"id": "byName", "options": "Last Status"},
             "properties": [
+              {"id": "mappings", "value": [{"type": "value", "options": {"0": {"text": "Failed"}, "1": {"text": "Success"}, "2": {"text": "PartiallyFailed"}}}]},
+              {"id": "custom.cellOptions", "value": {"type": "color-text"}},
               {
-                "id": "unit",
-                "value": "dateTimeAsLocal"
+                "id": "thresholds",
+                "value": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}, {"color": "yellow", "value": 2}]}
               }
             ]
           },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Next Run"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "dateTimeAsLocal"
-              }
-            ]
-          }
+          {"matcher": {"id": "byName", "options": "Last Tarball"}, "properties": [{"id": "unit", "value": "bytes"}]}
         ]
       },
-      "options": {
-        "showHeader": true,
-        "footer": {
-          "show": false,
-          "reducer": [
-            "sum"
-          ],
-          "fields": ""
-        }
-      },
+      "options": {"showHeader": true, "footer": {"show": false, "reducer": ["sum"], "fields": ""}},
       "pluginVersion": "13.0.1",
       "transformations": [
-        {
-          "id": "merge",
-          "options": {}
-        },
+        {"id": "merge", "options": {}},
         {
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Time": true,
-              "__name__": true,
-              "job": true,
-              "instance": true,
-              "endpoint": true,
-              "service": true,
-              "concurrency_policy": true,
-              "Value #A": true,
-              "container": true,
-              "pod": true,
-              "uid": true
+              "Time": true, "__name__": true, "job": true, "instance": true, "endpoint": true,
+              "service": true, "container": true, "pod": true, "namespace": true
             },
             "renameByName": {
-              "namespace": "Namespace",
-              "cronjob": "CronJob",
               "schedule": "Schedule",
-              "Value #B": "Last Success",
-              "Value #C": "Next Run"
+              "Value #A": "Last Success",
+              "Value #B": "Last Status",
+              "Value #C": "Last Tarball"
             }
           }
         }
@@ -338,183 +265,109 @@
     {
       "id": 120,
       "type": "row",
-      "title": "7-day totals",
+      "title": "Counters (last 7 days)",
       "collapsed": false,
-      "gridPos": {
-        "x": 0,
-        "y": 13,
-        "w": 24,
-        "h": 1
-      },
+      "gridPos": {"x": 0, "y": 13, "w": 24, "h": 1},
       "panels": []
     },
     {
       "id": 21,
-      "type": "stat",
-      "title": "Successful Jobs (7d)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 14,
-        "w": 12,
-        "h": 4
-      },
+      "type": "timeseries",
+      "title": "Successful backups (rate per schedule)",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 0, "y": 14, "w": 12, "h": 6},
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(kube_job_status_succeeded{namespace=~\"booklore|identity\", job_name=~\"(booklore|pocket-id)-backup-.+\"}[7d])) or vector(0)",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "expr": "increase(velero_backup_success_total{schedule=~\"$schedule\"}[$__rate_interval])",
+          "legendFormat": "{{schedule}}",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"}
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "decimals": 0
-        },
-        "overrides": []
+          "custom": {"drawStyle": "bars", "fillOpacity": 60, "stacking": {"mode": "normal"}, "lineWidth": 0}
+        }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "values": false
-        },
-        "colorMode": "background",
-        "graphMode": "none",
-        "textMode": "auto",
-        "justifyMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false
-      },
+      "options": {"tooltip": {"mode": "multi"}, "legend": {"placement": "bottom", "displayMode": "table", "calcs": ["sum"]}},
       "pluginVersion": "13.0.1"
     },
     {
       "id": 22,
-      "type": "stat",
-      "title": "Failed Jobs (7d)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 14,
-        "w": 12,
-        "h": 4
-      },
+      "type": "timeseries",
+      "title": "Failed + partially-failed backups (rate per schedule)",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 12, "y": 14, "w": 12, "h": 6},
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(kube_job_status_failed{namespace=~\"booklore|identity\", job_name=~\"(booklore|pocket-id)-backup-.+\"}[7d])) or vector(0)",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "expr": "increase(velero_backup_failure_total{schedule=~\"$schedule\"}[$__rate_interval])",
+          "legendFormat": "{{schedule}} failed",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"}
+        },
+        {
+          "refId": "B",
+          "expr": "increase(velero_backup_partial_failure_total{schedule=~\"$schedule\"}[$__rate_interval])",
+          "legendFormat": "{{schedule}} partial",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"}
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1
-              },
-              {
-                "color": "red",
-                "value": 3
-              }
-            ]
-          },
-          "decimals": 0
-        },
-        "overrides": []
+          "custom": {"drawStyle": "bars", "fillOpacity": 60, "stacking": {"mode": "normal"}, "lineWidth": 0},
+          "color": {"mode": "palette-classic"}
+        }
       },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "values": false
-        },
-        "colorMode": "background",
-        "graphMode": "none",
-        "textMode": "auto",
-        "justifyMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false
+      "options": {"tooltip": {"mode": "multi"}, "legend": {"placement": "bottom", "displayMode": "table", "calcs": ["sum"]}},
+      "pluginVersion": "13.0.1"
+    },
+    {
+      "id": 23,
+      "type": "timeseries",
+      "title": "Backup duration p95",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 0, "y": 20, "w": 12, "h": 6},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (schedule, le) (rate(velero_backup_duration_seconds_bucket{schedule=~\"$schedule\"}[$__rate_interval])))",
+          "legendFormat": "{{schedule}}",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"}
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "s", "color": {"mode": "palette-classic"}}
       },
+      "options": {"tooltip": {"mode": "multi"}, "legend": {"placement": "bottom", "displayMode": "table", "calcs": ["mean", "lastNotNull"]}},
+      "pluginVersion": "13.0.1"
+    },
+    {
+      "id": 24,
+      "type": "timeseries",
+      "title": "Tarball size per backup",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 12, "y": 20, "w": 12, "h": 6},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by (schedule) (velero_backup_tarball_size_bytes{schedule=~\"$schedule\"})",
+          "legendFormat": "{{schedule}}",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"}
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "bytes", "color": {"mode": "palette-classic"}}
+      },
+      "options": {"tooltip": {"mode": "multi"}, "legend": {"placement": "bottom", "displayMode": "table", "calcs": ["lastNotNull"]}},
       "pluginVersion": "13.0.1"
     }
   ],
-  "editable": true,
-  "fiscalYearStartMonth": 0,
-  "graphTooltip": 1,
-  "liveNow": false,
-  "weekStart": "",
   "links": [
-    {
-      "title": "Homelab Overview",
-      "type": "link",
-      "url": "/d/homelab-overview",
-      "targetBlank": false,
-      "tags": [],
-      "icon": "dashboard"
-    },
-    {
-      "title": "Backups",
-      "type": "link",
-      "url": "/d/homelab-backups",
-      "targetBlank": false,
-      "tags": [],
-      "icon": "dashboard"
-    },
-    {
-      "title": "Game Servers",
-      "type": "link",
-      "url": "/d/homelab-game-servers",
-      "targetBlank": false,
-      "tags": [],
-      "icon": "dashboard"
-    },
-    {
-      "title": "K8s Views",
-      "type": "dashboards",
-      "tags": [
-        "kubernetes"
-      ],
-      "icon": "external link",
-      "asDropdown": true,
-      "includeVars": false,
-      "keepTime": true
-    }
+    {"title": "Homelab Overview", "type": "link", "url": "/d/homelab-overview", "targetBlank": false, "tags": [], "icon": "dashboard"},
+    {"title": "Backups", "type": "link", "url": "/d/homelab-backups", "targetBlank": false, "tags": [], "icon": "dashboard"},
+    {"title": "Game Servers", "type": "link", "url": "/d/homelab-game-servers", "targetBlank": false, "tags": [], "icon": "dashboard"},
+    {"title": "K8s Views", "type": "dashboards", "tags": ["kubernetes"], "icon": "external link", "asDropdown": true, "includeVars": false, "keepTime": true}
   ]
 }
