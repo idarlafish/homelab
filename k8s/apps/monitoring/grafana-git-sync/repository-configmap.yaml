@@ -16,7 +16,7 @@ data:
         "workflows": ["write", "branch"],
         "type": "github",
         "github": {
-          "url": "https://github.com/idarlafish/tools",
+          "url": "https://github.com/idarlafish/homelab",
           "branch": "main",
           "path": "grafana/"
         }
