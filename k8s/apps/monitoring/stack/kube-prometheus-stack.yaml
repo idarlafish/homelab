@@ -45,6 +45,7 @@ spec:
                 requests:
                   storage: 10Gi
     grafana:
+      defaultDashboardsEnabled: false
       envFromSecret: grafana-oidc
       grafana.ini:
         feature_toggles:
@@ -122,6 +123,40 @@ spec:
           memory: 32Mi
         limits:
           memory: 64Mi
+      rbac:
+        extraRules:
+          - apiGroups: [velero.io]
+            resources: [deletebackuprequests]
+            verbs: [get, list, watch]
+      customResourceState:
+        enabled: true
+        config:
+          spec:
+            resources:
+              - groupVersionKind:
+                  group: velero.io
+                  version: v1
+                  kind: DeleteBackupRequest
+                metricNamePrefix: velero_deletebackuprequest
+                labelsFromPath:
+                  name: [metadata, name]
+                  namespace: [metadata, namespace]
+                  backup_name: [spec, backupName]
+                metrics:
+                  - name: phase
+                    help: "DeleteBackupRequest phase"
+                    each:
+                      type: StateSet
+                      stateSet:
+                        labelName: phase
+                        path: [status, phase]
+                        list: [New, InProgress, Processed]
+                  - name: created
+                    help: "DeleteBackupRequest creationTimestamp as Unix seconds"
+                    each:
+                      type: Gauge
+                      gauge:
+                        path: [metadata, creationTimestamp]
     kubeScheduler:
       enabled: false
     kubeControllerManager:
