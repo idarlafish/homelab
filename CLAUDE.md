@@ -21,6 +21,8 @@ Operational rules and gotchas for this monorepo. See [README.md](README.md) for 
 - `SOPS_AGE_KEY` → `TF_VAR_sops_age_key`
 - For game-servers only: `HCLOUD_TOKEN` → `TF_VAR_hcloud_token`, `GAME_SERVERS_HCLOUD_SSH_KEY_NAME` → `TF_VAR_ssh_key_name`
 
+`AWS_ENDPOINT_URL_S3` is read directly by the S3 backend (no remap) — set it in `.env` to your R2 endpoint so the backend block in `infra/*/provider.tf` doesn't need to hardcode the account ID.
+
 **Tools clusters need `packer`, `talosctl`, `jq` locally** (Talos module dependencies). On macOS: `brew install packer siderolabs/tap/talosctl jq`.
 
 **First-time apply** on a fresh state file requires two phases (the kubernetes/helm providers can't configure against a non-existent cluster):
