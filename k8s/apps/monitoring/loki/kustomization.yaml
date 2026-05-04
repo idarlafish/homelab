@@ -5,4 +5,3 @@ resources:
   - helm-repos.yaml
   - loki-helm-release.yaml
   - alloy-helm-release.yaml
-  - grafana-datasource.yaml
