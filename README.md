@@ -39,6 +39,8 @@ flowchart TD
         CFD --> GRF[grafana]
         CFD --> O2P[oauth2-proxy] --> PRM[prometheus + alertmanager]
         CFD --> GTS[gatus]
+        ALY[alloy DaemonSet] -.->|pod logs| LK[loki]
+        GRF -.-> LK
 
         VLR[velero + node-agent · Kopia FS backup]
         FB -. NFS .-> BL
@@ -64,7 +66,7 @@ flowchart TD
 | **GitOps & IaC** | [![OpenTofu](https://img.shields.io/badge/OpenTofu-7B42BC?style=flat-square&logo=opentofu&logoColor=white)](https://opentofu.org/) [![Flux](https://img.shields.io/badge/FluxCD-5468FF?style=flat-square&logo=flux&logoColor=white)](https://fluxcd.io/) [![SOPS](https://img.shields.io/badge/SOPS_+_age-1E1E1E?style=flat-square&logoColor=white)](https://github.com/getsops/sops) [![Renovate](https://img.shields.io/badge/Renovate-1A1F6C?style=flat-square&logo=renovatebot&logoColor=white)](https://renovatebot.com/) |
 | **Edge & Networking** | [![Tunnel](https://img.shields.io/badge/Cloudflare_Tunnel-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) [![DNS](https://img.shields.io/badge/Cloudflare_DNS-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://www.cloudflare.com/dns/) [![R2](https://img.shields.io/badge/Cloudflare_R2-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://www.cloudflare.com/developer-platform/r2/) |
 | **Identity** | [![Pocket ID](https://img.shields.io/badge/Pocket_ID-1E1E1E?style=flat-square&logoColor=white)](https://pocket-id.org/) [![oauth2-proxy](https://img.shields.io/badge/oauth2--proxy-2088FF?style=flat-square&logoColor=white)](https://oauth2-proxy.github.io/oauth2-proxy/) |
-| **Observability** | [![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white)](https://prometheus.io/) [![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white)](https://grafana.com/) [![Alertmanager](https://img.shields.io/badge/Alertmanager-E6522C?style=flat-square&logo=prometheus&logoColor=white)](https://prometheus.io/docs/alerting/latest/alertmanager/) [![Gatus](https://img.shields.io/badge/Gatus-1A73E8?style=flat-square&logoColor=white)](https://gatus.io/) |
+| **Observability** | [![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white)](https://prometheus.io/) [![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white)](https://grafana.com/) [![Loki](https://img.shields.io/badge/Loki-F5A623?style=flat-square&logo=grafana&logoColor=white)](https://grafana.com/oss/loki/) [![Alloy](https://img.shields.io/badge/Alloy-FF6B35?style=flat-square&logo=grafana&logoColor=white)](https://grafana.com/oss/alloy/) [![Alertmanager](https://img.shields.io/badge/Alertmanager-E6522C?style=flat-square&logo=prometheus&logoColor=white)](https://prometheus.io/docs/alerting/latest/alertmanager/) [![Gatus](https://img.shields.io/badge/Gatus-1A73E8?style=flat-square&logoColor=white)](https://gatus.io/) |
 | **Backup & Storage** | [![Velero](https://img.shields.io/badge/Velero-02A9EA?style=flat-square&logoColor=white)](https://velero.io/) [![Kopia](https://img.shields.io/badge/Kopia-3E5BA9?style=flat-square&logoColor=white)](https://kopia.io/) [![csi-driver-nfs](https://img.shields.io/badge/csi--driver--nfs-326CE5?style=flat-square&logo=kubernetes&logoColor=white)](https://github.com/kubernetes-csi/csi-driver-nfs) |
 | **Validation** | [![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)](https://github.com/features/actions) [![Kustomize](https://img.shields.io/badge/Kustomize-326CE5?style=flat-square&logo=kubernetes&logoColor=white)](https://kustomize.io/) [![kubeconform](https://img.shields.io/badge/kubeconform-326CE5?style=flat-square&logo=kubernetes&logoColor=white)](https://github.com/yannh/kubeconform) [![conftest](https://img.shields.io/badge/conftest-7B42BC?style=flat-square&logoColor=white)](https://www.conftest.dev/) |
 
@@ -90,6 +92,7 @@ flowchart TD
 | **grafana** | dashboards (kube-prometheus-stack) | ![](https://status.la.fish/api/v1/endpoints/tools_grafana/uptimes/7d/badge.svg) |
 | **prometheus** | metrics; fronted by oauth2-proxy | ![](https://status.la.fish/api/v1/endpoints/tools_prometheus/uptimes/7d/badge.svg) |
 | **alertmanager** | alert routing to Telegram | |
+| **loki** + **alloy** | centralized log aggregation; Alloy DaemonSet ships pod logs to Loki, Grafana queries via the Loki datasource | |
 | **blackbox-exporter** | synthetic probes | |
 | **gatus** | public status page at `status.la.fish` | |
 | **filebrowser** | NFS bridge over booklore's PVC (rclone serve nfs + csi-driver-nfs) | |

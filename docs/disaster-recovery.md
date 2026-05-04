@@ -94,6 +94,7 @@ After restore, before declaring success:
 - **etcd state** — covered by `kube-system/talos-backup` hourly CronJob
 - **R2 itself** — single point of failure for backups. Cross-account replication or local clone is a separate concern
 - **External service state** — Cloudflare DNS records, pocket-id user accounts inside the IdP (the *data* is captured via PVC; rebuilding the IdP is part of pocket-id namespace restore)
+- **Loki PV** — intentionally unscheduled. Logs are 14d-transient (compactor enforces `retention_period: 336h`); recovering yesterday's logs adds no value. On full-cluster rebuild, Loki starts fresh and Alloy resumes shipping immediately.
 
 ## Related
 

@@ -47,6 +47,11 @@ spec:
       wait: true
       dependsOn:
         - name: alerts
+    - name: loki
+      path: ./k8s/apps/monitoring/loki
+      wait: true
+      dependsOn:
+        - name: monitoring-stack
     # vpn: wait:false because wg-easy is intentionally at replicas:0
     - name: vpn
       path: ./k8s/apps/vpn

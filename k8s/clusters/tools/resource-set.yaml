@@ -47,6 +47,11 @@ spec:
       wait: true
       dependsOn:
         - name: alerts
+    - name: loki
+      path: ./k8s/apps/monitoring/loki
+      wait: true
+      dependsOn:
+        - name: monitoring-stack
     - name: identity
       path: ./k8s/apps/identity
       wait: true

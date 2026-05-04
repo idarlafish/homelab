@@ -90,3 +90,34 @@ resource "kubernetes_persistent_volume_v1" "gatus_data" {
     }
   }
 }
+
+resource "hcloud_volume" "loki_data" {
+  name     = "${var.name}-loki-data"
+  size     = 10
+  location = var.location
+}
+
+resource "kubernetes_persistent_volume_v1" "loki_data" {
+  metadata {
+    name = "pv-loki-data"
+  }
+  spec {
+    capacity                         = { storage = "${hcloud_volume.loki_data.size}Gi" }
+    access_modes                     = ["ReadWriteOnce"]
+    persistent_volume_reclaim_policy = "Retain"
+    storage_class_name               = "hcloud-volumes-encrypted"
+
+    persistent_volume_source {
+      csi {
+        driver        = "csi.hetzner.cloud"
+        volume_handle = hcloud_volume.loki_data.id
+        fs_type       = "ext4"
+      }
+    }
+
+    claim_ref {
+      namespace = "monitoring"
+      name      = "storage-loki-0"
+    }
+  }
+}
