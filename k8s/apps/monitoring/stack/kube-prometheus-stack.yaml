@@ -97,6 +97,8 @@ spec:
           jwk_set_url: https://kubernetes.default.svc.cluster.local/openid/v1/jwks
           jwk_set_bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
           tls_client_ca: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        plugins:
+          disable_plugins: elasticsearch
       persistence:
         enabled: true
         size: 10Gi
