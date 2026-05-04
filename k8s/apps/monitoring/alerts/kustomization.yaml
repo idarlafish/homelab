@@ -5,5 +5,4 @@ resources:
   - alertmanager-config.yaml
   - backup-alerts.yaml
   - pocket-id-alerts.yaml
-  - telegram-notify-rules.yaml
   - telegram-credentials.yaml

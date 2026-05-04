@@ -89,6 +89,18 @@ data:
             failure-threshold: 3
             success-threshold: 2
 
+      - name: telegram-notify
+        group: ${CLUSTER_NAME}
+        url: https://telegram-notify.la.fish/health
+        interval: 60s
+        conditions:
+          - "[STATUS] == 200"
+        alerts:
+          - type: telegram
+            send-on-resolved: true
+            failure-threshold: 3
+            success-threshold: 2
+
     alerting:
       telegram:
         token: $${TELEGRAM_BOT_TOKEN}
