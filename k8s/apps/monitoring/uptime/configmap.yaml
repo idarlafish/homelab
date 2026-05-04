@@ -90,7 +90,7 @@ data:
             success-threshold: 2
 
       - name: telegram-notify
-        group: ${CLUSTER_NAME}
+        group: External
         url: https://telegram-notify.la.fish/health
         interval: 60s
         conditions:
