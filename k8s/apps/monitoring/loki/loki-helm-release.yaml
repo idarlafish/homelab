@@ -9,13 +9,13 @@ spec:
   chart:
     spec:
       chart: loki
-      version: "<8.0.0"
+      version: "<14.0.0"
       sourceRef:
         kind: HelmRepository
-        name: grafana
+        name: grafana-community
         namespace: flux-system
   values:
-    deploymentMode: SingleBinary
+    deploymentMode: Monolithic
 
     loki:
       auth_enabled: false
@@ -47,6 +47,7 @@ spec:
       replicas: 1
       persistence:
         enabled: true
+        enableStatefulSetAutoDeletePVC: false
         storageClass: hcloud-volumes-encrypted
         accessModes: [ReadWriteOnce]
         size: 10Gi
@@ -94,14 +95,7 @@ spec:
       enabled: false
     gateway:
       enabled: false
-
-    monitoring:
-      selfMonitoring:
-        enabled: false
-        grafanaAgent:
-          installOperator: false
-      lokiCanary:
-        enabled: false
-
+    lokiCanary:
+      enabled: false
     test:
       enabled: false
