@@ -7,6 +7,7 @@ node_modules
 .external_modules
 tfplan
 .claude
+.junie
 docs/superpowers/
 tfplan
 
