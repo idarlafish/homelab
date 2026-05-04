@@ -58,12 +58,17 @@ spec:
               source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
               target_label  = "__path__"
               separator     = "/"
-              replacement   = "/var/log/pods/*$1/*.log"
+              regex         = "(.+)/(.+)"
+              replacement   = "/var/log/pods/*$1/$2/*.log"
             }
           }
 
+          local.file_match "pod_logs" {
+            path_targets = discovery.relabel.pod_logs.output
+          }
+
           loki.source.file "pods" {
-            targets    = discovery.relabel.pod_logs.output
+            targets    = local.file_match.pod_logs.targets
             forward_to = [loki.process.cluster.receiver]
           }
 
