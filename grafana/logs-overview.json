@@ -44,7 +44,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "sum(rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\"} |~ \"$search\" [$__interval]))",
+          "expr": "sum(rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\",pod!~\"^(loki|alloy)-.*\",level=~\"$level\"} |~ \"$search\" [$__interval]))",
           "editorMode": "code",
           "queryType": "range",
           "legendFormat": " ",
@@ -109,7 +109,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "sum(rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\"} |~ \"$search\" |~ \"(?i)error|exception|fatal|panic|traceback\" [$__interval]))",
+          "expr": "sum(rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\",pod!~\"^(loki|alloy)-.*\",level=~\"err(or)?|fatal|crit(ical)?|panic\"} |~ \"$search\" [$__interval]))",
           "editorMode": "code",
           "queryType": "range",
           "legendFormat": " ",
@@ -174,7 +174,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "sum(rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\"} |~ \"$search\" |~ \"(?i)warn\" [$__interval]))",
+          "expr": "sum(rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\",pod!~\"^(loki|alloy)-.*\",level=~\"warn(ing)?\"} |~ \"$search\" [$__interval]))",
           "editorMode": "code",
           "queryType": "range",
           "legendFormat": " ",
@@ -239,7 +239,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "count(count by (pod) (rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\"} |~ \"$search\" [$__range])))",
+          "expr": "count(count by (pod) (rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\",pod!~\"^(loki|alloy)-.*\",level=~\"$level\"} |~ \"$search\" [$__range])))",
           "editorMode": "code",
           "queryType": "range",
           "legendFormat": " ",
@@ -317,7 +317,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "sum by (namespace) (rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\"} |~ \"$search\" [$__interval]))",
+          "expr": "sum by (namespace) (rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\",pod!~\"^(loki|alloy)-.*\",level=~\"$level\"} |~ \"$search\" [$__interval]))",
           "editorMode": "code",
           "queryType": "range",
           "legendFormat": "{{namespace}}",
@@ -396,7 +396,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "sum by (namespace) (rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\"} |~ \"$search\" |~ \"(?i)error|exception|fatal|panic|traceback\" [$__interval]))",
+          "expr": "sum by (namespace) (rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\",pod!~\"^(loki|alloy)-.*\",level=~\"err(or)?|fatal|crit(ical)?|panic\"} |~ \"$search\" [$__interval]))",
           "editorMode": "code",
           "queryType": "range",
           "legendFormat": "{{namespace}}",
@@ -488,7 +488,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "topk(10, sum by (namespace, pod) (rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\"} |~ \"$search\" [$__interval])))",
+          "expr": "topk(10, sum by (namespace, pod) (rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\",pod!~\"^(loki|alloy)-.*\",level=~\"$level\"} |~ \"$search\" [$__interval])))",
           "editorMode": "code",
           "queryType": "instant",
           "format": "table"
@@ -599,7 +599,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "topk(10, sum by (namespace) (count_over_time({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\"} |~ \"$search\" [$__range])))",
+          "expr": "topk(10, sum by (namespace) (count_over_time({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\",pod!~\"^(loki|alloy)-.*\",level=~\"$level\"} |~ \"$search\" [$__range])))",
           "editorMode": "code",
           "queryType": "instant",
           "legendFormat": "{{namespace}}",
@@ -676,7 +676,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "topk(10, sum by (container) (rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\"} |~ \"$search\" |~ \"(?i)error|exception|fatal|panic|traceback\" [$__interval])))",
+          "expr": "topk(10, sum by (container) (rate({cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\",pod!~\"^(loki|alloy)-.*\",level=~\"err(or)?|fatal|crit(ical)?|panic\"} |~ \"$search\" [$__interval])))",
           "editorMode": "code",
           "queryType": "range",
           "legendFormat": "{{container}}",
@@ -755,7 +755,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "{cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\"} |~ \"$search\" |~ \"(?i)error|exception|fatal|panic|traceback\"",
+          "expr": "{cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\",pod!~\"^(loki|alloy)-.*\",level=~\"err(or)?|fatal|crit(ical)?|panic\"} |~ \"$search\"",
           "editorMode": "code",
           "queryType": "range",
           "maxLines": 1000
@@ -810,7 +810,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "{cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\"} |~ \"$search\"",
+          "expr": "{cluster=~\"$cluster\",namespace=~\"$namespace\",app=~\"$app\",container=~\"$container\",pod!~\"^(loki|alloy)-.*\",level=~\"$level\"} |~ \"$search\"",
           "editorMode": "code",
           "queryType": "range",
           "maxLines": 1000
@@ -956,6 +956,35 @@
         },
         "definition": "label_values({cluster=~\"$cluster\",namespace=~\"$namespace\"}, container)",
         "query": "label_values({cluster=~\"$cluster\",namespace=~\"$namespace\"}, container)",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "options": [],
+        "hide": 0,
+        "skipUrlSync": false
+      },
+      {
+        "type": "query",
+        "name": "level",
+        "label": "level",
+        "datasource": {
+          "type": "loki",
+          "uid": "${DS_LOKI}"
+        },
+        "definition": "label_values({cluster=~\"$cluster\"}, level)",
+        "query": "label_values({cluster=~\"$cluster\"}, level)",
         "refresh": 2,
         "regex": "",
         "sort": 1,
