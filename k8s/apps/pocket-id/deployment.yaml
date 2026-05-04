@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pocket-id
-  namespace: identity
+  namespace: pocket-id
 spec:
   replicas: 1
   strategy:

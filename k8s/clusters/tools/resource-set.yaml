@@ -52,8 +52,8 @@ spec:
       wait: true
       dependsOn:
         - name: monitoring-stack
-    - name: identity
-      path: ./k8s/apps/identity
+    - name: pocket-id
+      path: ./k8s/apps/pocket-id
       wait: true
       dependsOn:
         - name: monitoring-stack
@@ -62,7 +62,7 @@ spec:
       wait: true
       dependsOn:
         - name: monitoring-stack
-        - name: identity
+        - name: pocket-id
     # vpn: wait:false because wg-easy is intentionally at replicas:0
     - name: vpn
       path: ./k8s/apps/vpn

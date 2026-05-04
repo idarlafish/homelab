@@ -11,9 +11,9 @@ spec:
     - name: pocket-id
       rules:
         - alert: PocketIDDown
-          # Selector targets metrics scraped via the ServiceMonitor in k8s/apps/tools/identity/pocket-id/.
+          # Selector targets metrics scraped via the ServiceMonitor in k8s/apps/pocket-id/.
           # Will be verified against actual labels in Task 6 — adjust if Prometheus reports different labels.
-          expr: up{namespace="identity", service="pocket-id"} == 0
+          expr: up{namespace="pocket-id", service="pocket-id"} == 0
           for: 5m
           labels:
             severity: critical

@@ -17,7 +17,7 @@ module "cluster" {
   flux_instance_yaml = file("${path.root}/../../k8s/clusters/tools/flux-instance.yaml")
 
   tunnel_routes = [
-    { hostname = "auth.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://pocket-id.identity.svc.cluster.local:1411" },
+    { hostname = "auth.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://pocket-id.pocket-id.svc.cluster.local:1411" },
     { hostname = "booklore.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://booklore.booklore.svc.cluster.local:6060" },
     { hostname = "wg-admin.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://wg-easy-http.vpn.svc.cluster.local:51821" },
     { hostname = "grafana.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80" },

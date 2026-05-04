@@ -23,7 +23,7 @@ resource "kubernetes_persistent_volume_v1" "pocket_id_data" {
     }
 
     claim_ref {
-      namespace = "identity"
+      namespace = "pocket-id"
       name      = "pocket-id-data"
     }
   }

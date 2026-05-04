@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: pocket-id-config
-  namespace: identity
+  namespace: pocket-id
 data:
   # --- Required core ---
   APP_URL: "https://${HOSTNAME_AUTH}"

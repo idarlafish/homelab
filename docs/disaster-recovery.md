@@ -46,7 +46,7 @@ kubectl delete ns <ns>-restore
 Replaces the live namespace with the backup. Workload offline for the duration.
 
 ```
-flux suspend kustomization booklore   # or whichever owns the namespace (paperless, vault, identity, etc.)
+flux suspend kustomization booklore   # or whichever owns the namespace (paperless, vault, pocket-id, etc.)
 kubectl delete ns <ns>
 velero restore create incident-$(date +%s) \
   --from-backup <backup-name> \
