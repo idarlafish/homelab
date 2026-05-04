@@ -5,3 +5,15 @@ resources:
   - helm-repos.yaml
   - loki-helm-release.yaml
   - alloy-helm-release.yaml
+
+configMapGenerator:
+  - name: alloy-config
+    namespace: monitoring
+    files:
+      - alloy/00-discovery.alloy
+      - alloy/10-drops.alloy
+      - alloy/20-labels.alloy
+      - alloy/30-write.alloy
+
+generatorOptions:
+  disableNameSuffixHash: true

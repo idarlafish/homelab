@@ -1,0 +1,20 @@
+// Drop rules for noisy log lines we don't want in Loki.
+// Pin each rule's source via {container=...} or {namespace=...} so a stale
+// regex never starves an unrelated stream by accident. Each rule sets a
+// unique drop_counter_reason — verify it's still firing via
+//   sum by (reason) (rate(loki_process_dropped_lines_total[5m]))
+loki.process "drops" {
+  forward_to = [loki.process.labels.receiver]
+
+  stage.cri {}
+
+  // csi-snapshotter sidecar in csi-nfs-controller — VolumeSnapshot CRDs are
+  // intentionally not installed; ignore the resulting reflector errors.
+  stage.match {
+    selector = "{container=\"csi-snapshotter\"}"
+    stage.drop {
+      expression          = ".*Failed to watch.*VolumeSnapshot(Class|Content).*"
+      drop_counter_reason = "csi_snapshotter_missing_crds"
+    }
+  }
+}

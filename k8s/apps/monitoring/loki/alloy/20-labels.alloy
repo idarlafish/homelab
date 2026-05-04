@@ -1,0 +1,42 @@
+// Label promotion + severity extraction.
+// The level label drives Grafana Logs panel color coding and severity
+// histograms. Extraction is best-effort across common log formats; lines
+// matching nothing get level="" (shown as "unknown" in Grafana).
+loki.process "labels" {
+  forward_to = [loki.write.default.receiver]
+
+  // logfmt: level=info, lvl=warn, severity=error
+  stage.regex {
+    expression = `(?i)(?:level|lvl|severity)=(?P<level>trace|debug|info|warn(?:ing)?|err(?:or)?|fatal|crit(?:ical)?|panic)`
+  }
+
+  // JSON: "level":"info" or "severity":"warn"
+  stage.regex {
+    expression = `(?i)"(?:level|severity)"\s*:\s*"(?P<level>trace|debug|info|warn(?:ing)?|err(?:or)?|fatal|crit(?:ical)?|panic)"`
+  }
+
+  // klog single-letter prefix at line start: I0504 ..., E0504 ..., W0504 ...
+  stage.regex {
+    expression = `^(?P<klog>[IWEF])\d{4}`
+  }
+
+  // Synthesize a normalized lowercase level. Klog header wins over body
+  // text since k8s libraries set it authoritatively; body level is the
+  // fallback for app loggers (zap, logrus, slog, etc.).
+  stage.template {
+    source   = "level"
+    template = `{{ if eq .klog "I" }}info{{ else if eq .klog "W" }}warning{{ else if eq .klog "E" }}error{{ else if eq .klog "F" }}fatal{{ else if .level }}{{ ToLower .level }}{{ end }}`
+  }
+
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+
+  stage.static_labels {
+    values = {
+      cluster = "${CLUSTER_NAME}",
+    }
+  }
+}
