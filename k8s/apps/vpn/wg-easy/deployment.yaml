@@ -34,7 +34,7 @@ spec:
                 secretKeyRef:
                   name: wg-easy-password
                   key: password
-          image: ghcr.io/wg-easy/wg-easy:15.2.2
+          image: ghcr.io/wg-easy/wg-easy:15.3.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 51820
