@@ -32,10 +32,6 @@ module "talos" {
   firewall_talos_api_source = ["0.0.0.0/0", "::/0"]
 
   firewall_extra_rules = [
-    # Satisfactory
-    { description = "Satisfactory game", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "tcp", port = "7777" },
-    { description = "Satisfactory game UDP", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "7777" },
-    { description = "Satisfactory messaging", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "tcp", port = "18888" },
     # NodePorts (UDP unless noted)
     { description = "Minecraft TCP NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "tcp", port = "30565" },
     { description = "Minecraft UDP NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30565" },
@@ -51,6 +47,9 @@ module "talos" {
     { description = "V Rising query NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30877" },
     { description = "Soulmask game NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30750" },
     { description = "Soulmask query NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30751" },
+    { description = "Satisfactory api NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "tcp", port = "30777" },
+    { description = "Satisfactory game NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30777" },
+    { description = "Satisfactory messaging NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "tcp", port = "30888" },
   ]
 }
 

@@ -7,22 +7,22 @@ metadata:
     app: satisfactory
   namespace: satisfactory
 spec:
-  type: LoadBalancer
-  allocateLoadBalancerNodePorts: true
-  externalTrafficPolicy: Cluster
-  internalTrafficPolicy: Cluster
+  type: NodePort
   ports:
     - name: "api"
       port: 7777
       protocol: TCP
       targetPort: 7777
+      nodePort: 30777
     - name: "game"
       port: 7777
       protocol: UDP
       targetPort: 7777
+      nodePort: 30777
     - name: "messaging"
       port: 18888
       protocol: TCP
       targetPort: 18888
+      nodePort: 30888
   selector:
     app: satisfactory
