@@ -1,3 +1,7 @@
+locals {
+  cloudflare_zone_name = "la.fish"
+}
+
 module "cluster" {
   source = "../modules/tools-cluster"
 
@@ -11,24 +15,22 @@ module "cluster" {
   bootstrap_revision = var.bootstrap_revision
 
   cloudflare_account_id = data.sops_file.secrets.data["cloudflare_account_id"]
-  cloudflare_zone_name  = data.sops_file.secrets.data["cloudflare_zone_name"]
+  cloudflare_zone_name  = local.cloudflare_zone_name
   cloudflare_zone_id    = data.cloudflare_zone.main.zone_id
 
   flux_instance_yaml = file("${path.root}/../../k8s/clusters/tools/flux-instance.yaml")
 
   tunnel_routes = [
-    { hostname = "auth.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://pocket-id.pocket-id.svc.cluster.local:1411" },
-    { hostname = "booklore.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://booklore.booklore.svc.cluster.local:6060" },
-    { hostname = "wg-admin.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://wg-easy-http.vpn.svc.cluster.local:51821" },
-    { hostname = "grafana.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80" },
-    { hostname = "prometheus.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://oauth2-proxy-prometheus.monitoring.svc.cluster.local:4180" },
-    { hostname = "status.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://gatus.monitoring.svc.cluster.local:8080" },
-    { hostname = "files.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://filebrowser.files.svc.cluster.local:80" },
-    { hostname = "paperless.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://paperless.paperless.svc.cluster.local:8000" },
-    { hostname = "vault.${data.sops_file.secrets.data["cloudflare_zone_name"]}", path = "^/admin", service = "http://oauth2-proxy-vaultwarden.vault.svc.cluster.local:4180" },
-    { hostname = "vault.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://vaultwarden.vault.svc.cluster.local:80" },
+    { hostname = "auth.${local.cloudflare_zone_name}", service = "http://pocket-id.pocket-id.svc.cluster.local:1411" },
+    { hostname = "booklore.${local.cloudflare_zone_name}", service = "http://booklore.booklore.svc.cluster.local:6060" },
+    { hostname = "grafana.${local.cloudflare_zone_name}", service = "http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80" },
+    { hostname = "prometheus.${local.cloudflare_zone_name}", service = "http://oauth2-proxy-prometheus.monitoring.svc.cluster.local:4180" },
+    { hostname = "status.${local.cloudflare_zone_name}", service = "http://gatus.monitoring.svc.cluster.local:8080" },
+    { hostname = "files.${local.cloudflare_zone_name}", service = "http://filebrowser.files.svc.cluster.local:80" },
+    { hostname = "paperless.${local.cloudflare_zone_name}", service = "http://paperless.paperless.svc.cluster.local:8000" },
+    { hostname = "vault.${local.cloudflare_zone_name}", path = "^/admin", service = "http://oauth2-proxy-vaultwarden.vault.svc.cluster.local:4180" },
+    { hostname = "vault.${local.cloudflare_zone_name}", service = "http://vaultwarden.vault.svc.cluster.local:80" },
   ]
-  tunnel_dns_subdomains = ["auth", "booklore", "wg-admin", "grafana", "prometheus", "status", "files", "paperless", "vault"]
 
   manage_zone_primitives = true
 }

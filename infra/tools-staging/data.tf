@@ -4,6 +4,6 @@ data "sops_file" "secrets" {
 
 data "cloudflare_zone" "main" {
   filter = {
-    name = data.sops_file.secrets.data["cloudflare_zone_name"]
+    name = local.cloudflare_zone_name
   }
 }

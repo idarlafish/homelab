@@ -25,21 +25,15 @@ module "talos" {
   longhorn_enabled               = false
   kube_api_load_balancer_enabled = false
 
+  packer_arm64_builder = { server_location = "fsn1" }
+
   # Don't pin Hetzner firewall to operator's current IP — mTLS is the actual
   # auth, and the IP allowlist forced a re-apply on every VPN exit rotation.
   firewall_use_current_ipv4 = false
   firewall_kube_api_source  = ["0.0.0.0/0", "::/0"]
   firewall_talos_api_source = ["0.0.0.0/0", "::/0"]
 
-  firewall_extra_rules = [
-    {
-      description = "wg-easy WireGuard"
-      direction   = "in"
-      source_ips  = ["0.0.0.0/0", "::/0"]
-      protocol    = "udp"
-      port        = "51820"
-    }
-  ]
+  firewall_extra_rules = []
 }
 
 module "flux_bootstrap" {
@@ -102,8 +96,15 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
   }
 }
 
+locals {
+  tunnel_dns_subdomains = distinct([
+    for r in var.tunnel_routes :
+    trimsuffix(r.hostname, ".${var.cloudflare_zone_name}")
+  ])
+}
+
 resource "cloudflare_dns_record" "tunnel" {
-  for_each = toset(var.tunnel_dns_subdomains)
+  for_each = toset(local.tunnel_dns_subdomains)
 
   zone_id = var.cloudflare_zone_id
   name    = "${each.value}.${var.cloudflare_zone_name}"

@@ -52,10 +52,9 @@ spec:
       wait: true
       dependsOn:
         - name: monitoring-stack
-    # vpn: wait:false because wg-easy is intentionally at replicas:0
     - name: vpn
       path: ./k8s/apps/vpn
-      wait: false
+      wait: true
       dependsOn: []
     - name: csi-nfs
       path: ./k8s/apps/csi-nfs
@@ -105,8 +104,6 @@ spec:
             HOSTNAME_BOOKLORE: booklore-staging.la.fish
             HOSTNAME_GRAFANA: grafana-staging.la.fish
             HOSTNAME_PROMETHEUS: prometheus-staging.la.fish
-            HOSTNAME_WG: wg-staging.la.fish
-            HOSTNAME_WG_ADMIN: wg-admin-staging.la.fish
             HOSTNAME_PAPERLESS: paperless-staging.la.fish
             HOSTNAME_VAULT: vault.la.fish
           substituteFrom:
