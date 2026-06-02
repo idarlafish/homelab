@@ -29,4 +29,6 @@ module "cluster" {
     { hostname = "vault.${data.sops_file.secrets.data["cloudflare_zone_name"]}", service = "http://vaultwarden.vault.svc.cluster.local:80" },
   ]
   tunnel_dns_subdomains = ["auth", "booklore", "wg-admin", "grafana", "prometheus", "status", "files", "paperless", "vault"]
+
+  manage_zone_primitives = true
 }

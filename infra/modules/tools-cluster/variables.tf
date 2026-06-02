@@ -76,3 +76,9 @@ variable "tunnel_dns_subdomains" {
   description = "Subdomain prefixes (sans zone) to create CNAME records for, pointing at the tunnel"
   type        = list(string)
 }
+
+variable "manage_zone_primitives" {
+  description = "Manage zone-level Cloudflare resources (DNSSEC, CAA) from this module call. Exactly one cluster must set this to true."
+  type        = bool
+  default     = false
+}

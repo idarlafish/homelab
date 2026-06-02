@@ -113,6 +113,51 @@ resource "cloudflare_dns_record" "tunnel" {
   proxied = true
 }
 
+resource "cloudflare_dns_record" "caa_issue_le" {
+  count   = var.manage_zone_primitives ? 1 : 0
+  zone_id = var.cloudflare_zone_id
+  name    = var.cloudflare_zone_name
+  type    = "CAA"
+  ttl     = 3600
+  data    = { flags = 0, tag = "issue", value = "letsencrypt.org" }
+}
+
+resource "cloudflare_dns_record" "caa_issuewild_le" {
+  count   = var.manage_zone_primitives ? 1 : 0
+  zone_id = var.cloudflare_zone_id
+  name    = var.cloudflare_zone_name
+  type    = "CAA"
+  ttl     = 3600
+  data    = { flags = 0, tag = "issuewild", value = "letsencrypt.org" }
+}
+
+resource "cloudflare_dns_record" "caa_issue_google" {
+  count   = var.manage_zone_primitives ? 1 : 0
+  zone_id = var.cloudflare_zone_id
+  name    = var.cloudflare_zone_name
+  type    = "CAA"
+  ttl     = 3600
+  data    = { flags = 0, tag = "issue", value = "pki.goog" }
+}
+
+resource "cloudflare_dns_record" "caa_issuewild_google" {
+  count   = var.manage_zone_primitives ? 1 : 0
+  zone_id = var.cloudflare_zone_id
+  name    = var.cloudflare_zone_name
+  type    = "CAA"
+  ttl     = 3600
+  data    = { flags = 0, tag = "issuewild", value = "pki.goog" }
+}
+
+resource "cloudflare_dns_record" "caa_iodef" {
+  count   = var.manage_zone_primitives ? 1 : 0
+  zone_id = var.cloudflare_zone_id
+  name    = var.cloudflare_zone_name
+  type    = "CAA"
+  ttl     = 3600
+  data    = { flags = 0, tag = "iodef", value = "mailto:idar.dev@pm.me" }
+}
+
 data "cloudflare_zero_trust_tunnel_cloudflared_token" "this" {
   account_id = var.cloudflare_account_id
   tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.this.id
