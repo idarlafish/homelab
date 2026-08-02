@@ -85,12 +85,12 @@ flowchart TD
 
 | | | Uptime |
 |---|---|---|
-| **pocket-id** | passkey OIDC SSO; auth provider for every other app | ![](https://status.la.fish/api/v1/endpoints/tools_pocket-id/uptimes/7d/badge.svg) |
-| **booklore** + MariaDB | e-book manager | ![](https://status.la.fish/api/v1/endpoints/tools_booklore/uptimes/7d/badge.svg) |
-| **paperless-ngx** + Postgres | document archive | ![](https://status.la.fish/api/v1/endpoints/tools_paperless/uptimes/7d/badge.svg) |
-| **vaultwarden** | password manager; SSO via Pocket ID; `/admin` gated by oauth2-proxy | ![](https://status.la.fish/api/v1/endpoints/tools_vault/uptimes/7d/badge.svg) |
-| **grafana** | dashboards (kube-prometheus-stack) | ![](https://status.la.fish/api/v1/endpoints/tools_grafana/uptimes/7d/badge.svg) |
-| **prometheus** | metrics; fronted by oauth2-proxy | ![](https://status.la.fish/api/v1/endpoints/tools_prometheus/uptimes/7d/badge.svg) |
+| **pocket-id** | passkey OIDC SSO; auth provider for every other app | ![](https://status.la.fish/api/v1/endpoints/homelab_pocket-id/uptimes/7d/badge.svg) |
+| **booklore** + MariaDB | e-book manager | ![](https://status.la.fish/api/v1/endpoints/homelab_booklore/uptimes/7d/badge.svg) |
+| **paperless-ngx** + Postgres | document archive | ![](https://status.la.fish/api/v1/endpoints/homelab_paperless/uptimes/7d/badge.svg) |
+| **vaultwarden** | password manager; SSO via Pocket ID; `/admin` gated by oauth2-proxy | ![](https://status.la.fish/api/v1/endpoints/homelab_vault/uptimes/7d/badge.svg) |
+| **grafana** | dashboards (kube-prometheus-stack) | ![](https://status.la.fish/api/v1/endpoints/homelab_grafana/uptimes/7d/badge.svg) |
+| **prometheus** | metrics; fronted by oauth2-proxy | ![](https://status.la.fish/api/v1/endpoints/homelab_prometheus/uptimes/7d/badge.svg) |
 | **alertmanager** | alert routing to Telegram | |
 | **loki** + **alloy** | centralized log aggregation; Alloy DaemonSet ships pod logs to Loki, Grafana queries via the Loki datasource | |
 | **blackbox-exporter** | synthetic probes | |
@@ -126,8 +126,8 @@ Gatus tracks the latest completed `main` run of this workflow and of `telegram-n
 
 | Repo | Workflow | Status |
 |---|---|---|
-| **homelab** | `validate.yaml` | ![](https://status.la.fish/api/v1/endpoints/ci_homelab/uptimes/7d/badge.svg) |
-| **telegram-notify** | `ci.yml` | ![](https://status.la.fish/api/v1/endpoints/ci_telegram-notify/uptimes/7d/badge.svg) |
+| **homelab** | `validate.yaml` | ![](https://status.la.fish/api/v1/endpoints/pipelines_homelab/uptimes/7d/badge.svg) |
+| **telegram-notify** | `ci.yml` | ![](https://status.la.fish/api/v1/endpoints/pipelines_telegram-notify/uptimes/7d/badge.svg) |
 
 ## Infrastructure
 

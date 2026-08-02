@@ -11,12 +11,13 @@ data:
       path: /data/gatus.db
 
     ui:
-      title: ${CLUSTER_NAME} status
-      header: ${CLUSTER_NAME}
+      title: ${GATUS_GROUP} status
+      header: ${GATUS_GROUP}
+      default-sort-by: group
 
     endpoints:
       - name: booklore
-        group: ${CLUSTER_NAME}
+        group: ${GATUS_GROUP}
         url: https://${HOSTNAME_BOOKLORE}/
         interval: 60s
         conditions:
@@ -29,7 +30,7 @@ data:
             success-threshold: 2
 
       - name: pocket-id
-        group: ${CLUSTER_NAME}
+        group: ${GATUS_GROUP}
         url: https://${HOSTNAME_AUTH}/health
         interval: 60s
         conditions:
@@ -41,7 +42,7 @@ data:
             success-threshold: 2
 
       - name: paperless
-        group: ${CLUSTER_NAME}
+        group: ${GATUS_GROUP}
         url: https://${HOSTNAME_PAPERLESS}/
         interval: 60s
         conditions:
@@ -54,7 +55,7 @@ data:
             success-threshold: 2
 
       - name: vault
-        group: ${CLUSTER_NAME}
+        group: ${GATUS_GROUP}
         url: https://${HOSTNAME_VAULT}/alive
         interval: 60s
         conditions:
@@ -66,7 +67,7 @@ data:
             success-threshold: 2
 
       - name: grafana
-        group: ${CLUSTER_NAME}
+        group: ${GATUS_GROUP}
         url: https://${HOSTNAME_GRAFANA}/api/health
         interval: 60s
         conditions:
@@ -78,7 +79,7 @@ data:
             success-threshold: 2
 
       - name: prometheus
-        group: ${CLUSTER_NAME}
+        group: ${GATUS_GROUP}
         url: https://${HOSTNAME_PROMETHEUS}/-/healthy
         interval: 60s
         conditions:
@@ -102,7 +103,7 @@ data:
             success-threshold: 2
 
       - name: homelab
-        group: CI
+        group: Pipelines
         url: https://api.github.com/repos/idarlafish/homelab/actions/workflows/validate.yaml/runs?branch=main&status=completed&per_page=1
         interval: 5m
         conditions:
@@ -110,7 +111,7 @@ data:
           - "[BODY].workflow_runs[0].conclusion == success"
 
       - name: telegram-notify
-        group: CI
+        group: Pipelines
         url: https://api.github.com/repos/idarlafish/telegram-notify/actions/workflows/ci.yml/runs?branch=main&status=completed&per_page=1
         interval: 5m
         conditions:

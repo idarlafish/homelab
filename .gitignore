@@ -9,6 +9,7 @@ tfplan
 .claude
 .junie
 docs/superpowers/
+.playwright-mcp/
 tfplan
 
 # Game server data (saves, blueprints, maps)

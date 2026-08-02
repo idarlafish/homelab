@@ -110,6 +110,7 @@ spec:
         postBuild:
           substitute:
             CLUSTER_NAME: tools
+            GATUS_GROUP: Homelab
             BUCKET_NAME: tools-backups
             HOSTNAME_AUTH: auth.la.fish
             HOSTNAME_BOOKLORE: booklore.la.fish

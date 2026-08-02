@@ -99,6 +99,7 @@ spec:
         postBuild:
           substitute:
             CLUSTER_NAME: tools-staging
+            GATUS_GROUP: Homelab-staging
             BUCKET_NAME: tools-staging-backups
             HOSTNAME_AUTH: auth.la.fish
             HOSTNAME_BOOKLORE: booklore-staging.la.fish
