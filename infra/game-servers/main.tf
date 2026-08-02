@@ -1,6 +1,6 @@
 module "talos" {
   source  = "hcloud-k8s/kubernetes/hcloud"
-  version = "~> 4.0"
+  version = "4.0.0"
 
   hcloud_token = data.sops_file.secrets.data["hcloud_token"]
   cluster_name = "game-servers"
