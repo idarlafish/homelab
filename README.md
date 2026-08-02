@@ -122,6 +122,13 @@ Every push runs `.github/workflows/validate.yaml`:
 - **tofu fmt -check** + **tofu validate** per infra root
 - **renovate-config-validator** for `renovate.json5`
 
+Gatus tracks the latest completed `main` run of this workflow and of `telegram-notify`'s CI in a **CI** group on [status.la.fish](https://status.la.fish), via the unauthenticated GitHub REST API (60 req/hr per IP — keep the 5m interval).
+
+| Repo | Workflow | Status |
+|---|---|---|
+| **homelab** | `validate.yaml` | ![](https://status.la.fish/api/v1/endpoints/ci_homelab/uptimes/7d/badge.svg) |
+| **telegram-notify** | `ci.yml` | ![](https://status.la.fish/api/v1/endpoints/ci_telegram-notify/uptimes/7d/badge.svg) |
+
 ## Infrastructure
 
 OpenTofu state in Cloudflare R2.

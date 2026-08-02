@@ -18,7 +18,7 @@ spec:
       labels:
         app: gatus
       annotations:
-        checksum/config: 1dfd767f5faf91db35e0c82e848fc2d84b0b58f1e099df518ca24201fdb0f03e
+        checksum/config: 8112119b4281278a98173db1848541273e04615f6b5ee7d69bf1d9515c88dbe8
     spec:
       securityContext:
         fsGroup: 65532
