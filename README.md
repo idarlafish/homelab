@@ -138,5 +138,5 @@ OpenTofu state in Cloudflare R2.
 | `infra/tools/` | tools cluster (Talos), Cloudflare Tunnel, durable Hetzner Volumes |
 | `infra/tools-staging/` | tools-staging cluster |
 | `infra/game-servers/` | game-servers cluster |
-| `infra/r2/` | backup buckets + lifecycle rules (account-scoped, separate state) |
+| `infra/r2/` | backup buckets (account-scoped, separate state) |
 | `infra/modules/tools-cluster/` | shared module for tools + tools-staging |

@@ -18,6 +18,8 @@ Per-app Velero Schedules at `k8s/apps/velero/schedules-tools/{paperless,booklore
 - Runs pre-hooks for app-consistent dumps where applicable (paperless: `document_exporter` + `pg_dump`; booklore: `mariadb-dump`; vaultwarden: `sqlite3 .backup` from a sidecar container using SQLite Online Backup API; minecraft: RCON `save-off` + `save-all flush`; pocket-id + most games: file-system backup, SQLite WAL or volume snapshot suffices)
 - File-system backs the PVC content via Kopia → R2
 
+Retention is the Schedule `ttl` only — the R2 buckets carry no lifecycle rules. Age-based expiry on `velero/kopia/` would delete deduplicated blobs that current backups still reference.
+
 **Game-server caveat:** Velero file-system backup only captures volume data when the pod is running. Game StatefulSets default to `replicas: 0`; the daily schedule fires but only captures K8s manifests. Run `velero backup create <game>-<timestamp> --from-schedule <game> --wait` manually before scaling down a game session to capture save state.
 
 Inspect from CLI:
