@@ -51,6 +51,13 @@
       groupName: "fluxcd",
     },
     {
+      // v1.14.1+ sends an empty x-amz-tagging header; R2 rejects it with 501
+      // NotImplemented and every backup fails. Re-enable once velero-io/velero#9931 ships.
+      description: "Hold velero-plugin-for-aws at v1.14.0 — v1.14.1+ breaks Cloudflare R2",
+      matchPackageNames: ["velero/velero-plugin-for-aws"],
+      enabled: false,
+    },
+    {
       description: "Game-server images: bundle all updates into one weekly PR",
       matchFileNames: ["k8s/apps/game-servers/**"],
       groupName: "game-server images",
