@@ -22,7 +22,7 @@ spec:
       terminationGracePeriodSeconds: 90
       containers:
         - name: cloudflared
-          image: cloudflare/cloudflared:2026.3.0
+          image: cloudflare/cloudflared:2026.8.3
           args:
             - tunnel
             - --no-autoupdate
