@@ -76,7 +76,7 @@ flowchart TD
 |---|---|---|
 | `tools` | cax21 ARM | running |
 | `tools-staging` | cax21 ARM | sandbox; destroyed when idle |
-| `game-servers` | cx43 x86 | destroyed between play sessions |
+| `game-servers` | x86; `server_type` var, default cx43 | destroyed between play sessions |
 
 ## Apps
 

@@ -4,6 +4,12 @@ variable "hcloud_location" {
   default     = "fsn1"
 }
 
+variable "server_type" {
+  description = "Hetzner server type for the control-plane node; size it to the games you intend to run"
+  type        = string
+  default     = "cx43"
+}
+
 variable "sops_age_key" {
   description = "Age private key for SOPS decryption inside the cluster (bootstrap-only secret; everything else lives in infra/secrets.sops.yaml)"
   type        = string

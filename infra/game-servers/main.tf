@@ -11,7 +11,7 @@ module "talos" {
   control_plane_nodepools = [
     {
       name     = "cp"
-      type     = "cx43"
+      type     = var.server_type
       location = var.hcloud_location
       count    = 1
     }
