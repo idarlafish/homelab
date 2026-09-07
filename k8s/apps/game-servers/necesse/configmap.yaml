@@ -13,7 +13,6 @@ data:
   GIVE_CLIENTS_POWER: "1"
   LOGGING: "1"
   ZIP: "1"
-  # Space-separated Steam Workshop IDs; refetched on every pod start.
+  WORKSHOP_COLLECTION: "3797557934"
   WORKSHOP_IDS: ""
-  # JDK defaults to 25% of the container limit; 75% of 2Gi leaves GC headroom.
   JVMARGS: "-XX:MaxRAMPercentage=75.0"

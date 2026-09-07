@@ -16,16 +16,23 @@ reachable without `stdin: true` on the pod. In-game admin comes from `OWNER` in 
 
 ## Mods
 
-Steam Workshop mods download anonymously — no Steam account needed. Add space-separated
-workshop IDs to `WORKSHOP_IDS` in `configmap.yaml`, commit, restart the pod:
+Driven by a **public** Steam Workshop collection — curate it in Steam and the server follows.
+No Steam account needed; Workshop downloads for Necesse work with anonymous steamcmd.
 
 ```yaml
-WORKSHOP_IDS: "3617102992 2849573426"
+WORKSHOP_COLLECTION: "3797557934"
+WORKSHOP_IDS: ""
 ```
 
-The `fetch-mods` initContainer clears `/necesse/mods` and re-downloads on every pod start, so
-the server tracks the same mod versions Workshop auto-updates on clients — Necesse requires
-exact parity to connect. Removing an ID removes the mod.
+Three initContainers: `resolve-mods` expands the collection via the Steam API, `fetch-mods`
+downloads each item, `filter-mods` reads `clientside` from every jar's `mod.info` and installs
+only server-side mods into `/necesse/mods`, clearing it first so removals take effect. Retexture
+packs are dropped automatically — nothing to maintain by hand.
+
+The collection must be Public — the API does not serve unlisted items, and `resolve-mods` fails
+rather than silently starting a mod-less server. Necesse requires exact mod parity between
+server and client, so refetching each start keeps the server on the versions Workshop pushes
+to clients.
 
 ## Storage
 

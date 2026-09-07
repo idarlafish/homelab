@@ -19,6 +19,11 @@ module "talos" {
 
   worker_nodepools = []
 
+  # talos-ccm hardcodes --secure-port=50258, which sits in the ephemeral range.
+  talos_sysctls_extra_args = {
+    "net.ipv4.ip_local_reserved_ports" = "50258"
+  }
+
   cluster_delete_protection      = false
   cert_manager_enabled           = false
   ingress_nginx_enabled          = false

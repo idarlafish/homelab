@@ -16,24 +16,70 @@ spec:
         app: necesse
     spec:
       initContainers:
+        - name: resolve-mods
+          image: curlimages/curl:8.22.0
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -eu
+              api=https://api.steampowered.com/ISteamRemoteStorage
+              : > /work/ids
+              if [ -n "$${WORKSHOP_COLLECTION}" ]; then
+                curl -sfS -X POST "$${api}/GetCollectionDetails/v1/" \
+                  --data-urlencode "collectioncount=1" \
+                  --data-urlencode "publishedfileids[0]=$${WORKSHOP_COLLECTION}" \
+                  | tr '{' '\n' \
+                  | grep -o '"publishedfileid":"[0-9]*"' \
+                  | grep -o '[0-9][0-9]*' \
+                  | grep -vx "$${WORKSHOP_COLLECTION}" | sort -u > /work/ids
+                if [ ! -s /work/ids ]; then
+                  echo "collection $${WORKSHOP_COLLECTION} resolved to 0 mods; is it Public?" >&2
+                  exit 1
+                fi
+              fi
+              for id in $${WORKSHOP_IDS}; do echo "$${id}" >> /work/ids; done
+              sort -u -o /work/ids /work/ids
+              cat /work/ids
+          envFrom:
+            - configMapRef:
+                name: necesse-cm
+          volumeMounts:
+            - name: work
+              mountPath: /work
         - name: fetch-mods
           image: steamcmd/steamcmd:debian-12
           command: ["sh", "-c"]
           args:
             - |
               set -eu
-              rm -f /mods/*.jar
-              if [ -z "$${WORKSHOP_IDS}" ]; then echo "no mods configured"; exit 0; fi
-              for id in $${WORKSHOP_IDS}; do
-                steamcmd +force_install_dir /tmp/ws +login anonymous \
+              [ -s /work/ids ] || { echo "no mods configured"; exit 0; }
+              while read -r id; do
+                [ -n "$${id}" ] || continue
+                steamcmd +force_install_dir /work/ws +login anonymous \
                   +workshop_download_item 1169040 "$${id}" +quit
-              done
-              find /tmp/ws/steamapps/workshop/content/1169040 -name '*.jar' \
-                -exec cp -v {} /mods/ \;
-          envFrom:
-            - configMapRef:
-                name: necesse-cm
+              done < /work/ids
           volumeMounts:
+            - name: work
+              mountPath: /work
+        - name: filter-mods
+          image: brammys/necesse-server:1-3-3
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -eu
+              rm -f /mods/*.jar
+              d=/work/ws/steamapps/workshop/content/1169040
+              [ -d "$${d}" ] || { echo "nothing downloaded"; exit 0; }
+              find "$${d}" -name '*.jar' | while read -r jar; do
+                if unzip -p "$${jar}" mod.info | tr -d ' ' | grep -qi 'clientside=true'; then
+                  echo "client-only, skipped: $${jar}"
+                else
+                  cp -v "$${jar}" /mods/
+                fi
+              done
+          volumeMounts:
+            - name: work
+              mountPath: /work
             - name: necesse-data
               mountPath: /mods
               subPath: mods
@@ -73,6 +119,9 @@ spec:
             - name: necesse-data
               mountPath: /necesse/mods
               subPath: mods
+      volumes:
+        - name: work
+          emptyDir: {}
   volumeClaimTemplates:
     - metadata:
         name: necesse-data
