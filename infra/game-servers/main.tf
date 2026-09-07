@@ -50,6 +50,7 @@ module "talos" {
     { description = "Satisfactory api NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "tcp", port = "30777" },
     { description = "Satisfactory game NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30777" },
     { description = "Satisfactory messaging NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "tcp", port = "30888" },
+    { description = "Necesse NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30159" },
   ]
 }
 

@@ -1,0 +1,84 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: necesse
+  namespace: necesse
+spec:
+  selector:
+    matchLabels:
+      app: necesse
+  serviceName: "necesse"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: necesse
+    spec:
+      initContainers:
+        - name: fetch-mods
+          image: steamcmd/steamcmd:debian-12
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -eu
+              rm -f /mods/*.jar
+              if [ -z "$${WORKSHOP_IDS}" ]; then echo "no mods configured"; exit 0; fi
+              for id in $${WORKSHOP_IDS}; do
+                steamcmd +force_install_dir /tmp/ws +login anonymous \
+                  +workshop_download_item 1169040 "$${id}" +quit
+              done
+              find /tmp/ws/steamapps/workshop/content/1169040 -name '*.jar' \
+                -exec cp -v {} /mods/ \;
+          envFrom:
+            - configMapRef:
+                name: necesse-cm
+          volumeMounts:
+            - name: necesse-data
+              mountPath: /mods
+              subPath: mods
+      containers:
+        - name: necesse
+          image: brammys/necesse-server:1-3-3
+          imagePullPolicy: Always
+          env:
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: necesse-secrets
+                  key: serverPassword
+          envFrom:
+            - configMapRef:
+                name: necesse-cm
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "2Gi"
+            limits:
+              memory: "2Gi"
+          ports:
+            - name: game
+              containerPort: 14159
+              protocol: UDP
+          volumeMounts:
+            - name: necesse-data
+              mountPath: /necesse/saves
+              subPath: saves
+            - name: necesse-data
+              mountPath: /necesse/logs
+              subPath: logs
+            - name: necesse-data
+              mountPath: /necesse/cfg
+              subPath: cfg
+            - name: necesse-data
+              mountPath: /necesse/mods
+              subPath: mods
+  volumeClaimTemplates:
+    - metadata:
+        name: necesse-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: hcloud-volumes

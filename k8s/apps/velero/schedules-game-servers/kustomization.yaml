@@ -6,6 +6,7 @@ resources:
   - enshrouded.yaml
   - foundry.yaml
   - minecraft.yaml
+  - necesse.yaml
   - palworld.yaml
   - satisfactory.yaml
   - soulmask.yaml

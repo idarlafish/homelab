@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: necesse-cm
+  namespace: necesse
+data:
+  WORLD: "Fabler"
+  SLOTS: "10"
+  OWNER: "Echo"
+  MOTD: "Fabler"
+  PAUSE: "1"
+  GIVE_CLIENTS_POWER: "1"
+  LOGGING: "1"
+  ZIP: "1"
+  # Space-separated Steam Workshop IDs; refetched on every pod start.
+  WORKSHOP_IDS: ""
+  # JDK defaults to 25% of the container limit; 75% of 2Gi leaves GC headroom.
+  JVMARGS: "-XX:MaxRAMPercentage=75.0"

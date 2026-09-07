@@ -58,6 +58,11 @@
       enabled: false,
     },
     {
+      description: "necesse-server tags releases as 1-3-3, not 1.3.3",
+      matchPackageNames: ["brammys/necesse-server"],
+      versioning: "regex:^(?<major>\\d+)-(?<minor>\\d+)-(?<patch>\\d+)$",
+    },
+    {
       description: "Game-server images: bundle all updates into one weekly PR",
       matchFileNames: ["k8s/apps/game-servers/**"],
       groupName: "game-server images",

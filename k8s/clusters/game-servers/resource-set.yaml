@@ -26,6 +26,10 @@ spec:
       path: ./k8s/apps/game-servers/minecraft
       wait: true
       dependsOn: []
+    - name: necesse
+      path: ./k8s/apps/game-servers/necesse
+      wait: true
+      dependsOn: []
     # palworld: wait:false because PVC stays Pending under WaitForFirstConsumer + replicas:0
     - name: palworld
       path: ./k8s/apps/game-servers/palworld

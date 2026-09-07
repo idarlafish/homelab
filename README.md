@@ -48,7 +48,7 @@ flowchart TD
 
     subgraph GAMES[game-servers cluster · Talos · cx43]
         MC[minecraft]
-        OTH[+ 8 others]
+        OTH[+ 9 others]
         VLG[velero + node-agent]
     end
 
@@ -107,7 +107,7 @@ flowchart TD
 
 | | Notes |
 |---|---|
-| **minecraft, valheim, vrising, core-keeper, foundry, soulmask, enshrouded, palworld, satisfactory** | usually destroyed between play sessions |
+| **minecraft, valheim, vrising, core-keeper, foundry, soulmask, enshrouded, palworld, satisfactory, necesse** | usually destroyed between play sessions |
 | **grafana-alloy** | ships metrics to tools' Prometheus |
 | **velero** | schedules per game |
 
