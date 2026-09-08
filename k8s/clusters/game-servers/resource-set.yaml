@@ -6,6 +6,10 @@ metadata:
   namespace: flux-system
 spec:
   inputs:
+    - name: alchemy-factory
+      path: ./k8s/apps/game-servers/alchemy-factory
+      wait: true
+      dependsOn: []
     - name: core-keeper
       path: ./k8s/apps/game-servers/core-keeper
       wait: true

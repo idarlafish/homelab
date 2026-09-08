@@ -56,6 +56,8 @@ module "talos" {
     { description = "Satisfactory game NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30777" },
     { description = "Satisfactory messaging NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "tcp", port = "30888" },
     { description = "Necesse NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30159" },
+    { description = "Alchemy Factory game NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30015" },
+    { description = "Alchemy Factory query NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30016" },
   ]
 }
 

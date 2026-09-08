@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alchemy-factory-cm
+  namespace: alchemy-factory
+data:
+  TZ: "Europe/Riga"
+  SERVER_PUBLIC: "1"
+  SERVER_RELAY: "1"

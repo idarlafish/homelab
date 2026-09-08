@@ -1,0 +1,55 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: alchemy-factory
+  namespace: alchemy-factory
+spec:
+  selector:
+    matchLabels:
+      app: alchemy-factory
+  serviceName: "alchemy-factory"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: alchemy-factory
+    spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: alchemy-factory
+          image: idarlafish/alchemy-factory-server:v0.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: alchemy-factory-secrets
+                  key: adminPassword
+          envFrom:
+            - configMapRef:
+                name: alchemy-factory-cm
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "3Gi"
+            limits:
+              memory: "4Gi"
+          ports:
+            - name: game
+              containerPort: 27015
+              protocol: UDP
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 20Gi
+        storageClassName: hcloud-volumes
