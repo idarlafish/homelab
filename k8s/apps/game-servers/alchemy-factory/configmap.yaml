@@ -6,5 +6,5 @@ metadata:
   namespace: alchemy-factory
 data:
   TZ: "Europe/Riga"
-  SERVER_PUBLIC: "1"
+  SERVER_PUBLIC: "0"
   SERVER_RELAY: "1"

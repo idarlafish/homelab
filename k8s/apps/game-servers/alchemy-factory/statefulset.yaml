@@ -28,6 +28,11 @@ spec:
                 secretKeyRef:
                   name: alchemy-factory-secrets
                   key: adminPassword
+            - name: SERVER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: alchemy-factory-secrets
+                  key: serverPassword
           envFrom:
             - configMapRef:
                 name: alchemy-factory-cm
