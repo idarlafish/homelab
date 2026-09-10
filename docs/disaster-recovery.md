@@ -20,6 +20,22 @@ Per-app Velero Schedules at `k8s/apps/velero/schedules-tools/{paperless,booklore
 
 Retention is the Schedule `ttl` only — the R2 buckets carry no lifecycle rules. Age-based expiry on `velero/kopia/` would delete deduplicated blobs that current backups still reference.
 
+## Kopia repo maintenance failures
+
+Velero pins every Kopia snapshot with `velero-pin`, so Kopia retention never removes them — Velero alone deletes them when a Backup expires. Two failures follow from that:
+
+**Backups stuck in `Deleting`, DeleteBackupRequest `Processed` with `BLOB not found`.** A stale Kopia cache in the long-lived velero pod (`scratch` emptyDir); the referenced `q` blob ID changes between retries while a fresh client reads the same manifests fine. Fix: `kubectl rollout restart deploy/velero -n velero` — Velero then drains the whole backlog itself. Alert: `VeleroBackupDeletionFailing`.
+
+**One `<ns>-r2-kopia-maintain-job` failing per ~24h while hourly runs pass in 9s.** Kopia `auto` mode runs quick maintenance hourly and full maintenance every 24h; only full runs snapshot GC, which must resolve every pinned snapshot root. An orphan that lost its root content aborts it permanently — the Backup CR is gone, so nothing in Velero will ever clean it up. Waiting does not help.
+
+Repair with a `kopia/kopia` pod in the velero namespace, mounting `velero-credentials` (key `cloud`) and `velero-repo-credentials` (key `repository-password`, as `KOPIA_PASSWORD`), connected to `s3://tools-backups` prefix `velero/kopia/<ns>/`:
+- `kopia snapshot verify --verify-files-percent=0` finds broken roots (read-only).
+- Orphans = repo manifest IDs minus every live PodVolumeBackup `.status.snapshotID` for that namespace. Abort if any live ID is missing from the repo or present in the delete list.
+- Delete with `kopia snapshot delete <ids> --delete`. `kopia manifest delete` is gated behind `--advanced-commands`.
+- Do not run `kopia maintenance` from the CLI — Velero embeds a `project-velero/kopia` fork; leave index and blob work to its hourly job.
+
+Connect one repo per pod: several repos in one container leaks state and only the first succeeds.
+
 **Game-server caveat:** Velero file-system backup only captures volume data when the pod is running. Game StatefulSets default to `replicas: 0`; the daily schedule fires but only captures K8s manifests. Run `velero backup create <game>-<timestamp> --from-schedule <game> --wait` manually before scaling down a game session to capture save state.
 
 Inspect from CLI:

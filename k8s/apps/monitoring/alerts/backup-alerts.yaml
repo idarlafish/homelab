@@ -51,14 +51,12 @@ spec:
             summary: "Velero BackupStorageLocation {{ $labels.name }} is {{ $labels.phase }}"
             description: "Velero cannot reach R2 — backups will fail until resolved."
 
-        - alert: VeleroDeleteBackupStuck
+        - alert: VeleroBackupDeletionFailing
           expr: |
-            (time() - kube_customresource_velero_deletebackuprequest_created)
-              * on(name, namespace) group_left
-              kube_customresource_velero_deletebackuprequest_phase{phase="InProgress"} > 7200
-          for: 10m
+            increase(velero_backup_deletion_failure_total[6h]) > 0
+          for: 15m
           labels:
             severity: warning
           annotations:
-            summary: "Velero DeleteBackupRequest {{ $labels.name }} stuck in InProgress"
-            description: "Backup deletion for {{ $labels.backup_name }} stuck for {{ $value | humanizeDuration }} — recover via: kubectl -n velero delete deletebackuprequest {{ $labels.name }} && velero backup delete {{ $labels.backup_name }} --confirm"
+            summary: "Velero backup deletion failing for {{ $labels.schedule }}"
+            description: "Expired backups are not being removed. Their Kopia snapshots stay pinned as orphans and are never reclaimed from R2, and eventually break repo maintenance. See docs/disaster-recovery.md."
