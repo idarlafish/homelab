@@ -11,7 +11,8 @@ KUBECONFIG=infra/game-servers/kubeconfig kubectl exec -n alchemy-factory alchemy
 ```
 
 `SERVER_RELAY: "1"` routes traffic through Steam, so the NodePort and its Hetzner firewall
-rule are unused. Set it to `0` for direct `IP:30015` joins.
+rule are unused. Setting it to `0` is not enough for direct joins: the game listens on
+`server_port` 9877, while the Service and container expose 27015/30015.
 
 Admin in-game: `/admin <adminPassword>` in chat, then `/help`.
 
