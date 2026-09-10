@@ -9,7 +9,7 @@ spec:
     matchLabels:
       app: alchemy-factory
   serviceName: "alchemy-factory"
-  replicas: 0
+  replicas: 1
   template:
     metadata:
       labels:
