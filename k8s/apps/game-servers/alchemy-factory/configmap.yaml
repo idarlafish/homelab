@@ -8,4 +8,4 @@ data:
   TZ: "Europe/Riga"
   SERVER_NAME: "Zagribozha"
   SERVER_PUBLIC: "1"
-  SERVER_RELAY: "1"
+  SERVER_RELAY: "0"
