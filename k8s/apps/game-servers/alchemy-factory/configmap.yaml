@@ -9,3 +9,4 @@ data:
   SERVER_NAME: "Zagribozha"
   SERVER_PUBLIC: "1"
   SERVER_RELAY: "1"
+  EXTRA_ARGS: "-stdout -FullStdOutLogOutput"
