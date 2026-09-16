@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dragonwilds-cm
+  namespace: dragonwilds
+data:
+  TZ: "Europe/Riga"
+  PUID: "1000"
+  PGID: "1000"
+  SERVER_NAME: "Zagribozha"
+  DEFAULT_WORLD_NAME: "Zagribozha"
+  OWNER_ID: "0"
+  MAX_PLAYERS: "6"
+  # Must equal the NodePort: the server advertises its listen port to clients.
+  DEFAULT_PORT: "31777"

@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: dragonwilds
+  name: dragonwilds
+  namespace: dragonwilds
+spec:
+  type: NodePort
+  ports:
+    - name: game
+      port: 31777
+      protocol: UDP
+      targetPort: 31777
+      nodePort: 31777
+  selector:
+    app: dragonwilds

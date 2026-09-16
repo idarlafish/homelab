@@ -2,53 +2,54 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: alchemy-factory
-  namespace: alchemy-factory
+  name: dragonwilds
+  namespace: dragonwilds
 spec:
   selector:
     matchLabels:
-      app: alchemy-factory
-  serviceName: "alchemy-factory"
-  replicas: 0
+      app: dragonwilds
+  serviceName: "dragonwilds"
+  replicas: 1
   template:
     metadata:
       labels:
-        app: alchemy-factory
+        app: dragonwilds
     spec:
+      terminationGracePeriodSeconds: 30
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
       containers:
-        - name: alchemy-factory
-          image: idarlafish/alchemy-factory-server:0.1.5
+        - name: dragonwilds
+          image: indifferentbroccoli/runescape-dragonwilds-server-docker:v1.0.1
           imagePullPolicy: IfNotPresent
           env:
             - name: ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: alchemy-factory-secrets
+                  name: dragonwilds-secrets
                   key: adminPassword
-            - name: SERVER_PASSWORD
+            - name: WORLD_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: alchemy-factory-secrets
-                  key: serverPassword
+                  name: dragonwilds-secrets
+                  key: worldPassword
           envFrom:
             - configMapRef:
-                name: alchemy-factory-cm
+                name: dragonwilds-cm
           resources:
             requests:
               cpu: "500m"
-              memory: "3Gi"
-            limits:
               memory: "4Gi"
+            limits:
+              memory: "5Gi"
           ports:
             - name: game
-              containerPort: 27015
+              containerPort: 31777
               protocol: UDP
           volumeMounts:
             - name: data
-              mountPath: /data
+              mountPath: /home/steam/server-files
   volumeClaimTemplates:
     - metadata:
         name: data

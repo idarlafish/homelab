@@ -107,7 +107,7 @@ flowchart TD
 
 | | Notes |
 |---|---|
-| **minecraft, valheim, vrising, core-keeper, foundry, soulmask, enshrouded, palworld, satisfactory, necesse, alchemy-factory** | usually destroyed between play sessions |
+| **minecraft, valheim, vrising, core-keeper, foundry, soulmask, enshrouded, palworld, satisfactory, necesse, alchemy-factory, dragonwilds** | usually destroyed between play sessions |
 | **grafana-alloy** | ships metrics to tools' Prometheus |
 | **velero** | schedules per game |
 

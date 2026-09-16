@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - alchemy-factory.yaml
   - core-keeper.yaml
+  - dragonwilds.yaml
   - enshrouded.yaml
   - foundry.yaml
   - minecraft.yaml
