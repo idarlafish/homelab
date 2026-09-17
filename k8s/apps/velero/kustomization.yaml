@@ -6,3 +6,4 @@ resources:
   - helm-repo.yaml
   - credentials-secret.yaml
   - helmrelease.yaml
+  - cache-reset-cronjob.yaml

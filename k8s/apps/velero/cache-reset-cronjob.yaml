@@ -1,0 +1,60 @@
+---
+# Velero's kopia index goes stale after maintenance compacts blobs; bounce before the 03:00 UTC window.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: velero-cache-reset
+  namespace: velero
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: velero-cache-reset
+  namespace: velero
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [list, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: velero-cache-reset
+  namespace: velero
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: velero-cache-reset
+subjects:
+  - kind: ServiceAccount
+    name: velero-cache-reset
+    namespace: velero
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: velero-cache-reset
+  namespace: velero
+spec:
+  schedule: "50 2 * * *"
+  timeZone: UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          serviceAccountName: velero-cache-reset
+          restartPolicy: Never
+          containers:
+            - name: kubectl
+              image: alpine/kubectl:1.33.4
+              args: [delete, pod, -n, velero, -l, "name=velero", --wait=false]
+              resources:
+                requests: { cpu: 10m, memory: 32Mi }
+                limits: { memory: 64Mi }
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities: { drop: [ALL] }

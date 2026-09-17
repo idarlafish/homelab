@@ -24,7 +24,7 @@ Retention is the Schedule `ttl` only — the R2 buckets carry no lifecycle rules
 
 Velero pins every Kopia snapshot with `velero-pin`, so Kopia retention never removes them — Velero alone deletes them when a Backup expires. Two failures follow from that:
 
-**Backups stuck in `Deleting`, DeleteBackupRequest `Processed` with `BLOB not found`.** A stale Kopia cache in the long-lived velero pod (`scratch` emptyDir); the referenced `q` blob ID changes between retries while a fresh client reads the same manifests fine. Fix: `kubectl rollout restart deploy/velero -n velero` — Velero then drains the whole backlog itself. Alert: `VeleroBackupDeletionFailing`.
+**Backups stuck in `Deleting`, DeleteBackupRequest `Processed` with `BLOB not found`.** A stale Kopia cache in the long-lived velero pod (`scratch` emptyDir); the referenced `q` blob ID changes between retries while a fresh client reads the same manifests fine. The cache goes stale within ~2 days, so a restart is only a reprieve; the `velero-cache-reset` CronJob (`k8s/apps/velero/cache-reset-cronjob.yaml`) deletes the server pod daily at 02:50 UTC, ahead of the 03:00 schedule window. Velero drains any backlog itself on restart. Alert: `VeleroBackupDeletionFailing`.
 
 **One `<ns>-r2-kopia-maintain-job` failing per ~24h while hourly runs pass in 9s.** Kopia `auto` mode runs quick maintenance hourly and full maintenance every 24h; only full runs snapshot GC, which must resolve every pinned snapshot root. An orphan that lost its root content aborts it permanently — the Backup CR is gone, so nothing in Velero will ever clean it up. Waiting does not help.
 
