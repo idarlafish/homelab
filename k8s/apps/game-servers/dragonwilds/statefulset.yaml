@@ -9,7 +9,7 @@ spec:
     matchLabels:
       app: dragonwilds
   serviceName: "dragonwilds"
-  replicas: 1
+  replicas: 0
   template:
     metadata:
       labels:
