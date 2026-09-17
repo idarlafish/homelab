@@ -20,8 +20,8 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: alchemy-factory
-          image: idarlafish/alchemy-factory-server:0.1.5
-          imagePullPolicy: IfNotPresent
+          image: idarlafish/alchemy-factory-server:latest
+          imagePullPolicy: Always
           env:
             - name: ADMIN_PASSWORD
               valueFrom:
