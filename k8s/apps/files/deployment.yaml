@@ -25,7 +25,7 @@ spec:
         runAsGroup: 0
       containers:
         - name: filebrowser
-          image: gtstef/filebrowser:1.3.1-stable-slim
+          image: gtstef/filebrowser:1.5.6-stable-slim
           ports:
             - name: http
               containerPort: 80
