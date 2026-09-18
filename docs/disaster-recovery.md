@@ -82,7 +82,8 @@ Cluster destroyed (region failure, accidental Tofu destroy, etc.). Velero state 
 # 1. Rebuild infra
 cd infra/<cluster>
 source ../../.env
-tofu apply -target='module.cluster.module.talos'   # phase 1
+tofu apply -target='module.cluster.module.talos'   # phase 1 (tools/tools-staging)
+# game-servers calls the module directly: -target='module.talos'
 tofu apply                                          # phase 2
 
 # 2. Wait for Flux bootstrap to apply Velero from git (~5 min)

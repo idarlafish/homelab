@@ -6,4 +6,5 @@ resources:
   - alchemy-factory-secret.yaml
   - configmap.yaml
   - service.yaml
+  - pv.yaml
   - statefulset.yaml

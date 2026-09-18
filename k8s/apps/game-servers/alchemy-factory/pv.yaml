@@ -1,0 +1,21 @@
+---
+# Adopts the volume orphaned by the 2026-09-18 cluster teardown. The CSI driver
+# labelled it pvc-name=data-alchemy-factory-0, so this is the original world.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-alchemy-factory-data
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: hcloud-volumes
+  csi:
+    driver: csi.hetzner.cloud
+    volumeHandle: "106827148"
+    fsType: ext4
+  claimRef:
+    namespace: alchemy-factory
+    name: data-alchemy-factory-0

@@ -35,8 +35,12 @@ The regex below matches every category that needs removal — Kubernetes provide
 ```sh
 tofu -chdir=infra/$ENV state list \
   | grep -E '(^|\.)(kubernetes_[^.]+|helm_release)\.|module\.flux_bootstrap\.|(^|\.)talos_machine_(secrets|configuration_apply|bootstrap)|(^|\.)talos_cluster_kubeconfig' \
-  | xargs -t -n1 tofu -chdir=infra/$ENV state rm
+  | while IFS= read -r addr; do tofu -chdir=infra/$ENV state rm "$addr"; done
 ```
+
+Read the addresses one per line rather than piping to `xargs`: for-each resources are
+addressed as `...control_plane["game-servers-cp-1"]`, and `xargs` splits and strips the
+quotes, so the indexed entry is silently skipped. The verify step below catches it.
 
 The `(^|\.)` anchor catches both **root-level** resources (e.g. `kubernetes_persistent_volume_v1.pocket_id_data` declared in `infra/tools/volumes.tf`) and **module-nested** ones (e.g. `module.cluster.kubernetes_namespace_v1.cloudflared` declared in the shared module). Without it, root-level entries are silently missed.
 
@@ -118,6 +122,7 @@ Two-phase apply per [CLAUDE.md](../CLAUDE.md#environment):
 
 ```sh
 cd infra/$ENV
-tofu apply -target='module.cluster.module.talos'   # phase 1: provision Talos
+tofu apply -target='module.cluster.module.talos'   # phase 1: provision Talos (tools/tools-staging)
+# game-servers calls the module directly: -target='module.talos'
 tofu apply                                          # phase 2: everything else
 ```

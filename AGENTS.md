@@ -26,8 +26,14 @@ Operational rules and gotchas for this monorepo. See [README.md](README.md) for 
 **Tools clusters need `packer`, `talosctl`, `jq` locally** (Talos module dependencies). On macOS: `brew install packer siderolabs/tap/talosctl jq`.
 
 **First-time apply** on a fresh state file requires two phases (the kubernetes/helm providers can't configure against a non-existent cluster):
-1. `tofu apply -target='module.cluster.module.talos'` — provisions Talos
+1. `tofu apply -target=<talos-module>` — provisions Talos
 2. `tofu apply` — everything else
+
+`<talos-module>` differs per environment, because game-servers calls the upstream module directly while the tools clusters wrap it in `infra/modules/tools-cluster`:
+- `infra/tools`, `infra/tools-staging` → `module.cluster.module.talos`
+- `infra/game-servers` → `module.talos`
+
+Targeting the wrong address is not an error — `tofu plan` reports "No changes" and exits 0, so phase 1 appears to succeed while creating nothing.
 
 **Destroying a Talos cluster** requires several `tofu state rm` steps before `tofu destroy`: the lifecycle-protected `talos_machine_secrets`, the K8s/Helm/Talos-API resources that would hang on a dying API, and a Cloudflare Tunnel retry for the connection-active race. Full procedure: [docs/cluster-destroy.md](docs/cluster-destroy.md).
 

@@ -9,6 +9,7 @@ import rego.v1
 
 allowed_latest_prefixes := {
 	"ghcr.io/idarlafish/soulmask-server",
+	"idarlafish/alchemy-factory-server",
 }
 
 is_problematic(image) if {
