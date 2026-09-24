@@ -16,7 +16,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: bootstrap
-          image: alpine:3.23
+          image: alpine:3.24
           env:
             - name: GRAFANA_SERVER
               value: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local
