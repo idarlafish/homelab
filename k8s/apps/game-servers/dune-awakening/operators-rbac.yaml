@@ -1,0 +1,188 @@
+---
+# The ClusterRoles themselves ship in the Steam depot (crds/rbac-update.yaml) and are
+# applied by the bootstrap Job — Funcom's content is never vendored into this repo.
+# Everything below is ours: identities and bindings onto those roles.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: battlegroupoperator-controller-manager
+  namespace: funcom-operators
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: battlegroupoperator-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: battlegroupoperator-manager-role
+subjects:
+  - kind: ServiceAccount
+    name: battlegroupoperator-controller-manager
+    namespace: funcom-operators
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: battlegroupoperator-leader-election-role
+  namespace: funcom-operators
+rules:
+  - apiGroups: [coordination.k8s.io]
+    resources: [leases]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [""]
+    resources: [events, configmaps]
+    verbs: [get, list, watch, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: battlegroupoperator-leader-election-rolebinding
+  namespace: funcom-operators
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: battlegroupoperator-leader-election-role
+subjects:
+  - kind: ServiceAccount
+    name: battlegroupoperator-controller-manager
+    namespace: funcom-operators
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: databaseoperator-controller-manager
+  namespace: funcom-operators
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: databaseoperator-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: databaseoperator-manager-role
+subjects:
+  - kind: ServiceAccount
+    name: databaseoperator-controller-manager
+    namespace: funcom-operators
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: databaseoperator-leader-election-role
+  namespace: funcom-operators
+rules:
+  - apiGroups: [coordination.k8s.io]
+    resources: [leases]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [""]
+    resources: [events, configmaps]
+    verbs: [get, list, watch, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: databaseoperator-leader-election-rolebinding
+  namespace: funcom-operators
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: databaseoperator-leader-election-role
+subjects:
+  - kind: ServiceAccount
+    name: databaseoperator-controller-manager
+    namespace: funcom-operators
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: serveroperator-controller-manager
+  namespace: funcom-operators
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: serveroperator-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: serveroperator-manager-role
+subjects:
+  - kind: ServiceAccount
+    name: serveroperator-controller-manager
+    namespace: funcom-operators
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: serveroperator-leader-election-role
+  namespace: funcom-operators
+rules:
+  - apiGroups: [coordination.k8s.io]
+    resources: [leases]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [""]
+    resources: [events, configmaps]
+    verbs: [get, list, watch, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: serveroperator-leader-election-rolebinding
+  namespace: funcom-operators
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: serveroperator-leader-election-role
+subjects:
+  - kind: ServiceAccount
+    name: serveroperator-controller-manager
+    namespace: funcom-operators
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: utilitiesoperator-controller-manager
+  namespace: funcom-operators
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: utilitiesoperator-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: utilitiesoperator-manager-role
+subjects:
+  - kind: ServiceAccount
+    name: utilitiesoperator-controller-manager
+    namespace: funcom-operators
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: utilitiesoperator-leader-election-role
+  namespace: funcom-operators
+rules:
+  - apiGroups: [coordination.k8s.io]
+    resources: [leases]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [""]
+    resources: [events, configmaps]
+    verbs: [get, list, watch, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: utilitiesoperator-leader-election-rolebinding
+  namespace: funcom-operators
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: utilitiesoperator-leader-election-role
+subjects:
+  - kind: ServiceAccount
+    name: utilitiesoperator-controller-manager
+    namespace: funcom-operators

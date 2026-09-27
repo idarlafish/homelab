@@ -1,0 +1,126 @@
+---
+# Fetches everything Funcom owns at run time rather than vendoring it: the server images,
+# the 26 CRDs, the four ClusterRoles and the world template all come from Steam depot
+# 4754530, which this public repo must not redistribute.
+#
+# Re-run on every game patch: a server left on an old build is silently dropped from the
+# in-game Experimental tab (see README).
+#
+# Stages are init containers so they run strictly in order: depot -> images -> render,
+# then the main container applies. Shell ${...} is written $${...} so Flux postBuild
+# substitution leaves it for the shell.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dune-bootstrap-2124138-0-shipping
+  namespace: dune-awakening
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: dune-bootstrap
+      securityContext:
+        runAsUser: 0
+        seccompProfile: {type: RuntimeDefault}
+      initContainers:
+        # Anonymous Steam login is enough; owning the game only matters for the FLS token.
+        # A wedged appmanifest (StateFlags 6) makes app_update report success while doing
+        # nothing, so it is removed first; app_license_request and app_info_update are both
+        # required or a fresh install fails with "Missing configuration".
+        - name: depot
+          image: steamcmd/steamcmd:ubuntu-24
+          command: [bash, -c]
+          args:
+            - |
+              set -euo pipefail
+              mkdir -p /depot/server
+              rm -f /depot/server/steamapps/appmanifest_4754530.acf
+              steamcmd +@ShutdownOnFailedCommand 0 +@NoPromptForPassword 1 \
+                +@sSteamCmdForcePlatformType linux +force_install_dir /depot/server \
+                +login anonymous +app_license_request 4754530 +app_info_update 1 \
+                +app_update 4754530 validate +quit
+              build="$$(cat /depot/server/images/battlegroup/version.txt)"
+              echo "depot build: $$build / expected: 2124138-0-shipping"
+              if [ "$$build" != "2124138-0-shipping" ]; then
+                echo "BUILD MISMATCH - bump DUNE_SERVER_BUILD in the cluster ResourceSet" >&2
+                exit 1
+              fi
+          resources:
+            requests: {cpu: "1", memory: 1Gi}
+            limits: {memory: 3Gi}
+          volumeMounts: [{name: depot, mountPath: /depot}]
+        # Push the tarballs into the in-cluster registry the Talos mirror points at.
+        - name: images
+          image: quay.io/skopeo/stable@sha256:064d2cefb512c97d5a22979599ca05b7198fd6176494a634e1f31bd6b5fbd77a
+          command: [bash, -c]
+          args:
+            - |
+              set -euo pipefail
+              cd /depot/server/images
+              for t in operators/*.tar prerequisites/igw-postgres.tar battlegroup/*.tar; do
+                [ -f "$$t" ] || continue
+                ref="$$(tar -xOf "$$t" manifest.json | tr ',' '\n' \
+                        | grep -o '"registry\.funcom\.com/[^"]*"' | head -1 | tr -d '"')"
+                if [ -z "$$ref" ]; then echo "no RepoTag in $$t, skipping"; continue; fi
+                echo "push $$ref"
+                skopeo copy -q --dest-tls-verify=false \
+                  docker-archive:"$$t" "docker://10.0.96.200:5000/$${ref#registry.funcom.com/}"
+              done
+          resources:
+            requests: {cpu: "1", memory: 1Gi}
+            limits: {memory: 4Gi}
+          volumeMounts: [{name: depot, mountPath: /depot}]
+        - name: render
+          image: python:3.12-slim
+          command: [sh, -c]
+          args: ["pip install --quiet --no-cache-dir pyyaml==6.0.2 && python3 /scripts/render.py"]
+          envFrom:
+            - configMapRef: {name: dune-world-values}
+            - secretRef: {name: dune-awakening}
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {memory: 512Mi}
+          volumeMounts:
+            - {name: depot, mountPath: /depot, readOnly: true}
+            - {name: shared, mountPath: /shared}
+            - {name: script, mountPath: /scripts, readOnly: true}
+            - {name: settings, mountPath: /settings, readOnly: true}
+      containers:
+        # Funcom's CRDs + ClusterRoles from the depot, operator serving certs, then the world.
+        - name: apply
+          image: alpine/kubectl:1.33.4
+          command: [sh, -c]
+          args:
+            - |
+              set -euo pipefail
+              kubectl apply --server-side -f /depot/server/images/operators/crds/
+              for op in battlegroup database server utilities; do
+                s="$${op}operator-webhook-server-cert"
+                if kubectl -n funcom-operators get secret "$$s" >/dev/null 2>&1; then
+                  echo "$$s exists"; continue
+                fi
+                openssl req -x509 -nodes -newkey rsa:2048 -days 3650 \
+                  -keyout /tmp/k -out /tmp/c \
+                  -subj "/CN=$${op}operator-webhook.funcom-operators.svc" 2>/dev/null
+                kubectl -n funcom-operators create secret tls "$$s" --cert=/tmp/c --key=/tmp/k
+              done
+              rm -f /tmp/k /tmp/c
+              kubectl apply -f /shared/battlegroup.yaml
+              echo "bootstrap complete - world created stopped; start it with:"
+              echo "  kubectl -n funcom-seabass-sh-47951649e36d38d0-zagrib patch battlegroup sh-47951649e36d38d0-zagrib --type=merge -p '{\"spec\":{\"stop\":false}}'"
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {memory: 256Mi}
+          volumeMounts:
+            - {name: depot, mountPath: /depot, readOnly: true}
+            - {name: shared, mountPath: /shared, readOnly: true}
+      volumes:
+        - name: depot
+          persistentVolumeClaim: {claimName: depot}
+        - name: shared
+          emptyDir: {}
+        - name: script
+          configMap: {name: dune-render-script}
+        - name: settings
+          configMap: {name: dune-world-settings}

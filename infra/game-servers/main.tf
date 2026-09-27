@@ -14,6 +14,10 @@ module "talos" {
       type     = var.server_type
       location = var.hcloud_location
       count    = 1
+      # Pin the disk at its original 80GB. Hetzner cannot shrink a disk, and the
+      # cpx/cx types spec far larger ones (cpx52 480GB, cpx42 320GB, cx43 160GB),
+      # so letting it grow would permanently block resizing back down.
+      keep_disk = true
     }
   ]
 
@@ -22,6 +26,13 @@ module "talos" {
   # talos-ccm hardcodes --secure-port=50258, which sits in the ephemeral range.
   talos_sysctls_extra_args = {
     "net.ipv4.ip_local_reserved_ports" = "50258"
+  }
+
+  # Funcom ships Dune Awakening images as Steam-depot tarballs; served from an in-cluster registry.
+  talos_registries = {
+    mirrors = {
+      "registry.funcom.com" = { endpoints = ["http://10.0.96.200:5000"] }
+    }
   }
 
   cluster_delete_protection      = false
@@ -59,6 +70,8 @@ module "talos" {
     { description = "Alchemy Factory game NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30015" },
     { description = "Alchemy Factory query NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "30016" },
     { description = "DragonWilds NodePort", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "31777" },
+    { description = "Dune game servers", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "udp", port = "7777-7810" },
+    { description = "Dune RMQ game queue", direction = "in", source_ips = ["0.0.0.0/0", "::/0"], protocol = "tcp", port = "31982" },
   ]
 }
 

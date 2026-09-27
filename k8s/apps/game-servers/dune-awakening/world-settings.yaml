@@ -1,0 +1,52 @@
+---
+# Gameplay settings, mounted into every game-server pod via the ServerSet's userIniConfig.
+# Kept as plain ini so they are reviewable in git and match Funcom's own file format.
+#
+# Directions are NOT consistent across keys — always check the depot's own comment in
+# scripts/setup/config/ before adding one. Known traps:
+#   LootRespawnSpeed   higher = SLOWER ("loot chests take longer to spawn back")
+#   ResourceRespawnSpeed  higher = FASTER ("resources respawn sooner")
+#   WaterExtractionRate   higher = SLOWER ("extraction takes longer")
+#
+# The server login password is deliberately NOT here: it lives in the SOPS secret and is
+# injected as an -ini: argument, so this file stays safe to read in a public repo.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dune-world-settings
+  namespace: dune-awakening
+data:
+  # Custom difficulty. Every key below is ignored unless DifficultyLevel=Custom.
+  UserServerCustomSettings.ini: |
+    [/Script/DuneSandbox.UserServerCustomSettings]
+    DifficultyLevel=Custom
+
+    ; --- carrying and progression ---
+    InventoryVolumeMultiplier=10.000000
+    GlobalXpMultiplier=2.000000
+
+    ; --- crafting and resources ---
+    CraftingTimeMultiplier=0.500000
+    ResourceRespawnSpeed=2.000000
+
+    ; --- survival pressure ---
+    ThirstMultiplier=0.500000
+    HeatBuildupRate=0.500000
+
+    ; --- gear retention ---
+    ItemDurabilityDrainMultiplier=0.100000
+    bEnableItemMaxDurabilityLoss=False
+    ; Normal death and being eaten by a worm are separate systems; both must be None
+    ; to never lose equipment.
+    DropEquipmentOnDeath=None
+    SandwormConsequences=None
+
+    ; --- bases ---
+    ; Environmental damage only (sandstorms, decay) - not PvP raiding.
+    bAllowDynamicBuildingDamage=False
+    FiefdomLimit=10
+  UserEngine.ini: |
+    [ConsoleVariables]
+    ; Both are needed: the vehicle multiplier does not inherit from the on-foot one.
+    Dune.GlobalMiningOutputMultiplier=2.0
+    Dune.GlobalVehicleMiningOutputMultiplier=2.0

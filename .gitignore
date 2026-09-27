@@ -27,3 +27,6 @@ infra/*/talosconfig.bak
 
 # VS Code workspace settings (not relevant to a K8s/Tofu/Rego repo)
 .vscode/
+
+# Local-only runbooks (contain credentials; never committed)
+docs/local/

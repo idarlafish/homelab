@@ -108,6 +108,8 @@ flowchart TD
 | | Notes |
 |---|---|
 | **minecraft, valheim, vrising, core-keeper, foundry, soulmask, enshrouded, palworld, satisfactory, necesse, alchemy-factory, dragonwilds** | usually destroyed between play sessions |
+| **dune-awakening** | Funcom's own operator stack from the Steam depot; needs a >=24GB node, so kept stopped |
+| **kyverno** | admission-only; rewrites the hostPath Funcom hardcodes onto Dune game pods |
 | **grafana-alloy** | ships metrics to tools' Prometheus |
 | **velero** | schedules per game |
 
