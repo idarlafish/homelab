@@ -1,0 +1,28 @@
+---
+# The server-operator hardcodes a hostPath of /funcom/artifacts on every game pod and
+# exposes no CRD field to change it. Talos has a read-only root outside /var, so the
+# kubelet cannot create it and pods die with "mkdir /funcom: read-only file system".
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: dune-artifacts-hostpath
+spec:
+  rules:
+    - name: rewrite-funcom-artifacts
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: ["funcom-seabass-*"]
+      mutate:
+        foreach:
+          - list: request.object.spec.volumes[]
+            preconditions:
+              all:
+                - key: "{{ element.hostPath.path || '' }}"
+                  operator: Equals
+                  value: /funcom/artifacts
+            patchesJson6902: |-
+              - op: replace
+                path: /spec/volumes/{{elementIndex}}/hostPath/path
+                value: /var/funcom/artifacts

@@ -1,0 +1,23 @@
+---
+# Funcom's four operators. Kept separate from the world namespace so a world can be
+# deleted and recreated without tearing down the control plane.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: funcom-operators
+---
+# Game-server pods run with hostNetwork (the engine advertises its own listen port),
+# which the cluster-wide baseline PodSecurity level forbids.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dune-awakening
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: funcom-seabass-sh-47951649e36d38d0-zagrib
+  labels:
+    pod-security.kubernetes.io/enforce: privileged

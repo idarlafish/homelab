@@ -1,0 +1,60 @@
+---
+# Gameplay settings. Authored as plain ini for reviewability; the bootstrap render step
+# translates each key into an -ini: command-line override on every ServerSet.
+#
+# Mounting these as files does not work - Unreal's Saved/Config layer lives on the world
+# PVC and outranks the user-config layer, so first-boot values shadow them permanently.
+#
+# Directions are NOT consistent across keys — always check the depot's own comment in
+# scripts/setup/config/ before adding one. Known traps:
+#   LootRespawnSpeed   higher = SLOWER ("loot chests take longer to spawn back")
+#   ResourceRespawnSpeed  higher = FASTER ("resources respawn sooner")
+#   WaterExtractionRate   higher = SLOWER ("extraction takes longer")
+#
+# The server login password is deliberately NOT here: it lives in the SOPS secret and is
+# injected as an -ini: argument, so this file stays safe to read in a public repo.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dune-world-settings
+  namespace: dune-awakening
+data:
+  # Custom difficulty. Every key below is ignored unless DifficultyLevel=Custom.
+  UserServerCustomSettings.ini: |
+    [/Script/DuneSandbox.UserServerCustomSettings]
+    DifficultyLevel=Custom
+
+    ; --- carrying and progression ---
+    InventoryVolumeMultiplier=10.000000
+    ; Per-source XP, not GlobalXpMultiplier: the latter is ingested but the in-game
+    ; settings screen reads these three, and they are what the engine persists.
+    CombatXp=2.000000
+    GatheringXp=2.000000
+    MissionXp=2.000000
+    LandsraadSpecializationXpMultiplier=2.000000
+
+    ; --- crafting and resources ---
+    ; GatheringAmount is the live key; the depot comment claims it is "already exposed"
+    ; as Dune.GlobalMiningOutputMultiplier, but that console variable is legacy and had
+    ; no effect (mining efficiency stayed 1 in game). The UI groups mining with crafting
+    ; speed, i.e. both come from this section.
+    GatheringAmount=2.000000
+    CraftingTimeMultiplier=0.500000
+    ResourceRespawnSpeed=2.000000
+
+    ; --- survival pressure ---
+    ThirstMultiplier=0.500000
+    HeatBuildupRate=0.500000
+
+    ; --- gear retention ---
+    ItemDurabilityDrainMultiplier=0.100000
+    bEnableItemMaxDurabilityLoss=False
+    ; Normal death and being eaten by a worm are separate systems; both must be None
+    ; to never lose equipment.
+    DropEquipmentOnDeath=None
+    SandwormConsequences=None
+
+    ; --- bases ---
+    ; Environmental damage only (sandstorms, decay) - not PvP raiding.
+    bAllowDynamicBuildingDamage=False
+    FiefdomLimit=10

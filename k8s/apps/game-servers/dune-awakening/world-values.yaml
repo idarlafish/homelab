@@ -1,0 +1,25 @@
+---
+# Non-secret world configuration consumed by the bootstrap render step. Values are filled
+# by Flux postBuild substitution from the cluster ResourceSet, so there is one place to
+# change them.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dune-world-values
+  namespace: dune-awakening
+data:
+  # FLS requires the battlegroup id to be sh-<lowercase HostId from the FLS token>-<suffix>.
+  # Any other name is rejected with 403 ACCESS_DENIED on GatewayDeclareFarmStatus.
+  DUNE_WORLD_NAME: "sh-47951649e36d38d0-zagrib"
+  DUNE_WORLD_TITLE: "Zagribozha"
+  DUNE_WORLD_REGION: "Europe"
+  DUNE_SERVER_BUILD: "2124138-0-shipping"
+  DUNE_STORAGE_CLASS: "hcloud-volumes"
+  # "auto" reads the node ExternalIP at render time. Hetzner reassigns it on every
+  # cluster rebuild, and a stale value makes the world unjoinable.
+  DUNE_PUBLIC_IP: "auto"
+  # Maps kept resident, with their memory limits. Everything else is set to replicas 0.
+  # Survival_1 is OOM-killed below ~11Gi; DeepDesert_1 wants a further 15Gi, so the full
+  # set needs a 32-40GB node.
+  DUNE_ALWAYS_ON_MAPS: '{"Survival_1":"12Gi","Overmap":"2Gi"}'
+  DUNE_REGISTRY: "10.0.96.200:5000"

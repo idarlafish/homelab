@@ -1,0 +1,47 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dune-bootstrap
+  namespace: dune-awakening
+---
+# Applies Funcom's CRDs and ClusterRoles straight from the Steam depot (they are their
+# copyright, so they are fetched at run time rather than committed here), creates the
+# operator serving certs, and renders the BattleGroup from their world template.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dune-bootstrap
+rules:
+  - apiGroups: [apiextensions.k8s.io]
+    resources: [customresourcedefinitions]
+    verbs: [get, list, create, update, patch]
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [clusterroles]
+    verbs: [get, list, create, update, patch, escalate, bind]
+  - apiGroups: [igw.funcom.com]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: [get, list, create, update, patch]
+  - apiGroups: [""]
+    resources: [namespaces]
+    verbs: [get, list]
+  # render step resolves the node ExternalIP to advertise to FLS
+  - apiGroups: [""]
+    resources: [nodes]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dune-bootstrap
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dune-bootstrap
+subjects:
+  - kind: ServiceAccount
+    name: dune-bootstrap
+    namespace: dune-awakening

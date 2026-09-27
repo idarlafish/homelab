@@ -18,6 +18,17 @@ spec:
       path: ./k8s/apps/game-servers/dragonwilds
       wait: true
       dependsOn: []
+    - name: kyverno
+      path: ./k8s/apps/game-servers/kyverno
+      wait: true
+      dependsOn: []
+    # wait:false — the bootstrap Job pulls a 5GB Steam depot, well past the 5m timeout,
+    # and the world PVCs stay Pending under WaitForFirstConsumer while it is stopped.
+    - name: dune-awakening
+      path: ./k8s/apps/game-servers/dune-awakening
+      wait: false
+      dependsOn:
+        - name: kyverno
     - name: enshrouded
       path: ./k8s/apps/game-servers/enshrouded
       wait: true

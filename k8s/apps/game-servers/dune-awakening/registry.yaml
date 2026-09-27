@@ -1,0 +1,84 @@
+---
+# Funcom publishes the server images only as tarballs inside the Steam depot;
+# registry.funcom.com is not public DNS. This registry serves them to the node,
+# which reaches it through the talos_registries mirror set in infra/game-servers.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: registry
+  namespace: dune-awakening
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: hcloud-volumes
+  resources:
+    requests:
+      storage: 25Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry
+  namespace: dune-awakening
+spec:
+  # Static IP: the Talos machine config mirrors registry.funcom.com to this address,
+  # so it must not change when the Service is recreated.
+  clusterIP: 10.0.96.200
+  selector:
+    app: dune-registry
+  ports:
+    - port: 5000
+      targetPort: 5000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry
+  namespace: dune-awakening
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: dune-registry
+  template:
+    metadata:
+      labels:
+        app: dune-registry
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: registry
+          image: registry:3.1.2
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: ["ALL"]}
+          ports:
+            - containerPort: 5000
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {memory: 512Mi}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/registry
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: registry
+---
+# Holds the ~5GB Steam depot between bootstrap runs so an update only fetches deltas.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: depot
+  namespace: dune-awakening
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: hcloud-volumes
+  resources:
+    requests:
+      storage: 40Gi

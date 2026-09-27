@@ -1,0 +1,16 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - dune-awakening-secret.yaml
+  - world-values.yaml
+  - world-settings.yaml
+  - registry.yaml
+  - operators-rbac.yaml
+  - operators.yaml
+  - bootstrap-rbac.yaml
+  - render-script.yaml
+  - bootstrap-job.yaml
+  - apply-job.yaml
+  - kyverno-policy.yaml
