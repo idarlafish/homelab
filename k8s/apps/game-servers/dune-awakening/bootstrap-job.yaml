@@ -12,7 +12,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: dune-bootstrap-2124138-0-shipping
+  name: dune-bootstrap-2134304-0-shipping
   namespace: dune-awakening
 spec:
   backoffLimit: 2
@@ -36,13 +36,18 @@ spec:
               set -euo pipefail
               mkdir -p /depot/server
               rm -f /depot/server/steamapps/appmanifest_4754530.acf
+              # Prime the appinfo cache in its own run: doing this in the same invocation
+              # as app_update makes a fresh install fail with "Missing configuration".
+              steamcmd +@ShutdownOnFailedCommand 0 +@NoPromptForPassword 1 +login anonymous \
+                +app_license_request 4754530 +app_info_update 1 \
+                +app_info_print 4754530 +quit >/dev/null 2>&1 || true
               steamcmd +@ShutdownOnFailedCommand 0 +@NoPromptForPassword 1 \
                 +@sSteamCmdForcePlatformType linux +force_install_dir /depot/server \
                 +login anonymous +app_license_request 4754530 +app_info_update 1 \
                 +app_update 4754530 validate +quit
               build="$$(cat /depot/server/images/battlegroup/version.txt)"
-              echo "depot build: $$build / expected: 2124138-0-shipping"
-              if [ "$$build" != "2124138-0-shipping" ]; then
+              echo "depot build: $$build / expected: 2134304-0-shipping"
+              if [ "$$build" != "2134304-0-shipping" ]; then
                 echo "BUILD MISMATCH - bump DUNE_SERVER_BUILD in the cluster ResourceSet" >&2
                 exit 1
               fi

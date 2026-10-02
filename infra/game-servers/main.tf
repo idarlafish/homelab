@@ -35,6 +35,12 @@ module "talos" {
     }
   }
 
+  # Funcom's utilities-operator formats the message-queue address as "<ip>:<port>" without
+  # bracketing IPv6, so an IPv6 node address becomes "2a01:4f8:...::1:31982"; the gateway
+  # then splits on the first colon and advertises RMQGameHostname=2a01 to clients, which
+  # times out every join. No public IPv6 means it can only ever pick the IPv4 address.
+  talos_public_ipv6_enabled = false
+
   cluster_delete_protection      = false
   cert_manager_enabled           = false
   ingress_nginx_enabled          = false
