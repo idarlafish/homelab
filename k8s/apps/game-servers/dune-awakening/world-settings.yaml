@@ -38,13 +38,18 @@ data:
     ; as Dune.GlobalMiningOutputMultiplier, but that console variable is legacy and had
     ; no effect (mining efficiency stayed 1 in game). The UI groups mining with crafting
     ; speed, i.e. both come from this section.
-    GatheringAmount=2.000000
+    GatheringAmount=10.000000
     CraftingTimeMultiplier=0.500000
     ResourceRespawnSpeed=2.000000
+    ; Not "CraftingCostMultiplier" - the shipped key has no suffix, unlike building.
+    CraftingCost=0.500000
+    BuildingCostMultiplier=0.500000
+    ; Shown in game as "Fuel efficiency".
+    FuelBurnTimeMultiplier=5.000000
 
     ; --- survival pressure ---
-    ThirstMultiplier=0.500000
-    HeatBuildupRate=0.500000
+    ThirstMultiplier=0.100000
+    HeatBuildupRate=0.100000
 
     ; --- gear retention ---
     ItemDurabilityDrainMultiplier=0.100000
@@ -58,3 +63,5 @@ data:
     ; Environmental damage only (sandstorms, decay) - not PvP raiding.
     bAllowDynamicBuildingDamage=False
     FiefdomLimit=10
+    ; Base Reconstruction Tool cooldown, 7 days by default.
+    BaseBackupToolTimeRestriction=0.020000
