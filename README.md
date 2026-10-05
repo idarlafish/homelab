@@ -140,5 +140,6 @@ OpenTofu state in Cloudflare R2.
 | `infra/tools/` | tools cluster (Talos), Cloudflare Tunnel, durable Hetzner Volumes |
 | `infra/tools-staging/` | tools-staging cluster |
 | `infra/game-servers/` | game-servers cluster |
+| `k8s/apps/hetzner-capacity-watch/` | claims cx53 capacity for the game node the moment Hetzner has any (tools cluster, every 5 min) |
 | `infra/r2/` | backup buckets (account-scoped, separate state) |
 | `infra/modules/tools-cluster/` | shared module for tools + tools-staging |
