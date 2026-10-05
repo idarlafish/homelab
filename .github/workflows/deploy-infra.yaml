@@ -26,6 +26,12 @@ jobs:
 
       - uses: opentofu/setup-opentofu@v2
 
+      - name: Install talosctl and kubectl
+        run: |
+          curl -fsSL https://github.com/siderolabs/talos/releases/download/v1.12.7/talosctl-linux-amd64 -o /tmp/talosctl
+          curl -fsSL https://dl.k8s.io/release/v1.33.4/bin/linux/amd64/kubectl -o /tmp/kubectl
+          chmod +x /tmp/talosctl /tmp/kubectl && sudo mv /tmp/talosctl /tmp/kubectl /usr/local/bin/
+
       - name: Install sops (for backend creds only)
         run: |
           curl -fsSL https://github.com/getsops/sops/releases/download/v3.12.2/sops-v3.12.2.linux.amd64 -o /tmp/sops
@@ -48,3 +54,18 @@ jobs:
             -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY"
           tofu plan -input=false -out=tfplan
           tofu apply -input=false tfplan
+
+          # kubelet caches CPU/RAM at startup, so after a server resize it keeps
+          # advertising the old numbers and larger pods stay Pending. The generated
+          # talosconfig carries no endpoints, hence -e alongside -n.
+          IP=$(tofu output -raw server_ip 2>/dev/null || true)
+          if [ -n "$IP" ]; then
+            talosctl --talosconfig talosconfig -e "$IP" -n "$IP" service kubelet restart
+            for i in $(seq 1 30); do
+              kubectl --kubeconfig kubeconfig get nodes >/dev/null 2>&1 && break
+              sleep 10
+            done
+            kubectl --kubeconfig kubeconfig wait --for=condition=Ready node --all --timeout=5m
+            kubectl --kubeconfig kubeconfig get nodes \
+              -o custom-columns=NAME:.metadata.name,CPU:.status.capacity.cpu,MEM:.status.capacity.memory
+          fi
