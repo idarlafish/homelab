@@ -9,7 +9,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: dune-apply-3
+  name: dune-apply-4
   namespace: dune-awakening
 spec:
   backoffLimit: 3

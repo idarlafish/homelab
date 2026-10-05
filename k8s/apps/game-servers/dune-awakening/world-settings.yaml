@@ -38,13 +38,19 @@ data:
     ; as Dune.GlobalMiningOutputMultiplier, but that console variable is legacy and had
     ; no effect (mining efficiency stayed 1 in game). The UI groups mining with crafting
     ; speed, i.e. both come from this section.
-    GatheringAmount=2.000000
+    ; GatheringAmount is the in-game "mining efficiency" field (confirmed: setting 2
+    ; showed as 2). 10 is the documented maximum.
+    GatheringAmount=10.000000
     CraftingTimeMultiplier=0.500000
+    CraftingCost=0.500000
+    BuildingCostMultiplier=0.500000
+    ; Higher multiplies how long fuel lasts, i.e. better efficiency.
+    FuelBurnTimeMultiplier=5.000000
     ResourceRespawnSpeed=2.000000
 
     ; --- survival pressure ---
-    ThirstMultiplier=0.500000
-    HeatBuildupRate=0.500000
+    ThirstMultiplier=0.100000
+    HeatBuildupRate=0.100000
 
     ; --- gear retention ---
     ItemDurabilityDrainMultiplier=0.100000
@@ -58,3 +64,5 @@ data:
     ; Environmental damage only (sandstorms, decay) - not PvP raiding.
     bAllowDynamicBuildingDamage=False
     FiefdomLimit=10
+    ; Base reconstruction window, in hours (engine default 10).
+    BaseBackupToolTimeRestriction=0.020000
