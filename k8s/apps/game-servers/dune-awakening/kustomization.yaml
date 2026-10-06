@@ -10,7 +10,6 @@ resources:
   - operators-rbac.yaml
   - operators.yaml
   - bootstrap-rbac.yaml
-  - render-script.yaml
-  - bootstrap-job.yaml
-  - apply-job.yaml
+  - reconcile-script.yaml
+  - reconcile-cronjob.yaml
   - kyverno-policy.yaml

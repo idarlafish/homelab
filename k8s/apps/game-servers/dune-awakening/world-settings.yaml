@@ -19,32 +19,26 @@ metadata:
   name: dune-world-settings
   namespace: dune-awakening
 data:
-  # Custom difficulty. Every key below is ignored unless DifficultyLevel=Custom.
+  # Every key below is ignored unless DifficultyLevel=Custom.
   UserServerCustomSettings.ini: |
     [/Script/DuneSandbox.UserServerCustomSettings]
     DifficultyLevel=Custom
 
     ; --- carrying and progression ---
     InventoryVolumeMultiplier=10.000000
-    ; Per-source XP, not GlobalXpMultiplier: the latter is ingested but the in-game
-    ; settings screen reads these three, and they are what the engine persists.
+    ; Per-source XP: the settings screen reads these, not GlobalXpMultiplier.
     CombatXp=2.000000
     GatheringXp=2.000000
     MissionXp=2.000000
     LandsraadSpecializationXpMultiplier=2.000000
 
     ; --- crafting and resources ---
-    ; GatheringAmount is the live key; the depot comment claims it is "already exposed"
-    ; as Dune.GlobalMiningOutputMultiplier, but that console variable is legacy and had
-    ; no effect (mining efficiency stayed 1 in game). The UI groups mining with crafting
-    ; speed, i.e. both come from this section.
-    ; GatheringAmount is the in-game "mining efficiency" field (confirmed: setting 2
-    ; showed as 2). 10 is the documented maximum.
+    ; In-game "mining efficiency"; 10 is the max.
     GatheringAmount=10.000000
     CraftingTimeMultiplier=0.500000
     CraftingCost=0.500000
     BuildingCostMultiplier=0.500000
-    ; Higher multiplies how long fuel lasts, i.e. better efficiency.
+    ; Higher = fuel lasts longer.
     FuelBurnTimeMultiplier=5.000000
     ResourceRespawnSpeed=2.000000
 
@@ -55,23 +49,18 @@ data:
     ; --- gear retention ---
     ItemDurabilityDrainMultiplier=0.100000
     bEnableItemMaxDurabilityLoss=False
-    ; Normal death and being eaten by a worm are separate systems; both must be None
-    ; to never lose equipment.
+    ; Normal death and sandworm are separate systems; both needed.
     DropEquipmentOnDeath=None
     SandwormConsequences=None
 
     ; --- bases ---
-    ; Environmental damage only (sandstorms, decay) - not PvP raiding.
+    ; Environmental only, not PvP raiding.
     bAllowDynamicBuildingDamage=False
     FiefdomLimit=10
-    ; Base reconstruction window, in hours (engine default 10).
+    ; Hours (engine default 10).
     BaseBackupToolTimeRestriction=0.020000
-  # Console variables, applied as -ini:engine:[ConsoleVariables]:<name>=<value> - the same
-  # route the login password uses. Note the gameplay multipliers do NOT work this way;
-  # they belong in UserServerCustomSettings.ini above.
+  # Console variables only; gameplay multipliers do not work through this route.
   UserEngine.ini: |
     [ConsoleVariables]
-    ; This build already ships BattlEye.Enabled=false in DefaultEngine.ini and no BattlEye
-    ; process runs, so this pins the current behaviour rather than changing it - a future
-    ; build flipping the default cannot silently re-enable it.
+    ; Already the shipped default; pinned so a future build cannot re-enable it.
     BattlEye.Enabled=false

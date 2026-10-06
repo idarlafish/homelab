@@ -8,16 +8,15 @@ metadata:
   name: dune-world-values
   namespace: dune-awakening
 data:
-  # FLS requires the battlegroup id to be sh-<lowercase HostId from the FLS token>-<suffix>.
-  # Any other name is rejected with 403 ACCESS_DENIED on GatewayDeclareFarmStatus.
-  DUNE_WORLD_NAME: "sh-47951649e36d38d0-zagrib"
+  # The full id is sh-<lowercase HostId from the FLS token>-<suffix>, assembled at render
+  # time; only the suffix is a choice. Any other shape is rejected by FLS with
+  # 403 ACCESS_DENIED on GatewayDeclareFarmStatus.
+  DUNE_WORLD_SUFFIX: "zagrib"
   DUNE_WORLD_TITLE: "Zagribozha"
   DUNE_WORLD_REGION: "Europe"
-  DUNE_SERVER_BUILD: "2141883-0-shipping"
+  # Pinned: operators change rarely. Reconcile warns if the depot ships another.
+  DUNE_OPERATOR_VERSION: "v1.7.0"
   DUNE_STORAGE_CLASS: "hcloud-volumes"
-  # "auto" reads the node ExternalIP at render time. Hetzner reassigns it on every
-  # cluster rebuild, and a stale value makes the world unjoinable.
-  DUNE_PUBLIC_IP: "auto"
   # Maps kept resident, with their memory limits. Everything else is set to replicas 0.
   # Survival_1 is OOM-killed below ~11Gi; DeepDesert_1 wants a further 15Gi, so the full
   # set needs a 32-40GB node.

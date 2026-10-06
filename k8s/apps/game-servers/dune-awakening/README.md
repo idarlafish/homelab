@@ -19,9 +19,8 @@ in-cluster registry, applies their CRDs and renders their world template through
 |---|---|
 | `registry.yaml` | in-cluster `registry:2` on a fixed ClusterIP, plus the depot PVC |
 | `operators-rbac.yaml` / `operators.yaml` | identities and Deployments for Funcom's 4 operators |
-| `bootstrap-rbac.yaml` / `bootstrap-job.yaml` | fetch depot → push images (keyed on game build) |
-| `apply-job.yaml` | render the world template → apply the BattleGroup (keyed on settings) |
-| `render-script.yaml` | the template→BattleGroup transformation, as reviewable Python |
+| `bootstrap-rbac.yaml` / `reconcile-cronjob.yaml` | hourly: fetch depot → push images → render → apply on change |
+| `reconcile-script.yaml` | the template→BattleGroup transformation, as reviewable Python |
 | `world-values.yaml` | **the one place to change world config** |
 | `dune-awakening-secret.yaml` | SOPS: FLS token, DB passwords, server password |
 | `kyverno-policy.yaml` | rewrites the hostPath Funcom hardcodes (see below) |
@@ -65,12 +64,10 @@ see a retail world.
 - **The world name is not free-form.** It must be `sh-<lowercase HostId>-<suffix>`, where
   HostId comes from the FLS token's JWT payload. Anything else is rejected with
   `403 ACCESS_DENIED` on `GatewayDeclareFarmStatus`, with no hint as to why.
-- **A stale server is silently de-listed.** Steam's appmanifest wedges itself with
-  `StateFlags 6`, after which `app_update` reports success while doing nothing, so the
-  server stays on an old build and Funcom stops listing it. The bootstrap Job deletes the
-  appmanifest before every run and fails loudly if the depot build does not match
-  `DUNE_SERVER_BUILD`. On a game patch: bump the build in `world-values.yaml`, the image
-  tags in `operators.yaml`/the rendered CR, and the Job name, then let it re-run.
+- **A stale server is silently de-listed**, so the build is never pinned — the CronJob
+  follows the depot, which is what Funcom's own VM does. Steam's appmanifest wedges itself
+  with `StateFlags 6`, after which `app_update` reports success while doing nothing, so it
+  is deleted before every run.
 - **`/funcom/artifacts`** is a hostPath hardcoded in the server-operator with no CRD
   override. Talos' root is read-only outside `/var`, so pods die with
   `mkdir /funcom: read-only file system`. The Kyverno policy rewrites it to
@@ -98,10 +95,9 @@ Two caveats:
   `UserServerCustomSettings.ini` is silently ignored. There are also community reports of
   it not applying on 1.5+, so verify a fast-feedback key (carry capacity, XP) in-game
   before trusting a large batch.
-- **Bump the Job name to re-run it.** Jobs are immutable, so an edit alone will not
-  re-trigger. For a settings change bump the `dune-apply-N` suffix in `apply-job.yaml`
-  (seconds — it only re-renders). Only a new game build needs the depot Job, which is
-  keyed on `DUNE_SERVER_BUILD` and re-runs by itself when that changes.
+- **Nothing to bump.** The CronJob reconciles hourly, discovers the build from the depot
+  and applies only when its rendered hash changes, restoring the run state afterwards.
+  Force a run with `kubectl -n dune-awakening create job manual --from=cronjob/dune-reconcile`.
 
 ## Configuration
 

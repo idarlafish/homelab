@@ -1,0 +1,164 @@
+---
+# Reconciles the world against git and Funcom's latest build. A CronJob, not Jobs: Jobs
+# are immutable, so re-running one forced a hand-bumped name and a pinned build.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: dune-reconcile
+  namespace: dune-awakening
+spec:
+  # Hourly: tracks game builds, not scarce capacity.
+  schedule: "17 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 600
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          serviceAccountName: dune-bootstrap
+          securityContext:
+            runAsUser: 0
+            seccompProfile: {type: RuntimeDefault}
+          initContainers:
+            # Anonymous login suffices; owning the game only matters for the FLS token.
+            - name: depot
+              image: steamcmd/steamcmd:ubuntu-24
+              command: [bash, -c]
+              args:
+                - |
+                  set -euo pipefail
+                  mkdir -p /depot/server
+                  # Cheap check first: validating the 5GB depot hourly is pure waste when
+                  # Funcom has not shipped anything.
+                  steam_build="$$(steamcmd +@ShutdownOnFailedCommand 0 +@NoPromptForPassword 1 \
+                    +login anonymous +app_license_request 4754530 +app_info_update 1 \
+                    +app_info_print 4754530 +quit 2>/dev/null \
+                    | grep -A6 '"branches"' | grep -m1 -oE '"buildid"[^0-9]*[0-9]+' \
+                    | grep -oE '[0-9]+$$')"
+                  have="$$(cat /depot/synced-buildid 2>/dev/null || echo none)"
+                  echo "steam buildid $$steam_build, depot synced at $$have"
+                  if [ "$$steam_build" != "$$have" ] || [ ! -s /depot/server/images/battlegroup/version.txt ]; then
+                    # appmanifest cleared: StateFlags 6 makes app_update lie. appinfo must
+                    # be primed separately or install fails with "Missing configuration".
+                    rm -f /depot/server/steamapps/appmanifest_4754530.acf
+                    steamcmd +@ShutdownOnFailedCommand 0 +@NoPromptForPassword 1 +login anonymous \
+                      +app_license_request 4754530 +app_info_update 1 \
+                      +app_info_print 4754530 +quit >/dev/null 2>&1 || true
+                    steamcmd +@ShutdownOnFailedCommand 0 +@NoPromptForPassword 1 \
+                      +@sSteamCmdForcePlatformType linux +force_install_dir /depot/server \
+                      +login anonymous +app_license_request 4754530 +app_info_update 1 \
+                      +app_update 4754530 validate +quit
+                    printf '%s' "$$steam_build" > /depot/synced-buildid
+                  else
+                    echo "depot already current - skipping download"
+                  fi
+                  cp /depot/server/images/battlegroup/version.txt /shared/build
+                  cp /depot/server/images/operators/version.txt /shared/operator-version
+                  echo "depot build: $$(cat /shared/build)"
+              resources:
+                requests: {cpu: "1", memory: 1Gi}
+                limits: {memory: 3Gi}
+              volumeMounts:
+                - {name: depot, mountPath: /depot}
+                - {name: shared, mountPath: /shared}
+            # Skip the push when the registry already has this build.
+            - name: images
+              image: quay.io/skopeo/stable@sha256:064d2cefb512c97d5a22979599ca05b7198fd6176494a634e1f31bd6b5fbd77a
+              command: [bash, -c]
+              args:
+                - |
+                  set -euo pipefail
+                  cd /depot/server/images
+                  build="$$(cat /shared/build)"
+                  if skopeo list-tags --tls-verify=false \
+                       "docker://$${DUNE_REGISTRY}/funcom/self-hosting/seabass-server" 2>/dev/null \
+                       | grep -q "\"$$build\""; then
+                    echo "registry already has $$build - skipping push"
+                    exit 0
+                  fi
+                  for t in operators/*.tar prerequisites/igw-postgres.tar battlegroup/*.tar; do
+                    [ -f "$$t" ] || continue
+                    ref="$$(tar -xOf "$$t" manifest.json | tr ',' '\n' \
+                            | grep -o '"registry\.funcom\.com/[^"]*"' | head -1 | tr -d '"')"
+                    [ -n "$$ref" ] || { echo "no RepoTag in $$t"; continue; }
+                    echo "push $$ref"
+                    skopeo copy -q --dest-tls-verify=false \
+                      docker-archive:"$$t" "docker://$${DUNE_REGISTRY}/$${ref#registry.funcom.com/}"
+                  done
+              envFrom:
+                - configMapRef: {name: dune-world-values}
+              resources:
+                requests: {cpu: "1", memory: 1Gi}
+                limits: {memory: 4Gi}
+              volumeMounts:
+                - {name: depot, mountPath: /depot}
+                - {name: shared, mountPath: /shared}
+            - name: render
+              image: python:3.13-slim
+              command: [sh, -c]
+              args: ["pip install --quiet --no-cache-dir pyyaml==6.0.2 && python3 /scripts/reconcile.py"]
+              envFrom:
+                - configMapRef: {name: dune-world-values}
+                - secretRef: {name: dune-awakening}
+              resources:
+                requests: {cpu: 100m, memory: 256Mi}
+                limits: {memory: 512Mi}
+              volumeMounts:
+                - {name: depot, mountPath: /depot, readOnly: true}
+                - {name: shared, mountPath: /shared}
+                - {name: script, mountPath: /scripts, readOnly: true}
+                - {name: settings, mountPath: /settings, readOnly: true}
+          containers:
+            # Depot CRDs + operator certs, then the world only if render saw a change.
+            - name: apply
+              image: alpine/kubectl:1.33.4
+              command: [sh, -c]
+              args:
+                - |
+                  set -euo pipefail
+                  # CRDs only change with the operator version.
+                  if [ "$$(cat /shared/operator-version)" != "$$(cat /depot/applied-crds 2>/dev/null || echo none)" ]; then
+                    kubectl apply --server-side -f /depot/server/images/operators/crds/
+                    cp /shared/operator-version /depot/applied-crds
+                  else
+                    echo "CRDs already applied for this operator version"
+                  fi
+                  for op in battlegroup database server utilities; do
+                    s="$${op}operator-webhook-server-cert"
+                    kubectl -n funcom-operators get secret "$$s" >/dev/null 2>&1 && continue
+                    openssl req -x509 -nodes -newkey rsa:2048 -days 3650 \
+                      -keyout /tmp/k -out /tmp/c \
+                      -subj "/CN=$${op}operator-webhook.funcom-operators.svc" 2>/dev/null
+                    kubectl -n funcom-operators create secret tls "$$s" --cert=/tmp/c --key=/tmp/k
+                  done
+                  rm -f /tmp/k /tmp/c
+                  if [ ! -f /shared/battlegroup.yaml ]; then
+                    echo "world unchanged - nothing to apply"
+                    exit 0
+                  fi
+                  kubectl apply -f /shared/battlegroup.yaml
+                  # The operator forces stop=true on any spec change; restore run state.
+                  if [ "$$(cat /shared/was-running)" = "true" ]; then
+                    BG="$$(cat /shared/bg-name)"; NS="funcom-seabass-$$BG"
+                    for i in $$(seq 1 15); do
+                      [ "$$(kubectl -n "$$NS" get battlegroup "$$BG" -o jsonpath='{.spec.stop}')" = "false" ] && break
+                      kubectl -n "$$NS" patch battlegroup "$$BG" --type=merge -p '{"spec":{"stop":false}}'
+                      sleep 20
+                    done
+                    echo "world was running - restarted it"
+                  fi
+              resources:
+                requests: {cpu: 100m, memory: 128Mi}
+                limits: {memory: 256Mi}
+              volumeMounts:
+                - {name: depot, mountPath: /depot}
+                - {name: shared, mountPath: /shared, readOnly: true}
+          volumes:
+            - {name: depot, persistentVolumeClaim: {claimName: depot}}
+            - {name: shared, emptyDir: {}}
+            - {name: script, configMap: {name: dune-reconcile-script}}
+            - {name: settings, configMap: {name: dune-world-settings}}

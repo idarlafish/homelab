@@ -1,0 +1,163 @@
+---
+# Renders Funcom's world template through our values and applies only on change.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dune-reconcile-script
+  namespace: dune-awakening
+data:
+  reconcile.py: |
+    import base64, json, os, pathlib, re, ssl, urllib.error, urllib.request, yaml
+
+    SA = "/var/run/secrets/kubernetes.io/serviceaccount"
+    SHARED = pathlib.Path("/shared")
+    env = os.environ
+
+    # Build comes from the depot, never git: a stale server is dropped from the browser.
+    BUILD = (SHARED / "build").read_text().strip()
+    DEPOT_OPERATOR = (SHARED / "operator-version").read_text().strip()
+
+    # Must be sh-<lowercase token HostId>-<suffix> or FLS returns 403 ACCESS_DENIED.
+    payload = env["DUNE_FLS_TOKEN"].split(".")[1]
+    payload += "=" * (-len(payload) % 4)
+    host_id = json.loads(base64.urlsafe_b64decode(payload))["HostId"].lower()
+    WORLD = f"sh-{host_id}-{env['DUNE_WORLD_SUFFIX']}"
+    NS = f"funcom-seabass-{WORLD}"
+
+
+    def api(path, method=None, data=None):
+        token = pathlib.Path(f"{SA}/token").read_text()
+        ctx = ssl.create_default_context(cafile=f"{SA}/ca.crt")
+        req = urllib.request.Request(f"https://kubernetes.default.svc{path}", method=method)
+        req.add_header("Authorization", f"Bearer {token}")
+        if data is not None:
+            req.add_header("Content-Type", "application/json")
+            data = json.dumps(data).encode()
+        try:
+            with urllib.request.urlopen(req, data=data, context=ctx, timeout=30) as r:
+                body = r.read()
+                return json.loads(body) if body else {}
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return None
+            raise
+
+
+    def node_external_ip():
+        """Reassigned on every cluster rebuild, so never pinned in git."""
+        for n in api("/api/v1/nodes")["items"]:
+            for a in n["status"]["addresses"]:
+                if a["type"] == "ExternalIP" and ":" not in a["address"]:
+                    return a["address"]
+        raise SystemExit("no IPv4 node ExternalIP - cannot advertise a reachable address")
+
+
+    public_ip = node_external_ip()
+    print(f"build {BUILD}, world {WORLD}, advertising {public_ip}")
+
+    if DEPOT_OPERATOR != env["DUNE_OPERATOR_VERSION"]:
+        print(f"WARNING: depot ships operators {DEPOT_OPERATOR} but operators.yaml pins "
+              f"{env['DUNE_OPERATOR_VERSION']} - update it in git")
+
+    # --- render Funcom's template ------------------------------------------------------
+    src = pathlib.Path("/depot/server/scripts/setup/templates/world-template.yaml")
+    text = src.read_text()
+    for k, v in {
+        "{WORLD_NAME}":          env["DUNE_WORLD_TITLE"],
+        "{WORLD_UNIQUE_NAME}":   WORLD,
+        "{WORLD_REGION}":        env["DUNE_WORLD_REGION"],
+        "{WORLD_IMAGE_TAG}":     BUILD,
+        "{WORLD_POSTGRES_PASS}": env["DUNE_DB_SUPER_PASSWORD"],
+        "{WORLD_DUNE_PASS}":     env["DUNE_DB_PASSWORD"],
+        "{FLS_SECRET}":          env["DUNE_FLS_TOKEN"],
+    }.items():
+        text = text.replace(k, v)
+    leftover = set(re.findall(r"\{[A-Z0-9_]+\}", text))
+    assert not leftover, f"unsubstituted placeholders: {leftover}"
+
+    doc = yaml.safe_load(text)
+    doc["metadata"]["namespace"] = NS
+    spec = doc["spec"]
+
+    # Talos runs no local-path provisioner.
+    for store in (spec["database"]["storage"], spec["storage"]):
+        store["class"] = env["DUNE_STORAGE_CLASS"]
+
+    # Translated to -ini: overrides; mounting the files loses to Unreal's Saved/Config
+    # layer, which lives on the world PVC.
+    INI_NAMES = {
+        "UserServerCustomSettings.ini": "ServerCustomSettings",
+        "UserEngine.ini": "engine",
+        "UserGame.ini": "game",
+    }
+    overrides = []
+    settings_dir = pathlib.Path("/settings")
+    if settings_dir.is_dir():
+        for f in sorted(settings_dir.glob("*.ini")):
+            name = INI_NAMES.get(f.name)
+            if name is None:
+                raise SystemExit(f"no -ini: name mapped for {f.name}; add it to INI_NAMES")
+            section = None
+            for raw in f.read_text().splitlines():
+                line = raw.strip()
+                if not line or line.startswith(";"):
+                    continue
+                if line.startswith("["):
+                    section = line
+                elif section and "=" in line:
+                    overrides.append(f"-ini:{name}:{section}:{line}")
+    pw = "-ini:engine:[ConsoleVariables]:Bgd.ServerLoginPassword=" + env["DUNE_SERVER_PASSWORD"]
+
+    always_on = json.loads(env["DUNE_ALWAYS_ON_MAPS"])
+    for s in spec["serverGroup"]["template"]["spec"]["sets"]:
+        # Funcom's k3s ships a scheduler we do not run.
+        s.pop("schedulerName", None)
+        mem = always_on.get(s["map"])
+        s["replicas"] = 1 if mem else 0
+        if mem:
+            s.setdefault("resources", {}).setdefault("limits", {})["memory"] = mem
+        args = s.setdefault("arguments", [])
+        for a in [pw] + overrides:
+            if a not in args:
+                args.append(a)
+
+    # Template hardcodes 127.0.0.1.
+    def fix_ip(node):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                if k == "envVars" and isinstance(v, list):
+                    for e in v:
+                        if e.get("name") == "HOST_DATACENTER_IP_ADDRESS":
+                            e["value"] = public_ip
+                else:
+                    fix_ip(v)
+        elif isinstance(node, list):
+            for v in node:
+                fix_ip(v)
+
+    fix_ip(spec)
+
+    # --- apply only on a real change ---------------------------------------------------
+    live = api(f"/apis/igw.funcom.com/v1/namespaces/{NS}/battlegroups/{WORLD}")
+    was_running = bool(live) and live["spec"].get("stop") is False
+    (SHARED / "was-running").write_text("true" if was_running else "false")
+    (SHARED / "bg-name").write_text(WORLD)
+
+    # Keep current run state, or an hourly apply would stop a world in use.
+    spec["stop"] = live["spec"].get("stop", True) if live else True
+
+    # Compare a hash of what we render, not the live spec: the operator decorates the live
+    # object with its own defaults, so a direct comparison never matches and would restart
+    # the world every run.
+    import hashlib
+    want = hashlib.sha256(json.dumps(spec, sort_keys=True).encode()).hexdigest()[:16]
+    ANN = "dune.lafish.dev/rendered-hash"
+    doc["metadata"].setdefault("annotations", {})[ANN] = want
+    have = (live or {}).get("metadata", {}).get("annotations", {}).get(ANN)
+
+    if have == want:
+        print(f"world already at rendered-hash {want} - nothing to apply")
+    else:
+        (SHARED / "battlegroup.yaml").write_text(yaml.safe_dump(doc, sort_keys=False))
+        reason = "creating world" if not live else f"hash {have} -> {want}"
+        print(f"{reason} - will apply" + (" and restart (it was running)" if was_running else ""))
