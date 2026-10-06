@@ -66,3 +66,12 @@ data:
     FiefdomLimit=10
     ; Base reconstruction window, in hours (engine default 10).
     BaseBackupToolTimeRestriction=0.020000
+  # Console variables, applied as -ini:engine:[ConsoleVariables]:<name>=<value> - the same
+  # route the login password uses. Note the gameplay multipliers do NOT work this way;
+  # they belong in UserServerCustomSettings.ini above.
+  UserEngine.ini: |
+    [ConsoleVariables]
+    ; This build already ships BattlEye.Enabled=false in DefaultEngine.ini and no BattlEye
+    ; process runs, so this pins the current behaviour rather than changing it - a future
+    ; build flipping the default cannot silently re-enable it.
+    BattlEye.Enabled=false

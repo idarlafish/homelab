@@ -13,7 +13,7 @@ data:
   DUNE_WORLD_NAME: "sh-47951649e36d38d0-zagrib"
   DUNE_WORLD_TITLE: "Zagribozha"
   DUNE_WORLD_REGION: "Europe"
-  DUNE_SERVER_BUILD: "2134304-0-shipping"
+  DUNE_SERVER_BUILD: "2141883-0-shipping"
   DUNE_STORAGE_CLASS: "hcloud-volumes"
   # "auto" reads the node ExternalIP at render time. Hetzner reassigns it on every
   # cluster rebuild, and a stale value makes the world unjoinable.
