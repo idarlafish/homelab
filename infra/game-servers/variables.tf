@@ -7,7 +7,7 @@ variable "hcloud_location" {
 variable "server_type" {
   description = "Hetzner server type for the control-plane node; size it to the games you intend to run"
   type        = string
-  default     = "cpx52"
+  default     = "cx53"
 }
 
 variable "sops_age_key" {
