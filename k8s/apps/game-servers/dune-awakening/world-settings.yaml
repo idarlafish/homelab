@@ -61,6 +61,8 @@ data:
     ; Environmental only, not PvP raiding.
     bAllowDynamicBuildingDamage=False
     FiefdomLimit=10
+    ; Pieces of one category per fief; 1.0 is the UI's cap.
+    BuildingPieceLimitMultiplier=10.000000
     ; Hours (engine default 10).
     BaseBackupToolTimeRestriction=0.020000
   # Console variables only; gameplay multipliers do not work through this route.

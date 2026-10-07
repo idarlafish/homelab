@@ -86,10 +86,11 @@ see a retail world.
 
 ## Changing gameplay settings
 
-Edit `world-settings.yaml` — plain ini, one place. The render step mounts it onto every
-ServerSet via `userIniConfig`, at the path Funcom's own `apply-default-usersettings` uses.
+Edit `world-settings.yaml` — plain ini, one place. The render step translates each line
+into an `-ini:` argument on every ServerSet; mounting the files loses to Unreal's
+`Saved/Config` layer, which lives on the world PVC.
 
-Two caveats:
+Three caveats:
 
 - **`DifficultyLevel=Custom` is mandatory.** Without it the whole
   `UserServerCustomSettings.ini` is silently ignored. There are also community reports of
@@ -98,6 +99,10 @@ Two caveats:
 - **Nothing to bump.** The CronJob reconciles hourly, discovers the build from the depot
   and applies only when its rendered hash changes, restoring the run state afterwards.
   Force a run with `kubectl -n dune-awakening create job manual --from=cronjob/dune-reconcile`.
+- **The in-game admin UI reads the engine's own file, not our overrides.** The live subset
+  it manages is `server/DuneSandbox/Saved/Config/LinuxServer/ServerCustomSettings.ini`
+  inside a map pod, and it keeps showing defaults for keys we set via `-ini:`. Read that
+  file to learn a key's real name and shipped value; judge effect in-game, not from the UI.
 
 ## Configuration
 
