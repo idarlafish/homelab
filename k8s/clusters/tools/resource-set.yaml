@@ -77,10 +77,6 @@ spec:
       dependsOn:
         - name: booklore
         - name: csi-nfs
-    - name: hetzner-capacity-watch
-      path: ./k8s/apps/hetzner-capacity-watch
-      wait: true
-      dependsOn: []
     - name: velero
       path: ./k8s/apps/velero
       wait: true
