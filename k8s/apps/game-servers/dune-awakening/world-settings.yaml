@@ -25,12 +25,16 @@ data:
     DifficultyLevel=Custom
 
     ; --- carrying and progression ---
-    InventoryVolumeMultiplier=10.000000
+    ; Depot documents 0.1-10; 50 is an experiment - check the UI reads 50, not 10 or 1.
+    InventoryVolumeMultiplier=50.000000
     ; Per-source XP: the settings screen reads these, not GlobalXpMultiplier.
     CombatXp=2.000000
     GatheringXp=2.000000
     MissionXp=2.000000
     LandsraadSpecializationXpMultiplier=2.000000
+    LandsraadContributionMultiplier=2.000000
+    LandsraadFactionStandingMultiplier=2.000000
+    IntelPointsGainMultiplier=2.000000
 
     ; --- crafting and resources ---
     ; In-game "mining efficiency"; 10 is the max.
