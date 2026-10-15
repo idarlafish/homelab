@@ -11,6 +11,13 @@ data:
   SERVER_ROLE_0_CAN_ACCESS_INVENTORIES: "true"
   SERVER_ROLE_0_CAN_EDIT_BASE: "true"
   SERVER_ROLE_0_CAN_EXTEND_BASE: "true"
+  # Plays normally; no moderation or other players' inventories.
+  SERVER_ROLE_1_NAME: "Friend"
+  SERVER_ROLE_1_CAN_KICK_BAN: "false"
+  SERVER_ROLE_1_CAN_ACCESS_INVENTORIES: "false"
+  SERVER_ROLE_1_CAN_EDIT_WORLD: "true"
+  SERVER_ROLE_1_CAN_EDIT_BASE: "true"
+  SERVER_ROLE_1_CAN_EXTEND_BASE: "true"
   SERVER_ENABLE_TEXT_CHAT: "true"
   SERVER_SLOT_COUNT: "4"
   SERVER_GS_PRESET: "Custom"
