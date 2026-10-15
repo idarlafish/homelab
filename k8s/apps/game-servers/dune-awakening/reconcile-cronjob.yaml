@@ -141,7 +141,7 @@ spec:
                     exit 0
                   fi
                   kubectl apply -f /shared/battlegroup.yaml
-                  # The operator forces stop=true on any spec change; restore run state.
+                  # The operator forces stop=true on any spec change; restore desired state.
                   if [ "$$(cat /shared/was-running)" = "true" ]; then
                     BG="$$(cat /shared/bg-name)"; NS="funcom-seabass-$$BG"
                     for i in $$(seq 1 15); do
@@ -149,7 +149,7 @@ spec:
                       kubectl -n "$$NS" patch battlegroup "$$BG" --type=merge -p '{"spec":{"stop":false}}'
                       sleep 20
                     done
-                    echo "world was running - restarted it"
+                    echo "ensured world is running"
                   fi
               resources:
                 requests: {cpu: 100m, memory: 128Mi}

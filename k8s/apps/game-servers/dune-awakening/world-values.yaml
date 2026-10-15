@@ -22,3 +22,5 @@ data:
   # set needs a 32-40GB node.
   DUNE_ALWAYS_ON_MAPS: '{"Survival_1":"12Gi","Overmap":"2Gi"}'
   DUNE_REGISTRY: "10.0.96.200:5000"
+  # Run state. Unset leaves it to the cluster; "false" starts the world.
+  DUNE_STOP: "true"
