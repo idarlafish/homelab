@@ -25,11 +25,6 @@ spec:
                 secretKeyRef:
                   name: enshrouded-secrets
                   key: adminPassword
-            - name: SERVER_ROLE_1_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: enshrouded-secrets
-                  key: playerPassword
           envFrom:
             - configMapRef:
                 name: enshrouded-cm

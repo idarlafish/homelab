@@ -51,7 +51,6 @@ start game build 25936466 (1.0): Steamworks init fails with `Version Mismatch` /
 asks for. The game ships a correct `steamclient64.dll`, so no file swap or forced
 reinstall helps - only the different runtime does.
 
-Two roles, both with passwords in `enshrouded-secret.yaml` (SOPS): `adminPassword` ->
-`SERVER_ROLE_0_PASSWORD` (Admin, full moderation) and `playerPassword` ->
-`SERVER_ROLE_1_PASSWORD` (Friend, builds but cannot kick/ban or open other players'
-inventories). Which password a client joins with decides its role.
+One role: `adminPassword` in `enshrouded-secret.yaml` (SOPS) feeds
+`SERVER_ROLE_0_PASSWORD`. Everyone joins with it and gets full moderation rights.
+Add `SERVER_ROLE_1_*` plus a second secret key to split that again.
