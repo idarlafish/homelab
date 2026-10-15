@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: enshrouded
-          image: mornedhels/enshrouded-server:1.7.2
+          image: mornedhels/enshrouded-server:1.7.2-wine
           imagePullPolicy: Always
           env:
             - name: SERVER_ROLE_0_PASSWORD
