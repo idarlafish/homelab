@@ -4,7 +4,7 @@ Self-hosted [Enshrouded](https://enshrouded.zendesk.com/) dedicated server, 4 sl
 
 | | |
 |---|---|
-| Image | `mornedhels/enshrouded-server`, `dev-proton` pinned by digest ([docs](https://github.com/mornedhels/enshrouded-server)) |
+| Image | `mornedhels/enshrouded-server`, `1.8.0-proton` pinned by digest ([docs](https://github.com/mornedhels/enshrouded-server)) |
 | Connect | `<node ip>:30637` (UDP) |
 | Namespace | `enshrouded` |
 | Volume | `game-servers-enshrouded-data`, Tofu-owned, `Retain` |
@@ -45,10 +45,9 @@ through generically, so new game settings work without an image bump.
 `UPDATE_CRON` checks Steam every 30 minutes and updates in place, so a game patch
 needs no action here.
 
-Pinned to `dev-proton` because the 1.7.2 stable tags predate 1.0: their Proton Steam
-bridge fails Steamworks init with `Version Mismatch` / `No SteamUtils011`. Upstream
-fixed it in GE-Proton 11-9 (#254), which only the dev tags carry so far - move back to
-a stable tag once one ships.
+Needs 1.8.0 or newer. The 1.7.2 Proton tags fail Steamworks init on game 1.0 with
+`Version Mismatch` / `No SteamUtils011`; upstream fixed it by moving to GE-Proton 11-9
+(#254).
 
 On first start the updater may log `Unable to set current version` because Proton files
 do not exist yet and the download races. That leaves `current_version` empty, which

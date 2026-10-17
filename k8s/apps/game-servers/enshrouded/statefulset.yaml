@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: enshrouded
-          image: mornedhels/enshrouded-server:dev-proton@sha256:d122801bb54498f41a6c0d8b27f336ec4c9266ffd5e4660611cb7c20c162318f
+          image: mornedhels/enshrouded-server:1.8.0-proton@sha256:689dcb30037b0c63e6929b2fe5951eaf8eca52a43792b2764440baeb012b2aa1
           imagePullPolicy: Always
           env:
             - name: SERVER_ROLE_0_PASSWORD
