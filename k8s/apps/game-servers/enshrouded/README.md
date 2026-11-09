@@ -43,7 +43,9 @@ All of `configmap.yaml`, as `SERVER_*` env vars that the image converts into
 through generically, so new game settings work without an image bump.
 
 `UPDATE_CRON` checks Steam every 30 minutes and updates in place, so a game patch
-needs no action here.
+needs no action here. `RESTART_CRON` restarts daily at 05:00 (`TZ` Asia/Nicosia). Both
+skip while players are online (`*_CHECK_PLAYERS`). The crontab is built at container
+start, so cron changes apply on the next pod restart.
 
 Needs 1.8.0 or newer. The 1.7.2 Proton tags fail Steamworks init on game 1.0 with
 `Version Mismatch` / `No SteamUtils011`; upstream fixed it by moving to GE-Proton 11-9

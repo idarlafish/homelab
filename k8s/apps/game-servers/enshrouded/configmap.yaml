@@ -42,6 +42,10 @@ data:
   SERVER_GS_BOSS_DAMAGE_FACTOR: "0.5"
   SERVER_GS_BOSS_HEALTH_FACTOR: "0.5"
   UPDATE_CRON: "*/30 * * * *"
+  UPDATE_CHECK_PLAYERS: "true"
+  RESTART_CRON: "0 5 * * *"
+  RESTART_CHECK_PLAYERS: "true"
+  TZ: "Asia/Nicosia"
   PUID: "4711"
   PGID: "4711"
 
